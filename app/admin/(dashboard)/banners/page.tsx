@@ -1,0 +1,29 @@
+import { BannersAdminPanel } from "@/components/admin/BannersAdminPanel";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchAllBannersAdmin } from "@/lib/store-banners";
+
+export const dynamic = "force-dynamic";
+
+type Props = { searchParams: Promise<{ error?: string }> };
+
+export default async function AdminBannersPage({ searchParams }: Props) {
+  const sp = await searchParams;
+  const errorCode = typeof sp.error === "string" ? sp.error : undefined;
+
+  const supabase = await createSupabaseServerClient();
+  const banners = await fetchAllBannersAdmin(supabase);
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">Banners</h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Subí imágenes para el hero del inicio y para la parte superior del catálogo. Podés tener
+          varias por ubicación; en la tienda se muestran en carrusel con autoplay.
+        </p>
+      </div>
+
+      <BannersAdminPanel banners={banners} errorCode={errorCode} />
+    </div>
+  );
+}

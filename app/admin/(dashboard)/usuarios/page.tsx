@@ -1,0 +1,159 @@
+import Link from "next/link";
+import { CustomerAvatar } from "@/components/admin/CustomerAvatar";
+import { TeamRolesInfoCollapse } from "@/components/admin/TeamRolesInfoCollapse";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { storeBrand } from "@/lib/brand";
+
+export const dynamic = "force-dynamic";
+
+type ProfileRow = {
+  id: string;
+  role: string;
+  created_at: string;
+  display_name: string | null;
+  login_username: string | null;
+  public_email: string | null;
+  job_role: string | null;
+  branch_label: string | null;
+  avatar_variant: string | null;
+  is_active: boolean | null;
+  permissions: unknown;
+};
+
+function jobDescription(jobRole: string | null | undefined): string {
+  if (jobRole === "owner") {
+    return "Acceso completo a todas las funcionalidades del sistema.";
+  }
+  return "Registra ventas, pedidos y realiza cierres de caja.";
+}
+
+function jobBadgeClass(jobRole: string | null | undefined): string {
+  if (jobRole === "owner") {
+    return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100";
+  }
+  return "bg-sky-50 text-sky-800 ring-1 ring-sky-100";
+}
+
+function jobLabel(jobRole: string | null | undefined): string {
+  if (jobRole === "owner") return "Dueño";
+  return "Cajero";
+}
+
+export default async function AdminUsuariosRolesPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data: profiles, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  const emailByUserId = new Map<string, string>();
+  try {
+    const service = createSupabaseServiceClient();
+    const { data } = await service.auth.admin.listUsers({ perPage: 200 });
+    for (const u of data?.users ?? []) {
+      if (u.email) emailByUserId.set(u.id, u.email);
+    }
+  } catch {
+    /* sin SUPABASE_SERVICE_ROLE_KEY: solo public_email en perfiles */
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-3xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        No se pudieron cargar los perfiles. Aplicá la migración{" "}
+        <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs">
+          20260516120000_profiles_team_roles.sql
+        </code>{" "}
+        y revisá políticas RLS.
+      </div>
+    );
+  }
+
+  const rows = (profiles ?? []) as ProfileRow[];
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+            Usuarios y roles
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+            Gestioná colaboradores, roles y permisos en {storeBrand}.
+          </p>
+        </div>
+        <Link
+          href="/admin/usuarios/nuevo"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+        >
+          <span className="text-lg leading-none" aria-hidden>
+            +
+          </span>
+          Nuevo colaborador
+        </Link>
+      </div>
+
+      <TeamRolesInfoCollapse storeLabel={storeBrand} />
+
+      {rows.length === 0 ? (
+        <p className="rounded-xl border border-zinc-200 bg-white px-5 py-10 text-center text-sm text-zinc-500 shadow-sm">
+          Todavía no hay colaboradores con perfil en esta tienda.
+        </p>
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {rows.map((row) => {
+            const title =
+              row.display_name?.trim() ||
+              row.login_username?.trim() ||
+              "Colaborador";
+            const email =
+              row.public_email?.trim() || emailByUserId.get(row.id) || "—";
+            const jobRole = row.job_role ?? "cashier";
+            const avatarSeed = `${(email !== "—" ? email : row.id).toLowerCase()}:av:${(row.avatar_variant ?? "A").slice(0, 1)}`;
+
+            return (
+              <li
+                key={row.id}
+                className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex gap-4">
+                  <CustomerAvatar
+                    seed={avatarSeed}
+                    size={56}
+                    className="ring-2 ring-zinc-200/90"
+                    label={`Avatar de ${title}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-zinc-900">{title}</p>
+                    <p className="truncate text-sm text-zinc-500">{email}</p>
+                  </div>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-zinc-600">
+                  {jobDescription(jobRole)}
+                </p>
+                <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4">
+                  <span className="inline-flex size-2 rounded-full bg-zinc-900" aria-hidden />
+                  <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200/70">
+                    {row.is_active === false ? "Inactivo" : "Activo"}
+                  </span>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${jobBadgeClass(jobRole)}`}
+                  >
+                    {jobLabel(jobRole)}
+                  </span>
+                  <Link
+                    href={`/admin/usuarios/${row.id}/edit`}
+                    className="ml-auto inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+                  >
+                    Editar
+                  </Link>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

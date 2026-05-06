@@ -1,0 +1,85 @@
+import Link from "next/link";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { formatCop } from "@/lib/money";
+
+export const dynamic = "force-dynamic";
+
+const labels: Record<string, string> = {
+  pending: "Pendiente de pago",
+  paid: "Pagado",
+  failed: "Pago rechazado o fallido",
+  cancelled: "Cancelado",
+};
+
+export default async function CheckoutReturnPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const orderId =
+    typeof sp.order_id === "string" ? sp.order_id : undefined;
+
+  if (!orderId) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 px-4 py-10">
+        <h1 className="text-2xl font-semibold text-stone-900">Resultado del pago</h1>
+        <p className="text-stone-600">
+          Falta el identificador del pedido en la URL.
+        </p>
+        <Link href="/products" className="font-medium text-[#6b7f6a] underline">
+          Ir al catálogo
+        </Link>
+      </div>
+    );
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data: order } = await supabase
+    .from("orders")
+    .select("id,status,customer_name,customer_email,total_cents,currency")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (!order) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 px-4 py-10">
+        <h1 className="text-2xl font-semibold text-stone-900">Pedido no encontrado</h1>
+        <Link href="/products" className="font-medium text-[#6b7f6a] underline">
+          Ir al catálogo
+        </Link>
+      </div>
+    );
+  }
+
+  const status = order.status as string;
+
+  return (
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-10">
+      <h1 className="text-2xl font-semibold text-stone-900">
+        Resultado del pago
+      </h1>
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-stone-100">
+        <p className="text-sm text-stone-500">Pedido</p>
+        <p className="font-mono text-sm text-stone-800">{order.id}</p>
+        <p className="mt-4 text-sm text-stone-500">Estado</p>
+        <p className="text-lg font-medium text-stone-900">{labels[status] ?? status}</p>
+        <p className="mt-4 text-sm text-stone-500">Total</p>
+        <p className="text-lg font-semibold text-[#556654]">{formatCop(order.total_cents)}</p>
+        <p className="mt-4 text-sm text-stone-600">
+          {order.customer_name} · {order.customer_email}
+        </p>
+        <p className="mt-4 text-xs text-stone-500">
+          El estado final lo confirma Wompi por webhook; si ves “Pendiente”, esperá
+          unos segundos y refrescá.
+        </p>
+      </div>
+      <Link
+        href="/products"
+        className="inline-flex rounded-full bg-[#6b7f6a] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#5c6e5b]"
+      >
+        Seguir comprando
+      </Link>
+    </div>
+  );
+}
