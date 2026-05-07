@@ -28,6 +28,8 @@ type ProductHit = {
   price_cents: number;
   stock_quantity?: number | null;
   stock_local?: number | null;
+  has_vat?: boolean | null;
+  vat_percent?: number | null;
 };
 
 type CustomerHit = {
@@ -47,6 +49,23 @@ type CartLine = {
   product: ProductHit;
   quantity: number;
 };
+
+function lineBaseCents(line: CartLine): number {
+  return Number(line.product.price_cents ?? 0) * line.quantity;
+}
+
+function unitFinalCents(product: ProductHit): number {
+  const base = Math.max(0, Number(product.price_cents ?? 0));
+  if (!product.has_vat) return base;
+  const percent = Math.max(0, Number(product.vat_percent ?? 0));
+  return Math.round(base * (1 + percent / 100));
+}
+
+function lineVatCents(line: CartLine): number {
+  const unitBase = Math.max(0, Number(line.product.price_cents ?? 0));
+  const unitFinal = unitFinalCents(line.product);
+  return (unitFinal - unitBase) * line.quantity;
+}
 
 type PaymentTab = "cash" | "transfer" | "mixed";
 
@@ -318,12 +337,18 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
   const subtotalCents = useMemo(() => {
     let s = 0;
     for (const line of lines) {
-      s += Number(line.product.price_cents ?? 0) * line.quantity;
+      s += lineBaseCents(line);
     }
     return s;
   }, [lines]);
 
-  const totalCents = subtotalCents;
+  const vatCents = useMemo(() => {
+    let s = 0;
+    for (const line of lines) s += lineVatCents(line);
+    return s;
+  }, [lines]);
+
+  const totalCents = subtotalCents + vatCents;
 
   const cashGivenCents = parseCopInputDigitsToInt(cashGivenRaw);
   const mixedCashCents = parseCopInputDigitsToInt(mixedCashRaw);
@@ -484,7 +509,9 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                   const stock = Number(
                     line.product.stock_local ?? line.product.stock_quantity ?? 0,
                   );
-                  const lineTotal = Number(line.product.price_cents ?? 0) * line.quantity;
+                  const lineSubtotal = lineBaseCents(line);
+                  const lineVat = lineVatCents(line);
+                  const lineTotal = lineSubtotal + lineVat;
                   return (
                     <li
                       key={line.key}
@@ -494,6 +521,9 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                         <p className="font-medium text-zinc-900">{line.product.name}</p>
                         <p className="text-xs text-zinc-500">
                           {formatCop(Number(line.product.price_cents ?? 0))} c/u
+                          {line.product.has_vat
+                            ? ` · IVA ${String(line.product.vat_percent ?? 0).replace(/\.0+$/, "")}%`
+                            : ""}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -747,6 +777,12 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                     <dt className="text-zinc-500">Subtotal</dt>
                     <dd className="tabular-nums font-medium text-zinc-900">
                       {formatCop(subtotalCents)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2">
+                    <dt className="text-zinc-500">IVA</dt>
+                    <dd className="tabular-nums font-medium text-zinc-900">
+                      {formatCop(vatCents)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2">

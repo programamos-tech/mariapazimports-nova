@@ -8,14 +8,7 @@ import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { formatCop } from "@/lib/money";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
-
-const COLOR_OPTIONS = [
-  { id: "pink", className: "bg-rose-300 ring-rose-400" },
-  { id: "black", className: "bg-stone-900 ring-stone-600" },
-  { id: "green", className: "bg-emerald-600 ring-emerald-700" },
-  { id: "silver", className: "bg-stone-300 ring-stone-400" },
-  { id: "blue", className: "bg-sky-600 ring-sky-700" },
-] as const;
+import { productColorSwatchClass } from "@/lib/product-colors";
 
 function IconTruck(props: SVGProps<SVGSVGElement>) {
   return (
@@ -43,6 +36,13 @@ type Props = {
   priceCents: number;
   stockQuantity: number;
   imageUrl: string | null;
+  sizeValue: number | null;
+  sizeUnit: string | null;
+  hasExpiration: boolean | null;
+  expirationDate: string | null;
+  colors: string[];
+  hasVat: boolean | null;
+  vatPercent: number | null;
 };
 
 export function ProductDetailView({
@@ -52,6 +52,13 @@ export function ProductDetailView({
   priceCents,
   stockQuantity,
   imageUrl,
+  sizeValue,
+  sizeUnit,
+  hasExpiration,
+  expirationDate,
+  colors,
+  hasVat,
+  vatPercent,
 }: Props) {
   const router = useRouter();
   const [thumbIdx, setThumbIdx] = useState(0);
@@ -68,6 +75,11 @@ export function ProductDetailView({
       : Math.min(Math.max(1, qty), maxQty);
 
   const installment = Math.max(1, Math.ceil(priceCents / 6));
+  const sizeLabel =
+    sizeValue && sizeValue > 0
+      ? `${String(sizeValue).replace(/\.0+$/, "")} ${sizeUnit ?? "unidad"}`
+      : null;
+  const colorOptions = colors.filter((c) => c.trim().length > 0);
   const blurb =
     description?.trim() ||
     "Producto seleccionado para calidad y diseño. Consultá políticas de cambio antes de comprar.";
@@ -156,23 +168,53 @@ export function ProductDetailView({
           </p>
         </div>
 
-        <div>
-          <p className="mb-2 text-sm font-medium text-stone-800">Elegí un color</p>
-          <div className="flex flex-wrap gap-3">
-            {COLOR_OPTIONS.map((c, i) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setColorIdx(i)}
-                title={c.id}
-                className={`size-9 rounded-full ring-2 ring-offset-2 ring-offset-white transition ${c.className} ${
-                  colorIdx === i ? "ring-[#c2410c] ring-offset-2" : "ring-transparent"
-                }`}
-                aria-pressed={colorIdx === i}
-              />
-            ))}
+        {colorOptions.length > 0 ? (
+          <div>
+            <p className="mb-2 text-sm font-medium text-stone-800">Color</p>
+            <div className="flex flex-wrap gap-2">
+              {colorOptions.map((color, i) => (
+                <button
+                  key={`${color}-${i}`}
+                  type="button"
+                  onClick={() => setColorIdx(i)}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                    colorIdx === i
+                      ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240]"
+                      : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                  }`}
+                  aria-pressed={colorIdx === i}
+                >
+                  <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
+                  {color}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
+
+        {sizeLabel || hasExpiration ? (
+          <div className="rounded-xl border border-stone-200 bg-[#faf9f7] px-4 py-3 text-sm text-stone-700">
+            {sizeLabel ? (
+              <p>
+                <span className="font-medium text-stone-900">Tamaño:</span> {sizeLabel}
+              </p>
+            ) : null}
+            {hasExpiration ? (
+              <p className={sizeLabel ? "mt-1" : ""}>
+                <span className="font-medium text-stone-900">Vencimiento:</span>{" "}
+                {expirationDate || "Este producto requiere control de fecha."}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        {hasVat ? (
+          <p className="text-sm text-stone-600">
+            IVA aplicado:{" "}
+            <span className="font-semibold text-stone-900">
+              {String(vatPercent ?? 0).replace(/\.0+$/, "")}%
+            </span>
+          </p>
+        ) : null}
 
         {outOfStock ? (
           <p className="font-medium text-red-600">Sin stock por ahora.</p>

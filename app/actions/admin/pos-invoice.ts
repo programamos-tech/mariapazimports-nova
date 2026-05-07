@@ -17,6 +17,13 @@ function redirectError(code: string): never {
   redirect(`/admin/ventas/nueva?error=${encodeURIComponent(code)}`);
 }
 
+function unitFinalCents(priceCents: number, hasVat: boolean, vatPercent: number): number {
+  const base = Math.max(0, Math.floor(priceCents));
+  if (!hasVat) return base;
+  const pct = Math.max(0, vatPercent);
+  return Math.round(base * (1 + pct / 100));
+}
+
 export async function createPosInvoiceAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -70,7 +77,7 @@ export async function createPosInvoiceAction(formData: FormData) {
   const productIds = [...new Set(lines.map((l) => l.productId))];
   const { data: products, error: pErr } = await supabase
     .from("products")
-    .select("id,name,price_cents,stock_local")
+    .select("id,name,price_cents,stock_local,has_vat,vat_percent")
     .in("id", productIds);
 
   if (pErr || !products || products.length !== productIds.length) {
@@ -85,15 +92,22 @@ export async function createPosInvoiceAction(formData: FormData) {
     qtyByProduct.set(l.productId, (qtyByProduct.get(l.productId) ?? 0) + l.quantity);
   }
 
+  let subtotalCents = 0;
+  let vatCents = 0;
   let totalCents = 0;
   for (const [pid, qty] of qtyByProduct) {
     const p = productById.get(pid);
     if (!p) redirectError("products");
-    const price = Number(p.price_cents ?? 0);
+    const price = Math.max(0, Math.floor(Number(p.price_cents ?? 0)));
+    const hasVat = Boolean(p.has_vat);
+    const vatPercent = Math.max(0, Number(p.vat_percent ?? 0));
+    const unitFinal = unitFinalCents(price, hasVat, vatPercent);
     const stock = Number(p.stock_local ?? 0);
     if (stock < qty) redirectError("stock");
-    totalCents += price * qty;
+    subtotalCents += price * qty;
+    totalCents += unitFinal * qty;
   }
+  vatCents = Math.max(0, totalCents - subtotalCents);
 
   if (!Number.isFinite(totalCents) || totalCents < 0) redirectError("validation");
 
@@ -140,11 +154,17 @@ export async function createPosInvoiceAction(formData: FormData) {
 
   const itemRows = lines.map((l) => {
     const p = productById.get(l.productId)!;
+    const base = Math.max(0, Math.floor(Number(p.price_cents ?? 0)));
+    const unitFinal = unitFinalCents(
+      base,
+      Boolean(p.has_vat),
+      Math.max(0, Number(p.vat_percent ?? 0)),
+    );
     return {
       order_id: orderId,
       product_id: l.productId,
       quantity: l.quantity,
-      unit_price_cents: Number(p.price_cents ?? 0),
+      unit_price_cents: unitFinal,
       product_name_snapshot: String(p.name ?? "Producto"),
     };
   });
@@ -189,6 +209,8 @@ export async function createPosInvoiceAction(formData: FormData) {
     summary: `Venta a ${String(customerRow.name ?? "Cliente")} · ${totalFormatted}`,
     metadata: {
       customer_id: customerId,
+      subtotal_cents: subtotalCents,
+      vat_cents: vatCents,
       total_cents: totalCents,
       payment_method: paymentMethod,
       line_items: lines.length,

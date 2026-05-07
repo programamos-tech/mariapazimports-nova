@@ -26,6 +26,13 @@ type ProductRow = {
   image_path: string | null;
   is_published: boolean;
   category_id?: string | null;
+  size_value?: number | null;
+  size_unit?: string | null;
+  has_expiration?: boolean | null;
+  expiration_date?: string | null;
+  colors?: string[] | null;
+  has_vat?: boolean | null;
+  vat_percent?: number | null;
 };
 
 function breadcrumbSegment(name: string) {
@@ -129,6 +136,13 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           stockLocal: p.stock_local ?? 0,
           stockWarehouse: p.stock_warehouse ?? 0,
           isPublished: p.is_published === true,
+          sizeValue: p.size_value ?? null,
+          sizeUnit: p.size_unit ?? "ml",
+          hasExpiration: p.has_expiration === true,
+          expirationDate: p.expiration_date ?? "",
+          hasVat: p.has_vat === true,
+          vatPercent: p.vat_percent ?? null,
+          colors: Array.isArray(p.colors) ? p.colors : [],
         }}
       />
 

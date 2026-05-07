@@ -61,6 +61,63 @@ function parseMoneyCents(v: FormDataEntryValue | null) {
   return Math.max(0, Math.round(n));
 }
 
+function parseSizeValue(v: FormDataEntryValue | null): number | null {
+  const raw = String(v ?? "").trim().replace(",", ".");
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Number(n.toFixed(2));
+}
+
+function parseExpirationDate(v: FormDataEntryValue | null): string | null {
+  const raw = String(v ?? "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+}
+
+function parseVatPercent(v: FormDataEntryValue | null): number | null {
+  const raw = String(v ?? "").trim().replace(",", ".");
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  const clamped = Math.min(100, Math.max(0, n));
+  return Number(clamped.toFixed(2));
+}
+
+function parseColors(v: FormDataEntryValue | null): string[] {
+  const raw = String(v ?? "").trim();
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(",")) {
+    const c = part.trim().slice(0, 32);
+    if (!c) continue;
+    const key = c.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(c);
+  }
+  return out;
+}
+
+function parseColorsFromFormData(formData: FormData): string[] {
+  const raw = formData
+    .getAll("colors")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  if (raw.length === 0) {
+    return parseColors(formData.get("colors_csv"));
+  }
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const c of raw) {
+    const key = c.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(c.slice(0, 32));
+  }
+  return out;
+}
+
 function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (err?.code === "42703") return true;
   const m = err?.message ?? "";
@@ -68,7 +125,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|has_expiration|expiration_date|colors|has_vat|vat_percent/i.test(m)
   ) {
     return true;
   }
@@ -145,6 +202,20 @@ export async function createProduct(formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
+  const size_value = parseSizeValue(formData.get("size_value"));
+  const size_unit_raw = String(formData.get("size_unit") ?? "").trim().toLowerCase();
+  const size_unit = size_value
+    ? ["ml", "l", "g", "kg", "oz", "unidad"].includes(size_unit_raw)
+      ? size_unit_raw
+      : "unidad"
+    : null;
+  const has_expiration = formData.get("has_expiration") === "on";
+  const expiration_date = has_expiration
+    ? parseExpirationDate(formData.get("expiration_date"))
+    : null;
+  const has_vat = formData.get("has_vat") === "on";
+  const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
+  const colors = parseColorsFromFormData(formData);
 
   if (!name) {
     redirect("/admin/products/new?error=name");
@@ -161,6 +232,13 @@ export async function createProduct(formData: FormData) {
     stock_local: stockLocal,
     is_published: isPublished,
     category_id,
+    size_value,
+    size_unit,
+    has_expiration,
+    expiration_date,
+    has_vat,
+    vat_percent,
+    colors,
   };
 
   const extendedRow = {
@@ -262,6 +340,20 @@ export async function updateProduct(productId: string, formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
+  const size_value = parseSizeValue(formData.get("size_value"));
+  const size_unit_raw = String(formData.get("size_unit") ?? "").trim().toLowerCase();
+  const size_unit = size_value
+    ? ["ml", "l", "g", "kg", "oz", "unidad"].includes(size_unit_raw)
+      ? size_unit_raw
+      : "unidad"
+    : null;
+  const has_expiration = formData.get("has_expiration") === "on";
+  const expiration_date = has_expiration
+    ? parseExpirationDate(formData.get("expiration_date"))
+    : null;
+  const has_vat = formData.get("has_vat") === "on";
+  const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
+  const colors = parseColorsFromFormData(formData);
 
   if (!name) {
     redirect(`/admin/products/${productId}/edit?error=name`);
@@ -278,6 +370,13 @@ export async function updateProduct(productId: string, formData: FormData) {
     stock_local: stockLocal,
     is_published: isPublished,
     category_id,
+    size_value,
+    size_unit,
+    has_expiration,
+    expiration_date,
+    has_vat,
+    vat_percent,
+    colors,
   };
 
   const extendedUpdate = {

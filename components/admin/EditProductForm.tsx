@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import {
+  AdminDateInput,
   ProductMoneyInput,
   productInputClass as inputClass,
   productLabelClass as labelClass,
@@ -16,6 +17,7 @@ import {
   MAX_PRODUCT_IMAGE_BYTES,
 } from "@/lib/product-image-upload";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
 
 type Initial = {
   name: string;
@@ -28,6 +30,13 @@ type Initial = {
   stockLocal: number;
   stockWarehouse: number;
   isPublished: boolean;
+  sizeValue: number | null;
+  sizeUnit: string;
+  hasExpiration: boolean;
+  expirationDate: string;
+  hasVat: boolean;
+  vatPercent: number | null;
+  colors: string[];
 };
 
 type Props = {
@@ -51,6 +60,17 @@ export function EditProductForm({
   const [costCents, setCostCents] = useState(initial.costCents);
   const [priceCents, setPriceCents] = useState(initial.priceCents);
   const [isPublished, setIsPublished] = useState(initial.isPublished);
+  const [sizeValue, setSizeValue] = useState(
+    initial.sizeValue == null ? "" : String(initial.sizeValue),
+  );
+  const [sizeUnit, setSizeUnit] = useState(initial.sizeUnit || "ml");
+  const [hasExpiration, setHasExpiration] = useState(initial.hasExpiration);
+  const [expirationDate, setExpirationDate] = useState(initial.expirationDate);
+  const [hasVat, setHasVat] = useState(initial.hasVat);
+  const [vatPercent, setVatPercent] = useState(
+    initial.vatPercent == null ? "" : String(initial.vatPercent),
+  );
+  const [selectedColors, setSelectedColors] = useState(initial.colors);
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const categoryLabel =
@@ -203,6 +223,137 @@ export function EditProductForm({
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="ep-size-value" className={labelClass}>
+                    Tamaño / contenido (opcional)
+                  </label>
+                  <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <input
+                      id="ep-size-value"
+                      name="size_value"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={sizeValue}
+                      onChange={(e) => setSizeValue(e.target.value)}
+                      className={inputClass}
+                    />
+                    <select
+                      name="size_unit"
+                      value={sizeUnit}
+                      onChange={(e) => setSizeUnit(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="ml">ml</option>
+                      <option value="l">L</option>
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                      <option value="oz">oz</option>
+                      <option value="unidad">unidad</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Colores (opcional)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PRODUCT_COLOR_OPTIONS.map((color) => {
+                      const checked = selectedColors.includes(color);
+                      return (
+                        <label
+                          key={color}
+                          className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
+                            checked
+                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240]"
+                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            name="colors"
+                            value={color}
+                            checked={checked}
+                            onChange={(e) =>
+                              setSelectedColors((prev) =>
+                                e.target.checked
+                                  ? [...prev, color]
+                                  : prev.filter((c) => c !== color),
+                              )
+                            }
+                            className="sr-only"
+                          />
+                          <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
+                          {color}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="checkbox"
+                    name="has_expiration"
+                    checked={hasExpiration}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setHasExpiration(next);
+                      if (!next) setExpirationDate("");
+                    }}
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                  />
+                  Tiene fecha de vencimiento
+                </label>
+                <div className={!hasExpiration ? "pointer-events-none opacity-60" : ""}>
+                  <label htmlFor="ep-expiration" className={labelClass}>
+                    Fecha de vencimiento
+                  </label>
+                  <AdminDateInput
+                    id="ep-expiration"
+                    name="expiration_date"
+                    value={expirationDate}
+                    onChange={setExpirationDate}
+                    required={false}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="checkbox"
+                    name="has_vat"
+                    checked={hasVat}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setHasVat(next);
+                      if (!next) setVatPercent("");
+                    }}
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                  />
+                  Maneja IVA
+                </label>
+                <div className={!hasVat ? "pointer-events-none opacity-60" : ""}>
+                  <label htmlFor="ep-vat" className={labelClass}>
+                    IVA del producto (%)
+                  </label>
+                  <input
+                    id="ep-vat"
+                    name="vat_percent"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={vatPercent}
+                    onChange={(e) => setVatPercent(e.target.value)}
+                    className={inputClass}
+                  />
                 </div>
               </div>
 

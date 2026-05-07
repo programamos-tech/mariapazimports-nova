@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createProduct } from "@/app/actions/admin/products";
 import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
 import {
+  AdminDateInput,
   ProductMoneyInput,
   ProductQuantityInput,
   productInputClass as inputClass,
@@ -16,6 +17,7 @@ import {
   blockSubmitIfImageTooLarge,
   MAX_PRODUCT_IMAGE_BYTES,
 } from "@/lib/product-image-upload";
+import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
 
 export type ProductCategoryOption = { id: string; name: string };
 
@@ -33,6 +35,13 @@ export function NewProductForm({
   const [stockWarehouse, setStockWarehouse] = useState(0);
   const [costCents, setCostCents] = useState(0);
   const [priceCents, setPriceCents] = useState(0);
+  const [sizeValue, setSizeValue] = useState("");
+  const [sizeUnit, setSizeUnit] = useState("ml");
+  const [hasExpiration, setHasExpiration] = useState(false);
+  const [expirationDate, setExpirationDate] = useState("");
+  const [hasVat, setHasVat] = useState(false);
+  const [vatPercent, setVatPercent] = useState("");
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const totalStock = stockLocal + stockWarehouse;
@@ -164,6 +173,139 @@ export function NewProductForm({
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="np-size-value" className={labelClass}>
+                    Tamaño / contenido (opcional)
+                  </label>
+                  <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <input
+                      id="np-size-value"
+                      name="size_value"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={sizeValue}
+                      onChange={(e) => setSizeValue(e.target.value)}
+                      placeholder="500"
+                      className={inputClass}
+                    />
+                    <select
+                      name="size_unit"
+                      value={sizeUnit}
+                      onChange={(e) => setSizeUnit(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="ml">ml</option>
+                      <option value="l">L</option>
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                      <option value="oz">oz</option>
+                      <option value="unidad">unidad</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Colores (opcional)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PRODUCT_COLOR_OPTIONS.map((color) => {
+                      const checked = selectedColors.includes(color);
+                      return (
+                        <label
+                          key={color}
+                          className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
+                            checked
+                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240]"
+                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            name="colors"
+                            value={color}
+                            checked={checked}
+                            onChange={(e) =>
+                              setSelectedColors((prev) =>
+                                e.target.checked
+                                  ? [...prev, color]
+                                  : prev.filter((c) => c !== color),
+                              )
+                            }
+                            className="sr-only"
+                          />
+                          <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
+                          {color}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="checkbox"
+                    name="has_expiration"
+                    checked={hasExpiration}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setHasExpiration(next);
+                      if (!next) setExpirationDate("");
+                    }}
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                  />
+                  Tiene fecha de vencimiento
+                </label>
+                <div className={!hasExpiration ? "pointer-events-none opacity-60" : ""}>
+                  <label htmlFor="np-expiration" className={labelClass}>
+                    Fecha de vencimiento
+                  </label>
+                  <AdminDateInput
+                    id="np-expiration"
+                    name="expiration_date"
+                    value={expirationDate}
+                    onChange={setExpirationDate}
+                    required={false}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="checkbox"
+                    name="has_vat"
+                    checked={hasVat}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setHasVat(next);
+                      if (!next) setVatPercent("");
+                    }}
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                  />
+                  Maneja IVA
+                </label>
+                <div className={!hasVat ? "pointer-events-none opacity-60" : ""}>
+                  <label htmlFor="np-vat" className={labelClass}>
+                    IVA del producto (%)
+                  </label>
+                  <input
+                    id="np-vat"
+                    name="vat_percent"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={vatPercent}
+                    onChange={(e) => setVatPercent(e.target.value)}
+                    placeholder="19"
+                    className={inputClass}
+                  />
                 </div>
               </div>
             </div>

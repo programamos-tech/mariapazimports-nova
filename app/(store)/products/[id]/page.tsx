@@ -13,7 +13,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const supabase = await createSupabaseServerClient();
   const { data: product } = await supabase
     .from("products")
-    .select("id,name,description,price_cents,stock_quantity,image_path")
+    .select("id,name,description,price_cents,stock_quantity,image_path,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent")
     .eq("id", id)
     .eq("is_published", true)
     .maybeSingle();
@@ -61,6 +61,13 @@ export default async function ProductDetailPage({ params }: Props) {
         priceCents={product.price_cents}
         stockQuantity={product.stock_quantity}
         imageUrl={img}
+        sizeValue={product.size_value}
+        sizeUnit={product.size_unit}
+        hasExpiration={product.has_expiration}
+        expirationDate={product.expiration_date}
+        colors={Array.isArray(product.colors) ? product.colors : []}
+        hasVat={product.has_vat}
+        vatPercent={product.vat_percent}
       />
 
       <section className="mt-16 border-t border-stone-200 pt-10">

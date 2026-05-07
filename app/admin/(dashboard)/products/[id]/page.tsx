@@ -39,6 +39,13 @@ export default async function AdminProductDetailPage({ params }: Props) {
     stock_quantity: number;
     image_path: string | null;
     category_id?: string | null;
+    size_value?: number | null;
+    size_unit?: string | null;
+    has_expiration?: boolean | null;
+    expiration_date?: string | null;
+    colors?: string[] | null;
+    has_vat?: boolean | null;
+    vat_percent?: number | null;
   };
 
   let categoryName = "Sin categoría";
@@ -58,6 +65,19 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const stockW = Number(raw.stock_warehouse ?? 0);
   const stockL = Number(raw.stock_local ?? 0);
   const stockTotal = Number(raw.stock_quantity ?? stockW + stockL);
+  const sizeLabel =
+    raw.size_value && Number(raw.size_value) > 0
+      ? `${String(raw.size_value).replace(/\.0+$/, "")} ${raw.size_unit ?? "unidad"}`
+      : "—";
+  const expirationLabel = raw.has_expiration
+    ? raw.expiration_date || "Requiere fecha de lote"
+    : "No aplica";
+  const colorsLabel = Array.isArray(raw.colors) && raw.colors.length > 0
+    ? raw.colors.join(", ")
+    : "—";
+  const vatLabel = raw.has_vat
+    ? `${String(raw.vat_percent ?? 0).replace(/\.0+$/, "")}%`
+    : "No aplica";
 
   const { data: pendingOrders } = await supabase.from("orders").select("id").eq("status", "pending");
   const pendingIds = (pendingOrders ?? []).map((o) => o.id).filter(Boolean);
@@ -203,6 +223,22 @@ export default async function AdminProductDetailPage({ params }: Props) {
             <div>
               <dt className="text-zinc-500">Ubicación</dt>
               <dd className="mt-0.5 text-zinc-700">Sin ubicación específica</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Tamaño / contenido</dt>
+              <dd className="mt-0.5 text-zinc-900">{sizeLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Vencimiento</dt>
+              <dd className="mt-0.5 text-zinc-900">{expirationLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Colores</dt>
+              <dd className="mt-0.5 text-zinc-900">{colorsLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">IVA</dt>
+              <dd className="mt-0.5 text-zinc-900">{vatLabel}</dd>
             </div>
           </dl>
         </section>
