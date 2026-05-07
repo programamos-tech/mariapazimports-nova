@@ -274,6 +274,9 @@ function AdminSidebarInner({
         ))}
       </nav>
       <div className="border-t border-stone-200/80 p-3">
+        <p className="font-berea-nova mb-2 px-1 text-[11px] font-semibold text-zinc-700">
+          berea studio
+        </p>
         <form action={signOutAdmin}>
           <button
             type="submit"
@@ -298,6 +301,9 @@ function AdminSidebarFallback() {
       </div>
       <div className="flex-1 px-3 py-5" aria-busy aria-label="Cargando menú" />
       <div className="border-t border-stone-200/80 p-3">
+        <p className="font-berea-nova mb-2 px-1 text-[11px] font-semibold text-zinc-700">
+          berea studio
+        </p>
         <div className="h-10 rounded-xl bg-stone-200/60" />
       </div>
     </aside>

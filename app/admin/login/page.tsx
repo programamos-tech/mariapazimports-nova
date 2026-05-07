@@ -64,9 +64,8 @@ export default function AdminLoginPage() {
                 {" "}
                 ·{" "}
               </span>
-              <span className="text-zinc-500/90">
-                Powered by{" "}
-                <span className="font-semibold text-zinc-600">programamos</span>
+              <span className="font-berea-nova font-semibold text-zinc-700">
+                berea studio
               </span>
             </p>
           </div>

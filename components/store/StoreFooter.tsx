@@ -171,9 +171,14 @@ export function StoreFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-stone-200/80 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-stone-500 sm:text-sm">
-            © {year} {storeCopyrightHolder}. Todos los derechos reservados.
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-stone-500 sm:text-sm">
+              © {year} {storeCopyrightHolder}. Todos los derechos reservados.
+            </p>
+            <p className="font-berea-nova text-[11px] font-semibold text-stone-700 sm:text-xs">
+              berea studio
+            </p>
+          </div>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm">
             <Link href="#" className={`${footerLinkClass} text-stone-500`}>
               Privacidad
