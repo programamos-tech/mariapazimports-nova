@@ -41,6 +41,13 @@ export async function middleware(request: NextRequest) {
       if (profile) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
+      const hasNoProfileError =
+        request.nextUrl.searchParams.get("error") === "no_profile";
+      if (!hasNoProfileError) {
+        return NextResponse.redirect(
+          new URL("/admin/login?error=no_profile", request.url),
+        );
+      }
     }
     return response;
   }
