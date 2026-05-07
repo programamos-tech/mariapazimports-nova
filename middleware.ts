@@ -44,8 +44,12 @@ export async function middleware(request: NextRequest) {
       const hasNoProfileError =
         request.nextUrl.searchParams.get("error") === "no_profile";
       if (!hasNoProfileError) {
+        const next = new URL("/admin/login", request.url);
+        next.searchParams.set("error", "no_profile");
+        next.searchParams.set("uid", user.id);
+        if (user.email) next.searchParams.set("email", user.email);
         return NextResponse.redirect(
-          new URL("/admin/login?error=no_profile", request.url),
+          next,
         );
       }
     }
@@ -62,8 +66,12 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
     if (!profile) {
+      const next = new URL("/admin/login", request.url);
+      next.searchParams.set("error", "no_profile");
+      next.searchParams.set("uid", user.id);
+      if (user.email) next.searchParams.set("email", user.email);
       return NextResponse.redirect(
-        new URL("/admin/login?error=no_profile", request.url),
+        next,
       );
     }
   }

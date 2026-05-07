@@ -175,8 +175,8 @@ export function StoreFooter() {
             <p className="text-xs text-stone-500 sm:text-sm">
               © {year} {storeCopyrightHolder}. Todos los derechos reservados.
             </p>
-            <p className="font-berea-nova text-[11px] font-semibold text-stone-700 sm:text-xs">
-              berea studio
+            <p className="font-berea-nova berea-signature text-[11px] font-semibold sm:text-xs">
+              By Berea Studio
             </p>
           </div>
           <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm">

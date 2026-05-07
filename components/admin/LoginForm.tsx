@@ -89,9 +89,11 @@ export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errParam = searchParams.get("error");
+  const uidParam = searchParams.get("uid");
+  const emailParam = searchParams.get("email");
   const [error, setError] = useState<string | null>(
     errParam === "no_profile"
-      ? "Tu usuario no tiene perfil de administrador. Creá la fila en public.profiles en Supabase."
+      ? `Tu usuario no tiene perfil de administrador. Creá la fila en public.profiles en Supabase.${uidParam ? ` UID detectado: ${uidParam}.` : ""}${emailParam ? ` Email detectado: ${emailParam}.` : ""}`
       : null,
   );
   const [loading, setLoading] = useState(false);

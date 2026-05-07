@@ -64,8 +64,8 @@ export default function AdminLoginPage() {
                 {" "}
                 ·{" "}
               </span>
-              <span className="font-berea-nova font-semibold text-zinc-700">
-                berea studio
+              <span className="font-berea-nova berea-signature font-semibold">
+                By Berea Studio
               </span>
             </p>
           </div>
