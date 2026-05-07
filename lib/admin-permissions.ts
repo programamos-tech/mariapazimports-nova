@@ -1,6 +1,17 @@
 /** Claves de permisos del panel (persistidas en `profiles.permissions`). */
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
 
+/** Rol laboral del colaborador (columna `profiles.job_role`). */
+export type CollaboratorJobRole = "owner" | "cashier" | "support";
+
+export function normalizeCollaboratorJobRole(
+  raw: string | null | undefined,
+): CollaboratorJobRole {
+  if (raw === "owner") return "owner";
+  if (raw === "support") return "support";
+  return "cashier";
+}
+
 export const PERMISSION_KEYS = [
   "inicio_reportes",
   "ventas_ver",
@@ -16,8 +27,6 @@ export const PERMISSION_KEYS = [
   "categorias_gestionar",
   "stock_actualizar",
   "stock_transferir",
-  "bodega_ubicaciones",
-  "merma_registrar",
   "roles_ver",
   "colaboradores_gestionar",
   "sucursales_ver",
@@ -81,8 +90,6 @@ export const PERMISSION_MODULES: PermissionModule[] = [
       { key: "categorias_gestionar", label: "Gestionar categorías" },
       { key: "stock_actualizar", label: "Actualizar stock" },
       { key: "stock_transferir", label: "Transferir stock" },
-      { key: "bodega_ubicaciones", label: "Ubicaciones de bodega" },
-      { key: "merma_registrar", label: "Registrar merma" },
     ],
   },
   {
@@ -128,10 +135,18 @@ export function defaultPermissionsCashier(): PermissionMap {
   return m;
 }
 
-export function permissionsFromRoleTemplate(
-  role: "owner" | "cashier",
-): PermissionMap {
-  return role === "owner" ? defaultPermissionsOwner() : defaultPermissionsCashier();
+/**
+ * Apoyo: refuerzo en depósito / datos sin operar caja como cajero principal.
+ * (Misma base que cajero; afiná permisos con los checkboxes.)
+ */
+export function defaultPermissionsSupport(): PermissionMap {
+  return defaultPermissionsCashier();
+}
+
+export function permissionsFromRoleTemplate(role: CollaboratorJobRole): PermissionMap {
+  if (role === "owner") return defaultPermissionsOwner();
+  if (role === "support") return defaultPermissionsSupport();
+  return defaultPermissionsCashier();
 }
 
 export function normalizePermissions(raw: unknown): PermissionMap {
@@ -147,7 +162,7 @@ export function normalizePermissions(raw: unknown): PermissionMap {
 
 export function mergePermissionsWithDefaults(
   stored: PermissionMap | null | undefined,
-  fallbackRole: "owner" | "cashier",
+  fallbackRole: CollaboratorJobRole,
 ): PermissionMap {
   const base = permissionsFromRoleTemplate(fallbackRole);
   const s = stored ?? {};

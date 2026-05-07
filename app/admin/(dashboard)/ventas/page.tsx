@@ -4,6 +4,7 @@ import {
   VentasFiltersBar,
   VentasRefreshButton,
 } from "@/components/admin/VentasFiltersBar";
+import { VentasPagination } from "@/components/admin/VentasPagination";
 import { VentasSalesTable, type VentaOrderRow } from "@/components/admin/VentasSalesTable";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -15,13 +16,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const VENTAS_PAGE_SIZE = 20;
+
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function FiltersFallback() {
   return (
-    <div className="h-24 animate-pulse border-b border-zinc-100 bg-zinc-50/50 px-5 md:px-6" />
+    <div className="h-24 animate-pulse rounded-t-xl border-b border-zinc-100 bg-zinc-50/50 px-4 sm:px-5" />
   );
 }
 
@@ -31,6 +34,9 @@ export default async function AdminVentasPage({ searchParams }: Props) {
   const q = qRaw.trim().toLowerCase();
   const status = (typeof sp.status === "string" ? sp.status : "all") as VentaEstadoFilter;
   const payment = (typeof sp.payment === "string" ? sp.payment : "all") as VentaPagoFilter;
+  const pageRaw = typeof sp.page === "string" ? Number.parseInt(sp.page, 10) : 1;
+  const pageRequested =
+    Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -73,34 +79,57 @@ export default async function AdminVentasPage({ searchParams }: Props) {
     });
   }
 
+  const totalFiltered = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / VENTAS_PAGE_SIZE));
+  const page = Math.min(pageRequested, totalPages);
+  const offset = (page - 1) * VENTAS_PAGE_SIZE;
+  const pageRows = rows.slice(offset, offset + VENTAS_PAGE_SIZE);
+
+  const buildPageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (qRaw.trim()) params.set("q", qRaw.trim());
+    if (status !== "all") params.set("status", status);
+    if (payment !== "all") params.set("payment", payment);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/admin/ventas?${qs}` : "/admin/ventas";
+  };
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
             Ventas
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
             Gestioná facturas de mostrador y pedidos con envío desde un solo lugar.
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:shrink-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <VentasRefreshButton />
           <Link
             href="/admin/ventas/nueva"
-            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 sm:min-w-0"
           >
             + Nueva factura
           </Link>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/5">
         <Suspense fallback={<FiltersFallback />}>
           <VentasFiltersBar initialQ={qRaw} />
         </Suspense>
-        <VentasSalesTable rows={rows} />
+        <VentasSalesTable rows={pageRows} />
+        <VentasPagination
+          page={page}
+          pageSize={VENTAS_PAGE_SIZE}
+          total={totalFiltered}
+          buildHref={buildPageHref}
+        />
       </div>
     </div>
   );
 }
+

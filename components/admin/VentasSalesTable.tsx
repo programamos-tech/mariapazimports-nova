@@ -3,7 +3,7 @@ import {
   formatVentaFecha,
   isVentaFisica,
   ventaEstadoBadge,
-  ventaFormaPagoLabel,
+  ventaFormaPagoBadge,
   ventaNumeroReferencia,
 } from "@/lib/ventas-sales";
 import { formatCop } from "@/lib/money";
@@ -70,87 +70,158 @@ function IconEye() {
 }
 
 const thClass =
-  "px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400 md:px-5";
+  "px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 sm:px-4 md:px-5";
 
 export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
   if (rows.length === 0) {
     return (
-      <div className="px-5 py-12 text-center text-sm text-zinc-500 md:px-6">
+      <div className="px-4 py-12 text-center text-sm text-zinc-500 sm:px-5">
         No hay ventas que coincidan con los filtros.
       </div>
     );
   }
 
+  const cardClass =
+    "flex h-full flex-col rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 transition hover:border-zinc-300 hover:shadow-md";
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
-        <thead>
-          <tr className="border-b border-zinc-100 bg-white">
-            <th className={thClass}>Factura / pedido</th>
-            <th className={thClass}>Fecha</th>
-            <th className={thClass}>Cliente</th>
-            <th className={thClass}>Pago</th>
-            <th className={thClass}>Estado</th>
-            <th className={`${thClass} text-right`}>Total</th>
-            <th className={`${thClass} text-center`}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => {
-            const fisica = isVentaFisica(row.wompi_reference);
-            const ref = ventaNumeroReferencia(row.id);
-            const estado = ventaEstadoBadge(row.status);
-            const pago = ventaFormaPagoLabel(row.wompi_reference);
-            const zebra = i % 2 === 1 ? "bg-zinc-50/70" : "bg-white";
-            return (
-              <tr key={row.id} className={`border-b border-zinc-100/90 ${zebra}`}>
-                <td className="px-4 py-4 md:px-5">
-                  <div className="flex items-center gap-2.5">
+    <>
+      {/* Con sidebar fijo, por debajo de xl el área útil suele ser estrecha y la tabla genera scroll horizontal: cuadrícula 1/2 cols. Tabla solo desde xl (1280px). */}
+      <ul
+        role="list"
+        className="grid grid-cols-1 gap-4 px-4 pb-4 pt-2 sm:grid-cols-2 sm:gap-4 sm:px-5 xl:hidden"
+      >
+        {rows.map((row) => {
+          const fisica = isVentaFisica(row.wompi_reference);
+          const ref = ventaNumeroReferencia(row.id);
+          const estado = ventaEstadoBadge(row.status);
+          const pago = ventaFormaPagoBadge(row.wompi_reference);
+          return (
+            <li key={row.id} className="min-w-0">
+              <article className={cardClass}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
                     {fisica ? (
                       <IconStorefront className="size-5 shrink-0 text-zinc-500" />
                     ) : (
                       <IconPackage className="size-5 shrink-0 text-amber-600" />
                     )}
-                    <span className="font-mono text-xs font-semibold tabular-nums text-zinc-900">
-                      {ref}
-                    </span>
+                    <div className="min-w-0">
+                      <p className="font-mono text-sm font-semibold tabular-nums text-zinc-900">
+                        {ref}
+                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">
+                        {row.customer_name}
+                      </p>
+                    </div>
                   </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-zinc-600 md:px-5">
-                  {formatVentaFecha(row.created_at)}
-                </td>
-                <td className="px-4 py-4 font-semibold text-zinc-900 md:px-5">
-                  {row.customer_name}
-                </td>
-                <td className="px-4 py-4 md:px-5">
-                  <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200/60">
-                    {pago}
+                  <Link
+                    href={`/admin/orders/${row.id}`}
+                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-800"
+                    aria-label={`Ver detalle del pedido ${ref}`}
+                  >
+                    <IconEye />
+                  </Link>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-[11px] text-zinc-600 sm:text-xs">
+                  <span className="whitespace-nowrap">
+                    {formatVentaFecha(row.created_at)}
                   </span>
-                </td>
-                <td className="px-4 py-4 md:px-5">
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${pago.className}`}
+                  >
+                    {pago.label}
+                  </span>
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${estado.className}`}
                   >
                     {estado.label}
                   </span>
-                </td>
-                <td className="px-4 py-4 text-right font-bold tabular-nums text-zinc-900 md:px-5">
+                </div>
+                <p className="mt-auto pt-4 text-lg font-bold tabular-nums text-zinc-900">
                   {formatCop(Number(row.total_cents ?? 0))}
-                </td>
-                <td className="px-4 py-4 text-center md:px-5">
-                  <Link
-                    href={`/admin/orders/${row.id}`}
-                    className="inline-flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800"
-                    aria-label={`Ver detalle del pedido ${ref}`}
-                  >
-                    <IconEye />
-                  </Link>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                </p>
+              </article>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* xl+: ancho suficiente para tabla sin scroll molesto junto al sidebar */}
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="w-full min-w-[700px] text-sm xl:min-w-0">
+          <thead>
+            <tr className="border-b border-zinc-100 bg-zinc-50/50">
+              <th className={thClass}>Factura / pedido</th>
+              <th className={`${thClass} w-[9rem]`}>Fecha</th>
+              <th className={thClass}>Cliente</th>
+              <th className={`${thClass} w-[7rem]`}>Pago</th>
+              <th className={`${thClass} w-[7rem]`}>Estado</th>
+              <th className={`${thClass} w-[7.5rem] text-right`}>Total</th>
+              <th className={`${thClass} w-[4rem] text-center`}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const fisica = isVentaFisica(row.wompi_reference);
+              const ref = ventaNumeroReferencia(row.id);
+              const estado = ventaEstadoBadge(row.status);
+              const pago = ventaFormaPagoBadge(row.wompi_reference);
+              return (
+                <tr
+                  key={row.id}
+                  className="border-b border-zinc-100 bg-white transition hover:bg-zinc-50/80"
+                >
+                  <td className="px-3 py-3.5 sm:px-4 md:px-5">
+                    <div className="flex items-center gap-2.5">
+                      {fisica ? (
+                        <IconStorefront className="size-5 shrink-0 text-zinc-500" />
+                      ) : (
+                        <IconPackage className="size-5 shrink-0 text-amber-600" />
+                      )}
+                      <span className="font-mono text-xs font-semibold tabular-nums text-zinc-900">
+                        {ref}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-zinc-600 sm:px-4 md:px-5">
+                    {formatVentaFecha(row.created_at)}
+                  </td>
+                  <td className="min-w-0 max-w-[10rem] truncate px-3 py-3.5 font-semibold text-zinc-900 sm:max-w-[12rem] sm:px-4 md:max-w-[16rem] md:px-5 xl:max-w-none">
+                    {row.customer_name}
+                  </td>
+                  <td className="px-3 py-3.5 sm:px-4 md:px-5">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${pago.className}`}
+                    >
+                      {pago.label}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3.5 sm:px-4 md:px-5">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${estado.className}`}
+                    >
+                      {estado.label}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3.5 text-right text-sm font-bold tabular-nums text-zinc-900 sm:px-4 md:px-5">
+                    {formatCop(Number(row.total_cents ?? 0))}
+                  </td>
+                  <td className="px-3 py-3.5 text-center sm:px-4 md:px-5">
+                    <Link
+                      href={`/admin/orders/${row.id}`}
+                      className="inline-flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800"
+                      aria-label={`Ver detalle del pedido ${ref}`}
+                    >
+                      <IconEye />
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

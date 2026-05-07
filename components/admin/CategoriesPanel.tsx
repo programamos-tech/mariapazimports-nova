@@ -1,6 +1,8 @@
 import { createCategory } from "@/app/actions/admin/categories";
 import type { AdminCategoryManageRow } from "@/lib/supabase/admin-products-list";
 import { CategoryDeleteButton } from "@/components/admin/CategoryDeleteButton";
+import { CategoryIconPicker } from "@/components/admin/CategoryIconPicker";
+import { getCategoryIconComponent, resolveCategoryIconKey } from "@/lib/category-icons";
 
 type Props = {
   list: AdminCategoryManageRow[];
@@ -17,7 +19,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
       <header className="space-y-1 border-b border-zinc-100 pb-5">
         <h1
           id="categories-modal-title"
-          className="text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl"
+          className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl"
         >
           Categorías
         </h1>
@@ -30,24 +32,27 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
           Nueva categoría
         </p>
-        <form action={createCategory} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <form action={createCategory} className="space-y-3">
           <input type="hidden" name="from" value="modal" />
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <span className="sr-only">Nombre</span>
-            <input
-              name="name"
-              type="text"
-              autoComplete="off"
-              placeholder="Nombre (ej. Audio, Hogar)"
-              className={fieldClass}
-            />
-          </label>
-          <button
-            type="submit"
-            className="inline-flex shrink-0 justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
-          >
-            Agregar
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span className="sr-only">Nombre</span>
+              <input
+                name="name"
+                type="text"
+                autoComplete="off"
+                placeholder="Nombre (ej. Audio, Hogar)"
+                className={fieldClass}
+              />
+            </label>
+            <button
+              type="submit"
+              className="inline-flex shrink-0 justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+            >
+              Agregar
+            </button>
+          </div>
+          <CategoryIconPicker />
         </form>
       </section>
 
@@ -89,10 +94,13 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
               <table className="w-full min-w-0 text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/90">
-                    <th className="px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-zinc-400">
+                    <th className="w-12 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                      Icono
+                    </th>
+                    <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-zinc-400">
                       Nombre
                     </th>
-                    <th className="w-24 px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wide text-zinc-400">
+                    <th className="w-24 px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">
                       Acciones
                     </th>
                   </tr>
@@ -100,11 +108,17 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
                 <tbody>
                   {list.map((c, index) => {
                     const zebra = index % 2 === 1 ? "bg-zinc-50/80" : "bg-white";
+                    const Icon = getCategoryIconComponent(resolveCategoryIconKey(c.icon_key));
                     return (
                       <tr
                         key={c.id}
                         className={`border-b border-zinc-100/90 ${zebra} transition hover:bg-zinc-100/60`}
                       >
+                        <td className="px-3 py-3 text-zinc-600">
+                          <span className="inline-flex size-8 items-center justify-center rounded-md bg-zinc-100">
+                            <Icon className="size-4" />
+                          </span>
+                        </td>
                         <td className="px-3 py-3 font-semibold text-zinc-900">{c.name}</td>
                         <td className="px-3 py-3 text-right">
                           <CategoryDeleteButton

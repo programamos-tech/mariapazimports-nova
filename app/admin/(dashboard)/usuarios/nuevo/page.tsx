@@ -14,7 +14,7 @@ function errorMessage(code: string | undefined): string | null {
   if (!code) return null;
   switch (code) {
     case "validation":
-      return "Revisá nombre, usuario, correo, contraseña (mín. 6) y sucursal.";
+      return "Revisá nombre, usuario, correo y contraseña (mín. 6).";
     case "duplicate_email":
       return "Ese correo ya está registrado en Auth.";
     case "duplicate_username":
@@ -34,14 +34,14 @@ export default async function AdminNuevoColaboradorPage({ searchParams }: Props)
   const banner = errorMessage(err);
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl">
       <NewCollaboratorHeader />
       {banner ? (
         <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
           {banner}
         </p>
       ) : null}
-      <NewCollaboraboratorForm mode="create" branchDefault={storeBrand} storeLabel={storeBrand} />
+      <NewCollaboraboratorForm mode="create" storeLabel={storeBrand} />
     </div>
   );
 }

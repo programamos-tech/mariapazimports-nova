@@ -1,5 +1,6 @@
 "use server";
 
+import { logAdminActivity } from "@/lib/admin-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -174,6 +175,26 @@ export async function createPosInvoiceAction(formData: FormData) {
     stockRollback.push({ id: pid, prev });
   }
 
+  const totalFormatted = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(totalCents / 100);
+
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "sale_created",
+    entityType: "order",
+    entityId: orderId,
+    summary: `Venta a ${String(customerRow.name ?? "Cliente")} · ${totalFormatted}`,
+    metadata: {
+      customer_id: customerId,
+      total_cents: totalCents,
+      payment_method: paymentMethod,
+      line_items: lines.length,
+    },
+  });
+  revalidatePath("/admin/actividades");
   revalidatePath("/admin/orders");
   revalidatePath("/admin/ventas");
   redirect(`/admin/orders/${orderId}`);

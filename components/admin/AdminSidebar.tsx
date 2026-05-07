@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Suspense, type SVGProps } from "react";
 import { signOutAdmin } from "@/app/actions/admin/auth";
-import { StoreBrandMark } from "@/components/store/StoreBrandMark";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
   const { children, className = "", ...rest } = props;
@@ -61,22 +61,6 @@ const navSections: {
           </Icon>
         ),
       },
-    ],
-  },
-  {
-    title: "Operación",
-    items: [
-      {
-        href: "/admin/orders",
-        label: "Pedidos",
-        icon: (
-          <Icon>
-            <path d="M9 5H5v14h14v-4" />
-            <path d="M9 5a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v3H9V5Z" />
-            <path d="m15 12 2 2 4-4" />
-          </Icon>
-        ),
-      },
       {
         href: "/admin/customers",
         label: "Clientes",
@@ -95,13 +79,27 @@ const navSections: {
     items: [
       {
         href: "/admin/usuarios",
-        label: "Usuarios y roles",
+        label: "Equipo",
         icon: (
           <Icon>
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
             <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </Icon>
+        ),
+      },
+      {
+        href: "/admin/actividades",
+        label: "Actividades",
+        icon: (
+          <Icon>
+            <path d="M4 11h16" />
+            <path d="M4 7h10" />
+            <path d="M4 15h8" />
+            <path d="M18 15h2" />
+            <path d="M18 11h2" />
+            <circle cx="18" cy="7" r="2" />
           </Icon>
         ),
       },
@@ -150,6 +148,7 @@ function isActive(pathname: string, href: string) {
 
 const PRODUCTS_HREF = "/admin/products";
 const VENTAS_HUB_HREF = "/admin/ventas";
+const CUSTOMERS_HREF = "/admin/customers";
 const USUARIOS_HREF = "/admin/usuarios";
 
 function navItemActive(
@@ -160,38 +159,85 @@ function navItemActive(
     return pathname === USUARIOS_HREF || pathname.startsWith(`${USUARIOS_HREF}/`);
   }
   if (href === VENTAS_HUB_HREF) {
-    return pathname === VENTAS_HUB_HREF;
+    return (
+      pathname === VENTAS_HUB_HREF ||
+      pathname.startsWith(`${VENTAS_HUB_HREF}/`)
+    );
   }
   if (href === PRODUCTS_HREF) {
     return pathname === PRODUCTS_HREF || pathname.startsWith(`${PRODUCTS_HREF}/`);
   }
+  if (href === CUSTOMERS_HREF) {
+    return pathname === CUSTOMERS_HREF || pathname.startsWith(`${CUSTOMERS_HREF}/`);
+  }
   return isActive(pathname, href);
 }
 
-function AdminSidebarInner({ userEmail }: { userEmail: string }) {
+function SidebarLogo() {
+  return (
+    <Link href="/admin" className="inline-block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-zinc-400">
+      <Image
+        src="/logobackoficce.png"
+        alt="María Paz Imports"
+        width={280}
+        height={120}
+        className="h-auto w-full max-w-[220px] object-contain"
+        priority
+      />
+    </Link>
+  );
+}
+
+function AdminSidebarInner({
+  canViewActivities,
+  mobileOpen,
+  onNavigate,
+}: {
+  canViewActivities: boolean;
+  mobileOpen: boolean;
+  onNavigate: () => void;
+}) {
   const pathname = usePathname();
+
+  const navSectionsFiltered = canViewActivities
+    ? navSections
+    : navSections.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => item.href !== "/admin/actividades"),
+      }));
 
   const linkClass = (href: string, active: boolean) =>
     [
       "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
       active
-        ? "bg-zinc-800 text-white shadow-sm"
-        : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100",
+        ? "bg-zinc-900 text-white shadow-sm"
+        : "text-zinc-700 hover:bg-black/[0.04] hover:text-zinc-900",
     ].join(" ");
 
+  const drawerTranslate =
+    mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0";
+
+  /** Drawer cerrado en móvil: sin foco ni clics; en lg siempre interactuable. */
+  const drawerHiddenMobile =
+    !mobileOpen
+      ? "max-lg:invisible max-lg:pointer-events-none lg:!visible lg:!pointer-events-auto"
+      : "";
+
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-zinc-800/90 bg-zinc-950 md:w-64 md:border-b-0 md:border-r md:border-zinc-800/90">
-      <div className="border-b border-zinc-800/80 px-4 py-5">
-        <StoreBrandMark href="/admin" variant="admin-sidebar" />
-        <p
-          className="mt-4 truncate text-xs text-zinc-500"
-          title={userEmail || undefined}
-        >
-          {userEmail || "Sesión admin"}
+    <aside
+      className={`flex shrink-0 flex-col bg-[var(--admin-sidebar-bg)] print:hidden fixed inset-y-0 left-0 z-[50] w-[min(88vw,288px)] max-w-[288px] border-r border-stone-200/80 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out motion-reduce:transition-none lg:w-64 lg:max-w-none lg:border-b-0 lg:shadow-none ${drawerTranslate} ${drawerHiddenMobile}`}
+    >
+      <div className="flex flex-col items-center border-b border-stone-200/80 px-4 py-5 text-center">
+        <SidebarLogo />
+        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
+          BACKOFFICE
         </p>
       </div>
-      <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-5">
-        {navSections.map((section) => (
+      <nav
+        id="admin-sidebar-nav"
+        className="flex-1 space-y-7 overflow-y-auto overscroll-contain px-3 py-5"
+      >
+        {navSectionsFiltered.map((section) => (
           <div key={section.title}>
             <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
               {section.title}
@@ -204,6 +250,7 @@ function AdminSidebarInner({ userEmail }: { userEmail: string }) {
                     <Link
                       href={item.href}
                       className={linkClass(item.href, active)}
+                      onClick={() => onNavigate()}
                     >
                       {item.icon}
                       {item.label}
@@ -215,11 +262,11 @@ function AdminSidebarInner({ userEmail }: { userEmail: string }) {
           </div>
         ))}
       </nav>
-      <div className="border-t border-zinc-800/80 p-3">
+      <div className="border-t border-stone-200/80 p-3">
         <form action={signOutAdmin}>
           <button
             type="submit"
-            className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-red-400"
+            className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-zinc-700 transition hover:bg-black/[0.04] hover:text-red-600"
           >
             Salir
           </button>
@@ -229,30 +276,39 @@ function AdminSidebarInner({ userEmail }: { userEmail: string }) {
   );
 }
 
-function AdminSidebarFallback({ userEmail }: { userEmail: string }) {
+function AdminSidebarFallback() {
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-zinc-800/90 bg-zinc-950 md:w-64 md:border-b-0 md:border-r md:border-zinc-800/90">
-      <div className="border-b border-zinc-800/80 px-4 py-5">
-        <StoreBrandMark href="/admin" variant="admin-sidebar" />
-        <p
-          className="mt-4 truncate text-xs text-zinc-500"
-          title={userEmail || undefined}
-        >
-          {userEmail || "Sesión admin"}
+    <aside className="fixed inset-y-0 left-0 z-[45] hidden w-64 flex-col border-r border-stone-200/80 bg-[var(--admin-sidebar-bg)] print:hidden lg:flex lg:flex-col">
+      <div className="flex flex-col items-center border-b border-stone-200/80 px-4 py-5 text-center">
+        <SidebarLogo />
+        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
+          BACKOFFICE
         </p>
       </div>
       <div className="flex-1 px-3 py-5" aria-busy aria-label="Cargando menú" />
-      <div className="border-t border-zinc-800/80 p-3">
-        <div className="h-10 rounded-xl bg-zinc-900/50" />
+      <div className="border-t border-stone-200/80 p-3">
+        <div className="h-10 rounded-xl bg-stone-200/60" />
       </div>
     </aside>
   );
 }
 
-export function AdminSidebar({ userEmail }: { userEmail: string }) {
+export function AdminSidebar({
+  canViewActivities = true,
+  mobileOpen,
+  onNavigate,
+}: {
+  canViewActivities?: boolean;
+  mobileOpen: boolean;
+  onNavigate: () => void;
+}) {
   return (
-    <Suspense fallback={<AdminSidebarFallback userEmail={userEmail} />}>
-      <AdminSidebarInner userEmail={userEmail} />
+    <Suspense fallback={<AdminSidebarFallback />}>
+      <AdminSidebarInner
+        canViewActivities={canViewActivities}
+        mobileOpen={mobileOpen}
+        onNavigate={onNavigate}
+      />
     </Suspense>
   );
 }

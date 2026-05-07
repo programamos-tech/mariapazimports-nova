@@ -79,7 +79,7 @@ export function EditProductForm({
 
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
             <h2 className={sectionTitle}>Información básica</h2>
             <div className="mt-5 space-y-4">
               <div>
@@ -126,7 +126,7 @@ export function EditProductForm({
                 <span className={labelClass}>Imagen (catálogo en línea)</span>
                 <div className="flex flex-wrap items-start gap-4">
                   {currentImageUrl ? (
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100">
+                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60">
                       <Image
                         src={currentImageUrl}
                         alt=""
@@ -142,7 +142,7 @@ export function EditProductForm({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <label className="inline-flex cursor-pointer">
-                        <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100">
+                        <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50">
                           Seleccionar archivo
                         </span>
                         <input
@@ -213,7 +213,7 @@ export function EditProductForm({
                   value="on"
                   checked={isPublished}
                   onChange={(e) => setIsPublished(e.target.checked)}
-                  className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-300"
+                  className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
                 />
                 Publicado en la tienda
               </label>
@@ -222,7 +222,7 @@ export function EditProductForm({
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
             <h2 className={sectionTitle}>Información financiera</h2>
             <div className="mt-5 space-y-4">
               <div>
@@ -253,22 +253,22 @@ export function EditProductForm({
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
             <h2 className={sectionTitle}>Resumen del producto</h2>
-            <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+            <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-4 text-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                 Producto
               </p>
               <dl className="mt-3 space-y-2 text-zinc-700">
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Nombre</dt>
-                  <dd className="max-w-[60%] truncate text-right font-medium text-zinc-900">
+                  <dd className="max-w-[60%] truncate text-right text-zinc-900">
                     {name.trim() || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Referencia</dt>
-                  <dd className="font-mono text-xs font-medium text-zinc-900">
+                  <dd className="font-mono text-xs text-zinc-900">
                     {reference.trim() || "—"}
                   </dd>
                 </div>
@@ -281,21 +281,21 @@ export function EditProductForm({
               </dl>
             </div>
 
-            <div className="mt-5 border-t border-zinc-100 pt-5">
+            <div className="mt-5 border-t border-zinc-200/70 pt-5">
               <p className="text-xs font-medium text-zinc-500">Precio de venta</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900">
+              <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900">
                 {formatCop(priceCents)}
               </p>
             </div>
 
-            <ul className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
+            <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm">
               <li className="flex justify-between text-zinc-600">
                 <span>Costo</span>
-                <span className="tabular-nums font-medium text-zinc-900">
+                <span className="tabular-nums text-zinc-900">
                   {formatCop(costCents)}
                 </span>
               </li>
-              <li className="flex justify-between font-semibold text-zinc-900">
+              <li className="flex justify-between font-medium text-zinc-900">
                 <span>Precio venta</span>
                 <span className="tabular-nums">{formatCop(priceCents)}</span>
               </li>
@@ -312,7 +312,7 @@ export function EditProductForm({
 
             <button
               type="submit"
-              className="mt-4 w-full rounded-lg bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+              className="mt-4 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
               Guardar cambios
             </button>

@@ -2,6 +2,7 @@
 
 import type { SVGProps } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { formatCop } from "@/lib/money";
@@ -52,6 +53,7 @@ export function ProductDetailView({
   stockQuantity,
   imageUrl,
 }: Props) {
+  const router = useRouter();
   const [thumbIdx, setThumbIdx] = useState(0);
   const [colorIdx, setColorIdx] = useState(0);
   const [qty, setQty] = useState(1);
@@ -228,7 +230,10 @@ export function ProductDetailView({
               </button>
               <button
                 type="submit"
-                formAction={addToCartFromForm}
+                formAction={async (formData) => {
+                  await addToCartFromForm(formData);
+                  router.refresh();
+                }}
                 className="flex-1 rounded-full border-2 border-[#3d5240] bg-white px-6 py-3.5 text-center text-sm font-semibold text-[#3d5240] shadow-sm transition hover:bg-[#f4f7f3]"
               >
                 Agregar al carrito

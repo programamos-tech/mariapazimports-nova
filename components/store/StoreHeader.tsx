@@ -1,9 +1,14 @@
 import type { SVGProps } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { storeBrand, storeSupportPhone } from "@/lib/brand";
+import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
+import { storeBrand } from "@/lib/brand";
+import { StoreAnnouncementBar } from "@/components/store/StoreAnnouncementBar";
+import { StoreFavoritesNavLink } from "@/components/store/StoreFavoritesNavLink";
 import { StoreNavDropdowns } from "@/components/store/StoreNavDropdowns";
 import { StoreSearch } from "@/components/store/StoreSearch";
+import { fetchStoreCategoriesWithCounts } from "@/lib/fetch-store-categories";
 
 function IconUser(props: SVGProps<SVGSVGElement>) {
   return (
@@ -27,61 +32,63 @@ function IconCart(props: SVGProps<SVGSVGElement>) {
 
 export async function StoreHeader() {
   const supabase = await createSupabaseServerClient();
-  const { count } = await supabase
-    .from("products")
-    .select("*", { count: "exact", head: true })
-    .eq("is_published", true);
-
-  const productCount = count ?? 0;
+  const menuCategories = await fetchStoreCategoriesWithCounts(supabase);
+  const cartItemCount = await getStorefrontCartItemCount();
 
   return (
-    <header className="border-b border-stone-200/80 bg-white">
-      {/* Top utility bar */}
-      <div className="bg-[#e8e6e1] text-stone-600">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs sm:text-sm">
-          <span className="font-medium text-stone-700">{storeSupportPhone}</span>
-          <p className="order-3 w-full text-center sm:order-none sm:w-auto">
-            <span className="text-stone-700">Hasta 50% en seleccionados</span>{" "}
-            <Link href="/products" className="font-semibold text-[#6b7f6a] underline decoration-[#6b7f6a]/40 underline-offset-2 hover:text-[#556654]">
-              Comprar ahora
-            </Link>
-          </p>
-          <div className="flex items-center gap-3">
-            <span className="rounded-md bg-white/70 px-2 py-0.5 text-stone-600">ES</span>
-            <span className="rounded-md bg-white/70 px-2 py-0.5 text-stone-600">CO</span>
-          </div>
-        </div>
-      </div>
+    <header className="border-b border-stone-200/80">
+      <StoreAnnouncementBar />
 
-      {/* Main nav */}
-      <div className="mx-auto max-w-7xl px-4 py-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center gap-4 lg:gap-8">
-            <Link
-              href="/"
-              className="shrink-0 text-lg font-semibold tracking-tight text-stone-900 sm:text-xl"
-            >
-              {storeBrand}
-            </Link>
-            <StoreNavDropdowns productCount={productCount} />
-          </div>
+      {/* Fila principal del navbar: mismo fondo que el footer y la pantalla de carga */}
+      <div className="bg-[var(--store-chrome-bg)]">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
+            <div className="flex min-w-0 flex-wrap items-center gap-4 lg:shrink-0 lg:gap-8">
+              <Link
+                href="/"
+                className="group shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#6b7f6a] focus-visible:ring-offset-2"
+              >
+                <Image
+                  src="/logobackoficce.png"
+                  alt={storeBrand}
+                  width={400}
+                  height={171}
+                  className="h-12 w-auto max-w-[220px] object-contain object-left transition-opacity group-hover:opacity-90 sm:h-14 sm:max-w-[280px] lg:h-16 lg:max-w-[340px]"
+                  priority
+                />
+              </Link>
+              <StoreNavDropdowns menuCategories={menuCategories} />
+            </div>
 
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-3 lg:max-w-xl">
-            <StoreSearch />
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
-            >
-              <IconUser className="size-5" />
-              <span className="hidden sm:inline">Cuenta</span>
-            </Link>
-            <Link
-              href="/cart"
-              className="flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
-            >
-              <IconCart className="size-5" />
-              <span className="hidden sm:inline">Carrito</span>
-            </Link>
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <StoreSearch />
+              <div className="flex shrink-0 flex-wrap items-center gap-0.5 sm:gap-1">
+                <Link
+                  href="/admin"
+                  aria-label="Cuenta"
+                  className="flex size-10 items-center justify-center rounded-lg text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
+                >
+                  <IconUser className="size-5" />
+                </Link>
+                <StoreFavoritesNavLink />
+                <Link
+                  href="/checkout"
+                  aria-label={
+                    cartItemCount > 0
+                      ? `Carrito, ${cartItemCount} productos. Ir a finalizar compra`
+                      : "Carrito. Ir a finalizar compra"
+                  }
+                  className="relative flex size-10 items-center justify-center rounded-lg text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
+                >
+                  <IconCart className="size-5" />
+                  {cartItemCount > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#3d5240] px-1 text-[10px] font-bold leading-none text-white">
+                      {cartItemCount > 99 ? "99+" : cartItemCount}
+                    </span>
+                  ) : null}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>

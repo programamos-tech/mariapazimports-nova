@@ -2,8 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { addToCartFromForm } from "@/app/actions/cart";
+import { Heart, Minus, Plus, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import {
+  addToCartFromForm,
+  setLineQuantity,
+} from "@/app/actions/cart";
+import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { formatCop } from "@/lib/money";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
 import {
@@ -20,23 +26,35 @@ type Product = {
   stock_quantity: number;
 };
 
-function IconHeart({ filled }: { filled: boolean }) {
+function RatingStars() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth={2}
-      className="size-4"
-      aria-hidden
-    >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
+    <span className="flex items-center gap-0.5 text-stone-300" aria-hidden>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          className="size-3 shrink-0 fill-current"
+          strokeWidth={0}
+        />
+      ))}
+    </span>
   );
 }
 
-export function ProductListingCard({ product }: { product: Product }) {
-  const [favorite, setFavorite] = useState(false);
+export function ProductListingCard({
+  product,
+  cartQuantity = 0,
+  onCartChange,
+}: {
+  product: Product;
+  /** Unidades en el carrito (tienda efectiva). */
+  cartQuantity?: number;
+  /** Solo cliente: p. ej. favoritos, para refrescar cantidades sin RSC. */
+  onCartChange?: () => void;
+}) {
+  const router = useRouter();
+  const [cartPending, startCartTransition] = useTransition();
+  const { has, toggle, ready } = useStoreFavorites();
+  const favorite = ready && has(product.id);
   const img = storagePublicObjectUrl(product.image_path);
   const reviews = pseudoReviewCount(product.id);
   const outOfStock = product.stock_quantity <= 0;
@@ -44,19 +62,27 @@ export function ProductListingCard({ product }: { product: Product }) {
     product.description?.trim() ||
     "Selección curada · calidad para tu día a día.";
 
+  const afterCartMutation = () => {
+    router.refresh();
+    onCartChange?.();
+  };
+
+  const inCart = cartQuantity > 0;
+  const maxQty = Math.max(0, Math.floor(product.stock_quantity));
+
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200/55">
-      <div className="relative aspect-square w-full shrink-0 bg-stone-100">
+    <article className="group/card flex h-full flex-col overflow-hidden rounded-xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[box-shadow,border-color] duration-200 hover:border-stone-300 hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]">
+      <div className="relative aspect-square w-full shrink-0 bg-[#faf8f5]">
         <Link
           href={`/products/${product.id}`}
-          className="absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6b7f6a]"
+          className="absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6b7f6a]/80"
         >
           {img ? (
             <Image
               src={img}
-              alt=""
+              alt={product.name}
               fill
-              className="object-cover"
+              className="object-cover transition duration-300 group-hover/card:scale-[1.02]"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
             />
@@ -68,48 +94,111 @@ export function ProductListingCard({ product }: { product: Product }) {
         </Link>
         <button
           type="button"
-          onClick={() => setFavorite((v) => !v)}
-          className={`absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 shadow-sm ring-1 ring-stone-200/80 backdrop-blur-sm transition hover:bg-white ${favorite ? "text-rose-500" : "text-stone-400"}`}
+          onClick={(e) => {
+            e.preventDefault();
+            toggle(product.id);
+          }}
+          className={
+            favorite
+              ? "absolute right-2.5 top-2.5 z-10 flex size-9 items-center justify-center rounded-full bg-white text-rose-500 shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-rose-200/60 transition hover:bg-white hover:text-rose-600"
+              : "absolute right-2.5 top-2.5 z-10 flex size-9 items-center justify-center rounded-full bg-white text-stone-500 shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-stone-200/90 transition hover:bg-white hover:text-stone-700"
+          }
           aria-pressed={favorite}
           aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
         >
-          <IconHeart filled={favorite} />
+          <Heart
+            className="size-4"
+            strokeWidth={2}
+            fill={favorite ? "currentColor" : "none"}
+          />
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-1 px-4 pb-4 pt-3">
-        <div className="flex items-start justify-between gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 px-4 pb-5 pt-4">
+        <div className="flex items-start justify-between gap-3">
           <Link
             href={`/products/${product.id}`}
-            className="line-clamp-2 text-sm font-bold leading-snug text-stone-900 hover:text-[#556654] sm:text-base"
+            className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-tight text-stone-900 transition group-hover/card:text-[#556654] sm:text-[15px]"
           >
-            {product.name}
+            <span className="line-clamp-2">{product.name}</span>
           </Link>
-          <span className="shrink-0 text-sm font-bold text-stone-900 sm:text-base">
+          <span className="shrink-0 pt-0.5 text-sm font-medium tabular-nums text-[#4a5c49] sm:text-[15px]">
             {formatCop(product.price_cents)}
           </span>
         </div>
 
-        <p className="line-clamp-1 text-xs text-stone-500">{blurb}</p>
+        <p className="line-clamp-2 text-xs leading-relaxed text-stone-500 sm:text-[13px]">
+          {blurb}
+        </p>
 
-        <p className="mt-1 flex items-center gap-1.5">
-          <span className="text-[11px] leading-none tracking-tight text-[#6b7f6a]" aria-hidden>
-            ★★★★★
+        <p className="flex items-center gap-2">
+          <RatingStars />
+          <span className="text-[11px] tabular-nums text-stone-400 sm:text-xs">
+            ({reviews})
           </span>
-          <span className="text-[11px] text-stone-400">({reviews})</span>
         </p>
 
         {outOfStock ? (
-          <p className="mt-4 text-center text-xs font-medium text-red-600">
+          <p className="mt-2 text-center text-xs font-medium text-red-600/90">
             Sin stock
           </p>
+        ) : inCart ? (
+          <div
+            className="mt-auto flex w-full items-center gap-0.5 rounded-full border-2 border-[#6b7f6a] bg-white p-0.5 shadow-sm"
+            role="group"
+            aria-label="Cantidad en el carrito"
+          >
+            <button
+              type="button"
+              disabled={cartPending}
+              onClick={() =>
+                startCartTransition(() => {
+                  void setLineQuantity(product.id, cartQuantity - 1).then(
+                    afterCartMutation,
+                  );
+                })
+              }
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#556654] transition hover:bg-[#fffbf6] disabled:opacity-40"
+              aria-label={
+                cartQuantity <= 1
+                  ? "Quitar del carrito"
+                  : "Restar una unidad"
+              }
+            >
+              <Minus className="size-4" strokeWidth={2} aria-hidden />
+            </button>
+            <span className="min-w-0 flex-1 text-center text-sm font-semibold tabular-nums text-[#3d5240]">
+              {cartQuantity}
+            </span>
+            <button
+              type="button"
+              disabled={cartPending || cartQuantity >= maxQty}
+              onClick={() =>
+                startCartTransition(() => {
+                  void setLineQuantity(product.id, cartQuantity + 1).then(
+                    afterCartMutation,
+                  );
+                })
+              }
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#556654] transition hover:bg-[#fffbf6] disabled:opacity-40"
+              aria-label="Sumar una unidad"
+            >
+              <Plus className="size-4" strokeWidth={2} aria-hidden />
+            </button>
+          </div>
         ) : (
-          <form action={addToCartFromForm} className="mt-auto pt-4">
+          <form
+            className="mt-auto pt-2"
+            action={async (formData) => {
+              await addToCartFromForm(formData);
+              afterCartMutation();
+            }}
+          >
             <input type="hidden" name="productId" value={product.id} />
             <input type="hidden" name="quantity" value="1" />
             <button
               type="submit"
-              className="w-full rounded-full border-2 border-stone-900 bg-white py-2.5 text-sm font-semibold text-stone-900 shadow-sm transition hover:bg-stone-50"
+              className="w-full rounded-full border-2 border-[#6b7f6a] bg-white py-2.5 text-sm font-semibold text-[#556654] shadow-sm transition hover:bg-[#fffbf6] hover:border-[#5a6e59]"
             >
               Agregar al carrito
             </button>

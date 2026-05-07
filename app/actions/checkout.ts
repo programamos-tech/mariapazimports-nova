@@ -1,9 +1,14 @@
 "use server";
 
-import { getCart, setCart } from "@/lib/cart";
+import { getCart, normalizeCartForCheckout, setCart } from "@/lib/cart";
 import { storeBrand } from "@/lib/brand";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { createPaymentLink, getWompiEnv } from "@/lib/wompi";
+import {
+  createPaymentLink,
+  getWompiEnv,
+  shouldSkipWompiPayment,
+} from "@/lib/wompi";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 function siteUrl() {
@@ -45,18 +50,30 @@ export async function startCheckout(formData: FormData) {
   }
 
   const supabase = createSupabaseServiceClient();
-  const ids = cart.map((l) => l.productId);
+  const ids = [...new Set(cart.map((l) => l.productId))];
   const { data: products, error: pErr } = await supabase
     .from("products")
     .select("id,name,price_cents,currency,stock_quantity,is_published")
-    .in("id", ids)
-    .eq("is_published", true);
+    .in("id", ids);
 
-  if (pErr || !products?.length) {
+  if (pErr) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[checkout] products query:", pErr.message);
+    }
     redirect("/checkout?error=products");
   }
 
   const byId = new Map(products.map((p) => [p.id, p]));
+  const normalized = normalizeCartForCheckout(cart, byId);
+
+  if (JSON.stringify(cart) !== JSON.stringify(normalized)) {
+    await setCart(normalized);
+  }
+
+  if (!normalized.length) {
+    redirect("/cart?error=empty");
+  }
+
   let total = 0;
   const lines: {
     product_id: string;
@@ -65,11 +82,10 @@ export async function startCheckout(formData: FormData) {
     product_name_snapshot: string;
   }[] = [];
 
-  for (const line of cart) {
+  for (const line of normalized) {
     const p = byId.get(line.productId);
-    if (!p) redirect("/checkout?error=products");
-    if (p.stock_quantity < line.quantity) {
-      redirect(`/cart?error=stock&product=${p.name}`);
+    if (!p) {
+      redirect("/cart?error=removed");
     }
     const sub = p.price_cents * line.quantity;
     total += sub;
@@ -81,7 +97,8 @@ export async function startCheckout(formData: FormData) {
     });
   }
 
-  const currency = products[0]?.currency ?? "COP";
+  const first = byId.get(normalized[0]!.productId);
+  const currency = first?.currency ?? "COP";
 
   const emailLc = customerEmail.toLowerCase();
 
@@ -164,13 +181,37 @@ export async function startCheckout(formData: FormData) {
     redirect("/checkout?error=items");
   }
 
-  const redirectUrl = `${siteUrl()}/checkout/return?order_id=${orderId}`;
+  revalidatePath("/admin/ventas");
+  revalidatePath("/admin/orders");
+
+  const returnUrl = `${siteUrl()}/checkout/return?order_id=${orderId}`;
+
+  if (shouldSkipWompiPayment()) {
+    await supabase
+      .from("orders")
+      .update({
+        wompi_reference: orderId,
+      })
+      .eq("id", orderId);
+
+    await setCart([]);
+
+    if (process.env.NODE_ENV === "development") {
+      console.info(
+        "[checkout] Wompi omitido (sin clave en dev o CHECKOUT_SKIP_WOMPI). Pedido:",
+        orderId,
+      );
+    }
+
+    redirect(`${returnUrl}&test_checkout=1`);
+  }
+
   const link = await createPaymentLink({
     name: `${storeBrand} · Pedido`,
     description: `Pedido ${orderId}`,
     amountInCents: total,
     currency,
-    redirectUrl,
+    redirectUrl: returnUrl,
     sku: orderId,
     singleUse: true,
   });

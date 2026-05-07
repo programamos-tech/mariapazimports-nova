@@ -57,10 +57,12 @@ export function AdminTransferStockForm({
     ? "Local → Bodega · movés desde el mostrador hacia bodega"
     : "Bodega → Local · movés desde bodega al mostrador";
 
-  const toggleWrap = "flex rounded-xl border border-zinc-200 bg-zinc-100 p-1 gap-1";
-  const toggleActive = "flex-1 rounded-lg bg-zinc-900 px-3 py-3 text-center text-sm font-semibold text-white shadow-sm";
+  const toggleWrap =
+    "flex gap-1 rounded-xl border border-zinc-200/90 bg-zinc-100/70 p-1";
+  const toggleActive =
+    "flex-1 rounded-lg bg-zinc-900 px-3 py-3 text-center text-sm font-medium text-white";
   const toggleIdle =
-    "flex-1 rounded-lg px-3 py-3 text-center text-sm font-semibold text-zinc-700 transition hover:bg-white/70";
+    "flex-1 rounded-lg px-3 py-3 text-center text-sm font-medium text-zinc-700 transition hover:bg-white/60";
 
   return (
     <form
@@ -71,24 +73,24 @@ export function AdminTransferStockForm({
       <input type="hidden" name="return_to" value={returnTo} />
 
       <div className="space-y-8">
-        <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8">
           <div>
             <span className={labelClass}>Producto</span>
-            <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2.5 text-sm font-medium text-zinc-900">
+            <div className="mt-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2.5 text-sm text-zinc-900">
               {productName}
             </div>
           </div>
 
           <div className="mt-8">
             <span className={labelClass}>Stock actual</span>
-            <div className="mt-2 grid grid-cols-2 gap-3 rounded-xl border border-zinc-200 bg-zinc-50/90 p-4">
+            <div className="mt-2 grid grid-cols-2 gap-3 rounded-xl border border-zinc-200/90 bg-white/60 p-4">
               <div>
-                <p className="text-xs font-semibold text-zinc-500">Local</p>
-                <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{fmtQty(stockLocal)}</p>
+                <p className="text-xs font-medium text-zinc-500">Local</p>
+                <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900">{fmtQty(stockLocal)}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold text-zinc-500">Bodega</p>
-                <p className="mt-1 text-lg font-bold tabular-nums text-zinc-900">{fmtQty(stockWarehouse)}</p>
+                <p className="text-xs font-medium text-zinc-500">Bodega</p>
+                <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900">{fmtQty(stockWarehouse)}</p>
               </div>
             </div>
           </div>
@@ -113,7 +115,7 @@ export function AdminTransferStockForm({
             </div>
             <p className="mt-2 text-xs text-zinc-500">
               Disponible para mover desde el origen:{" "}
-              <span className="font-semibold text-zinc-700">{fmtQty(available)} u.</span>
+              <span className="font-medium text-zinc-700">{fmtQty(available)} u.</span>
             </p>
           </div>
 
@@ -133,7 +135,7 @@ export function AdminTransferStockForm({
 
           <button
             type="submit"
-            className="mt-10 w-full rounded-xl bg-zinc-200 py-3.5 text-sm font-semibold text-zinc-900 shadow-sm ring-1 ring-zinc-300/80 transition hover:bg-zinc-300/90"
+            className="mt-10 w-full rounded-xl border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800"
           >
             Transferir
           </button>
@@ -141,17 +143,17 @@ export function AdminTransferStockForm({
       </div>
 
       <aside className="space-y-6">
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/50 p-6">
+        <div className="rounded-2xl border border-dashed border-zinc-200/80 bg-white p-6">
           <h2 className={sectionTitle}>Operación</h2>
-          <p className="mt-4 text-sm font-medium text-zinc-900">{productName}</p>
+          <p className="mt-4 text-sm text-zinc-900">{productName}</p>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600">{directionSummary}</p>
           {quantity > 0 && quantity <= available ? (
-            <div className="mt-5 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm">
-              <p className="font-semibold text-zinc-800">Después del traslado</p>
+            <div className="mt-5 rounded-xl border border-zinc-200/90 bg-white/60 px-4 py-3 text-sm">
+              <p className="font-medium text-zinc-800">Después del traslado</p>
               <p className="mt-2 tabular-nums text-zinc-700">
-                Local: <span className="font-semibold">{fmtQty(afterLocal)}</span>
+                Local: <span className="font-medium">{fmtQty(afterLocal)}</span>
                 <span className="mx-2 text-zinc-300">·</span>
-                Bodega: <span className="font-semibold">{fmtQty(afterWh)}</span>
+                Bodega: <span className="font-medium">{fmtQty(afterWh)}</span>
               </p>
             </div>
           ) : (

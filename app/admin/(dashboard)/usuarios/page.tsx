@@ -25,6 +25,9 @@ function jobDescription(jobRole: string | null | undefined): string {
   if (jobRole === "owner") {
     return "Acceso completo a todas las funcionalidades del sistema.";
   }
+  if (jobRole === "support") {
+    return "Apoyo operativo; los permisos concretos los definís en su ficha.";
+  }
   return "Registra ventas, pedidos y realiza cierres de caja.";
 }
 
@@ -32,11 +35,15 @@ function jobBadgeClass(jobRole: string | null | undefined): string {
   if (jobRole === "owner") {
     return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100";
   }
+  if (jobRole === "support") {
+    return "bg-violet-50 text-violet-800 ring-1 ring-violet-100";
+  }
   return "bg-sky-50 text-sky-800 ring-1 ring-sky-100";
 }
 
 function jobLabel(jobRole: string | null | undefined): string {
   if (jobRole === "owner") return "Dueño";
+  if (jobRole === "support") return "Apoyo";
   return "Cajero";
 }
 
@@ -76,8 +83,8 @@ export default async function AdminUsuariosRolesPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
-            Usuarios y roles
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+            Equipo
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
             Gestioná colaboradores, roles y permisos en {storeBrand}.
@@ -125,7 +132,7 @@ export default async function AdminUsuariosRolesPage() {
                     label={`Avatar de ${title}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-zinc-900">{title}</p>
+                    <p className="truncate font-semibold text-zinc-900">{title}</p>
                     <p className="truncate text-sm text-zinc-500">{email}</p>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getCart } from "@/lib/cart";
+import { getStorefrontCartLines } from "@/lib/storefront-cart";
 import { formatCop } from "@/lib/money";
 import {
   shouldUnoptimizeStorageImageUrl,
@@ -18,9 +18,9 @@ export default async function CartPage({
 }) {
   const sp = await searchParams;
   const err = typeof sp.error === "string" ? sp.error : undefined;
-  const cart = await getCart();
+  const cart = await getStorefrontCartLines();
   const supabase = await createSupabaseServerClient();
-  const ids = cart.map((l) => l.productId);
+  const ids = [...new Set(cart.map((l) => l.productId))];
   const { data: products } =
     ids.length === 0
       ? { data: [] as { id: string; name: string; price_cents: number; image_path: string | null }[] }
@@ -58,6 +58,11 @@ export default async function CartPage({
       {err === "stock" ? (
         <p className="rounded-xl bg-[#f5edd6] px-3 py-2 text-sm text-amber-950">
           No hay stock suficiente para un producto del carrito.
+        </p>
+      ) : null}
+      {err === "removed" ? (
+        <p className="rounded-xl bg-[#f5edd6] px-3 py-2 text-sm text-amber-950">
+          Un producto del carrito ya no existe en la tienda. Se actualizó tu pedido.
         </p>
       ) : null}
       {rows.length === 0 ? (

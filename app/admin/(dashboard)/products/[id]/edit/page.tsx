@@ -77,7 +77,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
             <span className="mx-1.5 text-zinc-300">/</span>
             <span className="text-zinc-700">Editar</span>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Editar producto
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
@@ -93,7 +93,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
         </div>
         <Link
           href="/admin/products"
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
           aria-label="Volver al listado"
         >
           <span className="text-lg leading-none" aria-hidden>
@@ -135,7 +135,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       <ProductDeleteConfirmForm
         productId={id}
         productName={p.name}
-        className="mt-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+        className="mt-8 rounded-xl border border-zinc-200/90 bg-white p-6"
       >
         <p className="text-sm text-zinc-600">
           Eliminá el producto solo si no debe volver a figurar en el catálogo.

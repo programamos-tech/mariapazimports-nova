@@ -28,9 +28,11 @@ export function TeamRolesInfoCollapse({ storeLabel }: { storeLabel: string }) {
       {open ? (
         <div className="border-t border-zinc-100 px-5 pb-5 pt-2 text-sm leading-relaxed text-zinc-600 md:px-6">
           <p>
-            Los <strong className="text-zinc-800">dueños</strong> configuran la tienda, colaboradores
-            y sucursales. Los <strong className="text-zinc-800">cajeros</strong> registran ventas,
-            clientes y caja del día con permisos acotados.
+            Los <strong className="text-zinc-800">dueños</strong> tienen acceso completo. Los{" "}
+            <strong className="text-zinc-800">cajeros</strong> registran ventas y caja con permisos
+            acotados. El rol <strong className="text-zinc-800">apoyo</strong> sirve para quien
+            refuerza inventario u operación sin ser el titular; partís del paquete sugerido y afinás
+            permisos en cada ficha.
           </p>
           <p className="mt-3">
             Los permisos se guardan por colaborador; podés ajustarlos y usar{" "}

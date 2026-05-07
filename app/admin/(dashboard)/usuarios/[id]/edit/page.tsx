@@ -3,7 +3,11 @@ import {
   EditCollaboratorHeader,
   NewCollaboraboratorForm,
 } from "@/components/admin/NewCollaboraboratorForm";
-import { mergePermissionsWithDefaults, type PermissionMap } from "@/lib/admin-permissions";
+import {
+  mergePermissionsWithDefaults,
+  normalizeCollaboratorJobRole,
+  type PermissionMap,
+} from "@/lib/admin-permissions";
 import { storeBrand } from "@/lib/brand";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -56,7 +60,7 @@ export default async function AdminEditColaboradorPage({ params, searchParams }:
     }
   }
 
-  const jobRole = (row.job_role === "owner" ? "owner" : "cashier") as "owner" | "cashier";
+  const jobRole = normalizeCollaboratorJobRole(row.job_role as string | null);
   const permissions = mergePermissionsWithDefaults(
     row.permissions as PermissionMap | null,
     jobRole,
@@ -68,7 +72,6 @@ export default async function AdminEditColaboradorPage({ params, searchParams }:
     login_username: (row.login_username as string | null) ?? null,
     public_email: publicEmail,
     job_role: jobRole,
-    branch_label: (row.branch_label as string | null) ?? storeBrand,
     avatar_variant: (row.avatar_variant as string | null) ?? "A",
     permissions,
     is_active: row.is_active !== false,
@@ -78,19 +81,14 @@ export default async function AdminEditColaboradorPage({ params, searchParams }:
     initial.display_name?.trim() || initial.login_username?.trim() || "Colaborador";
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl">
       <EditCollaboratorHeader name={title} />
       {errorMessage(err) ? (
         <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
           {errorMessage(err)}
         </p>
       ) : null}
-      <NewCollaboraboratorForm
-        mode="edit"
-        branchDefault={storeBrand}
-        storeLabel={storeBrand}
-        initial={initial}
-      />
+      <NewCollaboraboratorForm mode="edit" storeLabel={storeBrand} initial={initial} />
     </div>
   );
 }

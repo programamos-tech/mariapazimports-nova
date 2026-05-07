@@ -34,7 +34,7 @@ export default async function AdminOrdersPage() {
             <li key={o.id}>
               <Link
                 href={`/admin/orders/${o.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-[#fffbf6]"
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition hover:bg-zinc-50"
               >
                 <div>
                   <p className="font-mono text-xs text-stone-500">{o.id}</p>

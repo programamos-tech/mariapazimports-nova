@@ -31,3 +31,22 @@ export async function setCart(lines: CartLine[]) {
     maxAge: 60 * 60 * 24 * 30,
   });
 }
+
+/** Solo productos publicados; cantidad acotada al stock. Sin escritura de cookies (usable en Server Components). */
+export function normalizeCartForCheckout(
+  cart: CartLine[],
+  byId: Map<
+    string,
+    { is_published: boolean | null; stock_quantity: number | null }
+  >,
+): CartLine[] {
+  const next: CartLine[] = [];
+  for (const line of cart) {
+    const p = byId.get(line.productId);
+    if (!p || !p.is_published) continue;
+    const stock = Math.max(0, Math.floor(Number(p.stock_quantity ?? 0)));
+    const q = Math.min(line.quantity, stock);
+    if (q > 0) next.push({ productId: line.productId, quantity: q });
+  }
+  return next;
+}

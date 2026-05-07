@@ -4,6 +4,8 @@ import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductsFilterSortBar } from "@/components/store/ProductsFilterSortBar";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { fetchPublishedBanners } from "@/lib/store-banners";
+import { parseProductsCategoryId } from "@/lib/product-list-query";
+import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,7 @@ type Props = {
   searchParams: Promise<{
     q?: string | string[];
     sort?: string | string[];
+    category?: string | string[];
   }>;
 };
 
@@ -23,14 +26,34 @@ export default async function ProductsPage({ searchParams }: Props) {
     typeof sortRaw === "string" && sortRaw.trim()
       ? sortRaw.trim()
       : "newest";
+  const categoryId = parseProductsCategoryId(sp.category);
 
   const supabase = await createSupabaseServerClient();
+
+  let categoryName: string | null = null;
+  let categoryFilterId: string | null = null;
+  if (categoryId) {
+    const { data: cat } = await supabase
+      .from("categories")
+      .select("name")
+      .eq("id", categoryId)
+      .maybeSingle();
+    if (cat?.name) {
+      categoryName = cat.name;
+      categoryFilterId = categoryId;
+    }
+  }
+
   let query = supabase
     .from("products")
     .select(
       "id,name,description,price_cents,image_path,stock_quantity,created_at",
     )
     .eq("is_published", true);
+
+  if (categoryFilterId) {
+    query = query.eq("category_id", categoryFilterId);
+  }
 
   if (q) {
     query = query.ilike("name", `%${q}%`);
@@ -53,14 +76,21 @@ export default async function ProductsPage({ searchParams }: Props) {
   const { data: products } = await query;
   const list = products ?? [];
 
+  const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
+
   const productsBanners = await fetchPublishedBanners(supabase, "products");
 
-  const sectionTitle = q
-    ? `Resultados para «${q}»`
-    : "Productos para vos";
+  const invalidCategory = Boolean(categoryId && !categoryName);
+  const sectionTitle = invalidCategory
+    ? "Categoría no encontrada"
+    : q
+      ? `Resultados para «${q}»`
+      : categoryName
+        ? `Productos · ${categoryName}`
+        : "Productos para vos";
 
   return (
-    <div className="bg-[#fffbf6]">
+    <div className="bg-white">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:py-10">
         {productsBanners.length > 0 ? (
           <StoreBannerCarousel
@@ -76,7 +106,11 @@ export default async function ProductsPage({ searchParams }: Props) {
           <ProductsListingPromo />
         )}
 
-        <ProductsFilterSortBar q={q} sort={sort} />
+        <ProductsFilterSortBar
+          q={q}
+          sort={sort}
+          categoryId={categoryFilterId ?? undefined}
+        />
 
         <div>
           <h1 className="text-xl font-bold text-stone-900 sm:text-2xl">
@@ -89,15 +123,20 @@ export default async function ProductsPage({ searchParams }: Props) {
 
         {list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
-            {q
-              ? "No hay productos que coincidan. Probá otra búsqueda o orden."
-              : "Aún no hay productos publicados. Cargalos desde el admin."}
+            {invalidCategory
+              ? "Esa categoría no existe o fue eliminada. Volvé al catálogo completo."
+              : q
+                ? "No hay productos que coincidan. Probá otra búsqueda o orden."
+                : categoryName
+                  ? "Todavía no hay productos publicados en esta categoría."
+                  : "Aún no hay productos publicados. Cargalos desde el admin."}
           </p>
         ) : (
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {list.map((p) => (
               <li key={p.id}>
                 <ProductListingCard
+                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
                   product={{
                     id: p.id,
                     name: p.name,

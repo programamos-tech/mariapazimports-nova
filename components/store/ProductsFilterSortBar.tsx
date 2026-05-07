@@ -1,18 +1,14 @@
 import Link from "next/link";
 
-const FILTER_LABELS = [
-  "Tipo de producto",
-  "Precio",
-  "Reseñas",
-  "Color",
-  "Material",
-  "Oferta",
-] as const;
-
-function buildProductsHref(q: string, sort: string | undefined) {
+function buildProductsHref(
+  q: string,
+  sort: string | undefined,
+  categoryId: string | undefined,
+) {
   const p = new URLSearchParams();
   if (q) p.set("q", q);
   if (sort && sort !== "newest") p.set("sort", sort);
+  if (categoryId) p.set("category", categoryId);
   const qs = p.toString();
   return qs ? `/products?${qs}` : "/products";
 }
@@ -20,16 +16,12 @@ function buildProductsHref(q: string, sort: string | undefined) {
 type Props = {
   q: string;
   sort: string;
+  categoryId?: string;
 };
 
-export function ProductsFilterSortBar({ q, sort }: Props) {
-  /** Pastillas de filtro (solo UI por ahora): borde fino, fondo blanco. */
-  const filterPill =
-    "inline-flex shrink-0 items-center gap-1 rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-500 shadow-sm sm:text-sm";
-
-  /** Ordenación: aspecto distinto para no confundir con filtros. */
+export function ProductsFilterSortBar({ q, sort, categoryId }: Props) {
   const sortPillBase =
-    "inline-flex shrink-0 items-center rounded-full px-3 py-2 text-xs font-medium sm:text-sm";
+    "inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-xs font-medium sm:text-sm";
 
   const sortActive = (s: string) =>
     sort === s || (s === "newest" && (sort === "" || sort === "newest"));
@@ -38,11 +30,11 @@ export function ProductsFilterSortBar({ q, sort }: Props) {
     const active = sortActive(s);
     return (
       <Link
-        href={buildProductsHref(q, s)}
+        href={buildProductsHref(q, s, categoryId)}
         className={`${sortPillBase} ${
           active
-            ? "border border-[#6b7f6a] bg-[#eef3ec] text-[#3d5240]"
-            : "border border-stone-200/80 bg-stone-100/90 text-stone-600 hover:bg-stone-200/60"
+            ? "border border-[#6b7f6a]/80 bg-[#eef3ec] text-[#3d5240]"
+            : "border border-stone-200/80 bg-white text-stone-600 hover:border-stone-300 hover:bg-stone-50"
         }`}
       >
         {label}
@@ -51,40 +43,27 @@ export function ProductsFilterSortBar({ q, sort }: Props) {
   };
 
   return (
-    <div className="border-b border-stone-200 pb-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
-        {/* Zona única: filtros (scroll horizontal en una fila) */}
-        <div className="min-w-0 flex-1">
-          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {FILTER_LABELS.map((label) => (
-              <button
-                key={label}
-                type="button"
-                disabled
-                title="Filtros disponibles en una próxima versión"
-                className={`${filterPill} cursor-not-allowed opacity-65`}
-              >
-                {label}
-                <span className="text-stone-400" aria-hidden>
-                  ▾
-                </span>
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled
-              title="Próximamente"
-              className={`${filterPill} cursor-not-allowed opacity-65`}
-            >
-              <span aria-hidden>⚙</span>
-              Todos los filtros
-            </button>
-          </div>
-        </div>
+    <div className="border-b border-stone-200/90 pb-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
+        <button
+          type="button"
+          disabled
+          title="Filtros avanzados disponibles en una próxima versión"
+          className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-500 shadow-sm sm:text-sm cursor-not-allowed opacity-70"
+        >
+          Filtros
+          <span className="text-stone-400" aria-hidden>
+            ▾
+          </span>
+        </button>
 
-        {/* Orden: bloque separado (no es un segundo bloque de “filtros”) */}
-        <div className="flex shrink-0 flex-col gap-2 border-t border-stone-100 pt-4 sm:items-start lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-stone-400">
+        <span
+          className="hidden h-4 w-px shrink-0 bg-stone-200 sm:block"
+          aria-hidden
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-stone-400">
             Ordenar por
           </span>
           <div className="flex flex-wrap gap-2">

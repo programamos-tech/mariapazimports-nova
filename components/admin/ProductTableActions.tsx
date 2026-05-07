@@ -45,28 +45,28 @@ export function ProductTableActions({ productId }: Props) {
     <div className="flex items-center justify-end gap-0.5 sm:gap-1">
       <Link
         href={`/admin/products/${productId}`}
-        className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
         title="Ver detalle del producto"
       >
         <IconEye />
       </Link>
       <Link
         href={`/admin/products/${productId}/edit`}
-        className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
         title="Editar producto"
       >
         <IconPencil />
       </Link>
       <Link
         href={`/admin/products/${productId}/stock`}
-        className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
         title="Actualizar stock"
       >
         <IconBox />
       </Link>
       <Link
         href={`/admin/products/${productId}/transfer`}
-        className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
         title="Transferir stock"
       >
         <IconTransfer />

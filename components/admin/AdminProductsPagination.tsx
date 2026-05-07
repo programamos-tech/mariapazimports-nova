@@ -70,7 +70,7 @@ export function AdminProductsPagination({
   };
 
   return (
-    <div className="flex flex-col gap-4 border-t border-zinc-100 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
+    <div className="flex flex-col gap-4 border-t border-zinc-100 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <p className="text-sm text-zinc-600">
         Mostrando{" "}
         <span className="font-semibold tabular-nums text-zinc-900">

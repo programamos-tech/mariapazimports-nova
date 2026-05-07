@@ -20,7 +20,7 @@ create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute function public.set_updated_at();
 
--- Ver otros perfiles del equipo (listado Usuarios y roles).
+-- Ver otros perfiles del equipo (listado Equipo).
 drop policy if exists "profiles_select_team" on public.profiles;
 create policy "profiles_select_team"
 on public.profiles

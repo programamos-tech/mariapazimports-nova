@@ -6,6 +6,18 @@ export function formatCop(cents: number) {
   }).format(cents);
 }
 
+/** Eje de gráficos: mismo tipo de valor que `formatCop`, notación compacta. */
+export function formatCopCompact(n: number) {
+  if (!Number.isFinite(n) || n <= 0) return "$ 0";
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1,
+  }).format(n);
+}
+
 /** Valor entero en pesos para inputs admin: vacío si es 0; miles con punto (es-CO). */
 export function formatCopInputGrouping(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "";

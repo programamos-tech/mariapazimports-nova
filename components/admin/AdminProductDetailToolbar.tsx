@@ -49,28 +49,28 @@ export function AdminProductDetailToolbar({
     <div className="flex flex-wrap items-center justify-end gap-2">
       <Link
         href="/admin/products"
-        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
         title="Volver al inventario"
       >
         <IconBack />
       </Link>
       <Link
         href={`/admin/products/${productId}/edit`}
-        className="inline-flex size-10 items-center justify-center rounded-full bg-zinc-900 text-white shadow-sm transition hover:bg-zinc-800"
+        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-900 bg-zinc-900 text-white transition hover:bg-zinc-800"
         title="Editar producto"
       >
         <IconPencil />
       </Link>
       <Link
         href={`/admin/products/${productId}/stock`}
-        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
         title="Actualizar stock"
       >
         <IconBox />
       </Link>
       <Link
         href={`/admin/products/${productId}/transfer`}
-        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 items-center justify-center rounded-full border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
         title="Transferir stock"
       >
         <IconTransfer />

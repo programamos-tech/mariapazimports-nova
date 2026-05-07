@@ -2,13 +2,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { startCheckout } from "@/app/actions/checkout";
-import { getCart } from "@/lib/cart";
+import { getCart, normalizeCartForCheckout } from "@/lib/cart";
 import { formatCop } from "@/lib/money";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
+import { CheckoutLineControls } from "@/components/store/CheckoutLineControls";
+
+/** Alineado con tarjetas de catálogo y página de carrito */
+const sectionClass =
+  "rounded-xl border border-stone-200/90 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6";
+const labelClass = "mb-2 block text-sm font-medium text-stone-800";
+const inputClass =
+  "w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-[#6b7f6a]/35";
+const primaryBtnClass =
+  "w-full rounded-full bg-[#6b7f6a] py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#5c6e5b]";
+const secondaryBtnClass =
+  "block w-full rounded-full border-2 border-stone-200 bg-white py-3.5 text-center text-sm font-semibold text-stone-800 shadow-sm hover:bg-stone-50";
 
 export const dynamic = "force-dynamic";
 
@@ -20,47 +32,44 @@ export default async function CheckoutPage({
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
   const message = typeof sp.message === "string" ? sp.message : undefined;
+  const unpublishedProduct =
+    typeof sp.product === "string" ? sp.product : undefined;
 
   const cart = await getCart();
   if (!cart.length) {
     redirect("/cart?error=empty");
   }
 
-  const supabase = await createSupabaseServerClient();
-  const ids = cart.map((l) => l.productId);
+  const supabase = createSupabaseServiceClient();
+  const ids = [...new Set(cart.map((l) => l.productId))];
   const { data: products } = await supabase
     .from("products")
-    .select("id,name,price_cents,image_path")
-    .in("id", ids)
-    .eq("is_published", true);
+    .select("id,name,price_cents,image_path,is_published,stock_quantity")
+    .in("id", ids);
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
-  const rows = cart
-    .map((line) => {
-      const p = byId.get(line.productId);
-      if (!p) return null;
-      const sub = p.price_cents * line.quantity;
-      return { line, p, sub };
-    })
-    .filter(Boolean) as {
-    line: { productId: string; quantity: number };
-    p: { id: string; name: string; price_cents: number; image_path: string | null };
-    sub: number;
-  }[];
+  const displayCart = normalizeCartForCheckout(cart, byId);
+  const cartAdjusted = JSON.stringify(cart) !== JSON.stringify(displayCart);
 
-  if (!rows.length) {
+  if (!displayCart.length) {
     redirect("/cart?error=empty");
   }
+
+  const rows = displayCart.map((line) => {
+    const p = byId.get(line.productId)!;
+    const sub = p.price_cents * line.quantity;
+    return { line, p, sub };
+  });
 
   const total = rows.reduce((acc, r) => acc + r.sub, 0);
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] bg-[#fffbf6]">
+    <div className="min-h-[calc(100vh-8rem)] bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
         <nav aria-label="Migas de pan" className="mb-6 text-sm text-stone-500">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
-              <Link href="/" className="hover:text-[#3d5240] hover:underline">
+              <Link href="/" className="hover:text-[#556654] hover:underline">
                 Inicio
               </Link>
             </li>
@@ -75,6 +84,15 @@ export default async function CheckoutPage({
           Finalizar compra
         </h1>
 
+        {cartAdjusted ? (
+          <div
+            className="mb-6 rounded-xl bg-[#f5edd6] px-4 py-3 text-sm text-amber-950 ring-1 ring-amber-100"
+            role="status"
+          >
+            Actualizamos tu pedido según stock y productos publicados en la tienda.
+          </div>
+        ) : null}
+
         {error ? (
           <div
             className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-900 ring-1 ring-red-100"
@@ -84,7 +102,12 @@ export default async function CheckoutPage({
             {error === "invalid_email" && "Email inválido."}
             {error === "missing_shipping" &&
               "Completá dirección, ciudad y teléfono de contacto."}
-            {error === "products" && "No se pudieron cargar los productos del pedido."}
+            {error === "products" &&
+              "No se pudieron cargar los productos del pedido. Si persiste, revisá la conexión o probá más tarde."}
+            {error === "unpublished" &&
+              (unpublishedProduct
+                ? `${decodeURIComponent(unpublishedProduct)} ya no está disponible en la tienda. Quitá ese producto del carrito o elegí otro.`
+                : "Hay productos en tu carrito que ya no están publicados. Volvé al carrito para actualizarlo.")}
             {error === "order" && "No se pudo crear el pedido."}
             {error === "items" && "No se pudieron guardar los ítems del pedido."}
             {error === "wompi" &&
@@ -96,6 +119,7 @@ export default async function CheckoutPage({
               "invalid_email",
               "missing_shipping",
               "products",
+              "unpublished",
               "order",
               "items",
               "wompi",
@@ -106,8 +130,8 @@ export default async function CheckoutPage({
         <form action={startCheckout}>
           <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
             <div className="space-y-6 lg:col-span-2">
-              <section className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="text-lg font-bold text-stone-900">
+              <section className={sectionClass}>
+                <h2 className="text-lg font-semibold text-stone-900">
                   Revisá tu pedido
                 </h2>
                 <p className="mt-1 text-sm text-stone-500">
@@ -116,7 +140,10 @@ export default async function CheckoutPage({
                 <ul className="mt-5 divide-y divide-stone-100">
                   {rows.map(({ line, p, sub }) => {
                     const img = storagePublicObjectUrl(p.image_path);
-                    const qtyLabel = String(line.quantity).padStart(2, "0");
+                    const maxStock = Math.max(
+                      0,
+                      Math.floor(Number(p.stock_quantity ?? 0)),
+                    );
                     return (
                       <li
                         key={p.id}
@@ -140,9 +167,11 @@ export default async function CheckoutPage({
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-stone-900">{p.name}</p>
-                          <p className="mt-1 text-sm text-stone-500">
-                            Cantidad: {qtyLabel}
-                          </p>
+                          <CheckoutLineControls
+                            productId={p.id}
+                            quantity={line.quantity}
+                            maxStock={maxStock}
+                          />
                           <p className="mt-2 text-base font-bold text-stone-900">
                             {formatCop(sub)}
                           </p>
@@ -153,117 +182,95 @@ export default async function CheckoutPage({
                 </ul>
               </section>
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-700 shadow-sm">
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-stone-200/90 bg-white px-4 py-3 text-sm text-stone-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 <input
                   type="checkbox"
                   name="returningCustomer"
-                  className="size-4 rounded border-stone-300 text-[#3d5240] focus:ring-[#3d5240]"
+                  className="size-4 rounded border-stone-300 text-[#6b7f6a] focus:ring-[#6b7f6a]"
                 />
                 ¿Ya compraste antes?
               </label>
 
-              <section className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-stone-900">
-                      Datos de envío
-                    </h2>
-                    <p className="mt-1 text-sm text-stone-500">
-                      Donde coordinamos la entrega
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-xs font-semibold text-stone-600 shadow-sm hover:bg-stone-100"
-                  >
-                    Guardar datos
-                  </button>
+              <section className={sectionClass}>
+                <div>
+                  <h2 className="text-lg font-semibold text-stone-900">
+                    Datos de envío
+                  </h2>
+                  <p className="mt-1 text-sm text-stone-500">
+                    Donde coordinamos la entrega
+                  </p>
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Nombre
-                    </span>
+                    <span className={labelClass}>Nombre</span>
                     <input
                       name="firstName"
                       required
                       autoComplete="given-name"
                       placeholder="Escribí aquí…"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Apellido
-                    </span>
+                    <span className={labelClass}>Apellido</span>
                     <input
                       name="lastName"
                       required
                       autoComplete="family-name"
                       placeholder="Escribí aquí…"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Dirección
-                    </span>
+                    <span className={labelClass}>Dirección</span>
                     <input
                       name="address"
                       required
                       autoComplete="street-address"
                       placeholder="Calle, número, apto…"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Ciudad
-                    </span>
+                    <span className={labelClass}>Ciudad</span>
                     <input
                       name="city"
                       required
                       autoComplete="address-level2"
                       placeholder="Escribí aquí…"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Código postal
-                    </span>
+                    <span className={labelClass}>Código postal</span>
                     <input
                       name="zipCode"
                       autoComplete="postal-code"
                       placeholder="Opcional"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Teléfono / WhatsApp
-                    </span>
+                    <span className={labelClass}>Teléfono / WhatsApp</span>
                     <input
                       name="mobile"
                       type="tel"
                       required
                       autoComplete="tel"
                       placeholder="Escribí aquí…"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                   <label className="block sm:col-span-1">
-                    <span className="mb-2 block text-sm font-semibold text-stone-800">
-                      Email
-                    </span>
+                    <span className={labelClass}>Email</span>
                     <input
                       name="email"
                       type="email"
                       required
                       autoComplete="email"
                       placeholder="correo@ejemplo.com"
-                      className="w-full rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-[#6b7f6a]"
+                      className={inputClass}
                     />
                   </label>
                 </div>
@@ -271,8 +278,8 @@ export default async function CheckoutPage({
             </div>
 
             <div className="space-y-6 lg:col-span-1">
-              <section className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="text-lg font-bold text-stone-900">
+              <section className={sectionClass}>
+                <h2 className="text-lg font-semibold text-stone-900">
                   Resumen del pedido
                 </h2>
                 <dl className="mt-4 space-y-2 text-sm">
@@ -287,7 +294,7 @@ export default async function CheckoutPage({
                 </dl>
 
                 <div className="mt-6">
-                  <p className="mb-2 text-sm font-semibold text-stone-800">
+                  <p className="mb-2 text-sm font-medium text-stone-800">
                     Cupón
                   </p>
                   <div className="flex gap-2">
@@ -295,12 +302,12 @@ export default async function CheckoutPage({
                       type="text"
                       disabled
                       placeholder="Código de cupón"
-                      className="min-w-0 flex-1 rounded-lg border-0 bg-stone-100 px-3 py-3 text-stone-400"
+                      className={`${inputClass} flex-1 opacity-60`}
                     />
                     <button
                       type="button"
                       disabled
-                      className="shrink-0 rounded-lg bg-[#3d5240] px-4 py-3 text-sm font-semibold text-white opacity-50"
+                      className="shrink-0 rounded-full bg-[#6b7f6a] px-4 py-2.5 text-sm font-semibold text-white opacity-50"
                     >
                       Aplicar
                     </button>
@@ -308,8 +315,8 @@ export default async function CheckoutPage({
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="text-lg font-bold text-stone-900">
+              <section className={sectionClass}>
+                <h2 className="text-lg font-semibold text-stone-900">
                   Método de pago
                 </h2>
                 <p className="mt-1 text-sm text-stone-500">
@@ -318,13 +325,13 @@ export default async function CheckoutPage({
 
                 <fieldset className="mt-4 space-y-3">
                   <legend className="sr-only">Elegí método de pago</legend>
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-200 bg-[#f4f7f3] p-3 ring-2 ring-[#3d5240]">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-200 bg-[#faf8f5] p-3 ring-2 ring-[#6b7f6a]/90">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="wompi"
                       defaultChecked
-                      className="size-4 border-stone-300 text-[#3d5240] focus:ring-[#3d5240]"
+                      className="size-4 border-stone-300 text-[#6b7f6a] focus:ring-[#6b7f6a]"
                     />
                     <span className="text-sm font-medium text-stone-900">
                       Pago en línea (Wompi)
@@ -355,7 +362,7 @@ export default async function CheckoutPage({
                   </span>
                 </p>
 
-                <div className="mt-4 rounded-xl bg-[#faf9f7] p-4 ring-1 ring-stone-100">
+                <div className="mt-4 rounded-xl border border-stone-100 bg-[#faf8f5] p-4">
                   <p className="text-sm text-stone-600">
                     Al continuar, se abre el checkout de Wompi. Ahí ingresás los datos
                     de tu tarjeta u otro medio; esta tienda no guarda números de tarjeta.
@@ -363,16 +370,10 @@ export default async function CheckoutPage({
                 </div>
               </section>
 
-              <button
-                type="submit"
-                className="w-full rounded-full bg-[#3d5240] py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#556654]"
-              >
+              <button type="submit" className={primaryBtnClass}>
                 Continuar al pago seguro
               </button>
-              <Link
-                href="/cart"
-                className="block w-full rounded-full border-2 border-stone-200 bg-white py-3.5 text-center text-sm font-semibold text-stone-800 hover:bg-stone-50"
-              >
+              <Link href="/cart" className={secondaryBtnClass}>
                 Volver al carrito
               </Link>
             </div>

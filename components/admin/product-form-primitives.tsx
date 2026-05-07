@@ -7,11 +7,15 @@ import {
 } from "@/lib/money";
 
 export const productLabelClass =
-  "mb-1.5 block text-sm font-semibold text-zinc-900";
-export const productInputClass =
-  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+  "mb-1.5 block text-sm font-medium text-zinc-900";
+/** Superficie blanca sobre el workspace del admin (`bg-white`). */
+export const productInputOnWhiteClass =
+  "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-500 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300/50";
+
+export const productInputClass = productInputOnWhiteClass;
+
 export const productSectionTitle =
-  "text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400";
+  "text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400";
 
 export function ProductMoneyInput({
   name,
@@ -32,7 +36,7 @@ export function ProductMoneyInput({
   }, [safe]);
 
   return (
-    <div className="flex rounded-lg border border-zinc-200 bg-white shadow-sm focus-within:border-zinc-300 focus-within:ring-2 focus-within:ring-zinc-200">
+    <div className="flex rounded-lg border border-zinc-200 bg-white shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-300/50">
       <span className="flex items-center border-r border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-600">
         $
       </span>
@@ -49,7 +53,7 @@ export function ProductMoneyInput({
           onChange(n);
           setText(n <= 0 ? "" : formatCopInputGrouping(n));
         }}
-        className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm tabular-nums text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
+        className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm tabular-nums text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:ring-0"
       />
     </div>
   );

@@ -127,7 +127,7 @@ export function EditCustomerHeader({
             <span className="mx-1.5 text-zinc-300">/</span>
             <span className="text-zinc-700">Editar</span>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Editar cliente
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
@@ -284,7 +284,7 @@ export function EditCustomerForm(props: EditCustomerFormProps) {
                   className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 sm:p-5"
                 >
                   <div className="mb-4 flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                       Dirección {i + 1}
                     </p>
                     {addresses.length > 1 ? (

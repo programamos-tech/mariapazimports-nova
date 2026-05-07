@@ -67,7 +67,7 @@ export function CustomerDeleteConfirmForm({
         if (pending) e.preventDefault();
       }}
     >
-      <h2 id="customer-delete-dialog-title" className="text-lg font-bold text-zinc-900">
+      <h2 id="customer-delete-dialog-title" className="text-lg font-semibold text-zinc-900">
         ¿Eliminar este cliente?
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-zinc-600">

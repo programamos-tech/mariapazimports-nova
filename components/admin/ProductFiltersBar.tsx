@@ -1,5 +1,7 @@
 "use client";
 
+import { productInputOnWhiteClass } from "@/components/admin/product-form-primitives";
+
 type Category = { id: string; name: string };
 
 type Props = {
@@ -23,9 +25,8 @@ export function ProductFiltersBar({
   categoriesModalOpen = false,
 }: Props) {
   const labelClass =
-    "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400";
-  const fieldClass =
-    "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+    "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600";
+  const fieldClass = `${productInputOnWhiteClass} font-medium`;
 
   return (
     <form

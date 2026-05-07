@@ -1,8 +1,72 @@
 "use server";
 
+import { logAdminActivity } from "@/lib/admin-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+export type QuickStoreCustomerRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  document_id: string | null;
+};
+
+export type CreateQuickStoreCustomerResult =
+  | { ok: true; customer: QuickStoreCustomerRow }
+  | { ok: false; code: "auth" | "name" | "db" };
+
+/** Alta mínima desde POS (sin redirect); para modal en nueva factura. */
+export async function createQuickStoreCustomer(input: {
+  name: string;
+  document_id?: string;
+}): Promise<CreateQuickStoreCustomerResult> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, code: "auth" };
+
+  const name = String(input.name ?? "").trim();
+  const documentId = String(input.document_id ?? "").trim();
+  if (!name) return { ok: false, code: "name" };
+
+  const { data: cust, error: insertErr } = await supabase
+    .from("customers")
+    .insert({
+      name,
+      email: null,
+      phone: null,
+      document_id: documentId || null,
+      shipping_address: null,
+      shipping_city: null,
+      shipping_postal_code: null,
+      source: "manual",
+    })
+    .select("id,name,email,phone,document_id")
+    .single();
+
+  if (insertErr || !cust) return { ok: false, code: "db" };
+
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "customer_created",
+    entityType: "customer",
+    entityId: (cust as { id: string }).id,
+    summary: `Nuevo cliente: ${name}${documentId ? ` · Doc. ${documentId}` : ""}`,
+    metadata: {
+      source: "pos_quick",
+      ...(documentId ? { document_id: documentId } : {}),
+    },
+  });
+  revalidatePath("/admin/actividades");
+  revalidatePath("/admin/customers");
+  return {
+    ok: true,
+    customer: cust as QuickStoreCustomerRow,
+  };
+}
 
 function normEmail(v: string): string | null {
   const t = v.trim().toLowerCase();
@@ -101,6 +165,20 @@ export async function createStoreCustomer(formData: FormData) {
     }
   }
 
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "customer_created",
+    entityType: "customer",
+    entityId: customerId,
+    summary: `Nuevo cliente: ${name}`,
+    metadata: {
+      source: "form",
+      ...(documentId ? { document_id: documentId } : {}),
+      ...(email ? { email } : {}),
+      ...(phone ? { phone } : {}),
+    },
+  });
+  revalidatePath("/admin/actividades");
   revalidatePath("/admin/customers");
   redirect("/admin/customers");
 }
@@ -205,6 +283,19 @@ export async function updateStoreCustomer(formData: FormData) {
     }
   }
 
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "customer_updated",
+    entityType: "customer",
+    entityId: customerId,
+    summary: `Cliente actualizado: ${name}`,
+    metadata: {
+      ...(documentId ? { document_id: documentId } : {}),
+      ...(email ? { email } : {}),
+      ...(phone ? { phone } : {}),
+    },
+  });
+  revalidatePath("/admin/actividades");
   revalidatePath("/admin/customers");
   revalidatePath(`/admin/customers/${customerId}`);
   redirect(`/admin/customers/${customerId}`);

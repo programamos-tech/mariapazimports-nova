@@ -19,7 +19,7 @@ export default async function NewProductPage({
   const cats = categories ?? [];
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl">
       <NewProductHeader />
 
       {error ? (

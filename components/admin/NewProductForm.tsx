@@ -53,9 +53,9 @@ export function NewProductForm({
     >
       <input type="hidden" name="is_published" value="on" />
 
-      <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
-        <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <div className="grid gap-6 xl:grid-cols-3 xl:gap-8">
+        <div className="space-y-6 xl:col-span-2">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6">
             <h2 className={sectionTitle}>Información básica</h2>
             <div className="mt-5 space-y-4">
               <div>
@@ -104,7 +104,7 @@ export function NewProductForm({
                 <span className={labelClass}>Imagen (catálogo en línea, opcional)</span>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="inline-flex cursor-pointer">
-                    <span className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100">
+                    <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50">
                       Seleccionar archivo
                     </span>
                     <input
@@ -169,7 +169,7 @@ export function NewProductForm({
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6">
             <h2 className={sectionTitle}>Control de stock</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div>
@@ -195,8 +195,12 @@ export function NewProductForm({
                 />
               </div>
             </div>
-            <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800">
-              Total inicial: {fmtStock(totalStock)} unidades (local + bodega)
+            <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 px-4 py-3 text-sm text-zinc-800">
+              Total inicial:{" "}
+              <span className="font-medium tabular-nums">
+                {fmtStock(totalStock)} unidades
+              </span>{" "}
+              (local + bodega)
             </div>
             <div className="mt-4 space-y-2 text-xs leading-relaxed text-zinc-500">
               <p>
@@ -211,8 +215,8 @@ export function NewProductForm({
           </section>
         </div>
 
-        <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="space-y-6 xl:sticky xl:top-24 xl:col-span-1 xl:self-start">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6">
             <h2 className={sectionTitle}>Información financiera</h2>
             <div className="mt-5 space-y-4">
               <div>
@@ -244,22 +248,22 @@ export function NewProductForm({
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6">
             <h2 className={sectionTitle}>Resumen del producto</h2>
-            <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+            <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-4 text-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                 Producto
               </p>
               <dl className="mt-3 space-y-2 text-zinc-700">
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Nombre</dt>
-                  <dd className="max-w-[60%] truncate text-right font-medium text-zinc-900">
+                  <dd className="max-w-[60%] truncate text-right text-zinc-900">
                     {name.trim() || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Referencia</dt>
-                  <dd className="font-mono text-xs font-medium text-zinc-900">
+                  <dd className="font-mono text-xs text-zinc-900">
                     {reference.trim() || "—"}
                   </dd>
                 </div>
@@ -271,40 +275,40 @@ export function NewProductForm({
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Stock local</dt>
-                  <dd className="tabular-nums font-medium text-zinc-900">
+                  <dd className="tabular-nums text-zinc-900">
                     {fmtStock(stockLocal)} unidades
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500">Stock bodega</dt>
-                  <dd className="tabular-nums font-medium text-zinc-900">
+                  <dd className="tabular-nums text-zinc-900">
                     {fmtStock(stockWarehouse)} unidades
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2">
-                  <dt className="font-medium text-zinc-700">Total</dt>
-                  <dd className="tabular-nums font-semibold text-zinc-900">
+                  <dt className="text-zinc-600">Total</dt>
+                  <dd className="tabular-nums font-medium text-zinc-900">
                     {fmtStock(totalStock)} unidades
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className="mt-5 border-t border-zinc-100 pt-5">
+            <div className="mt-5 border-t border-zinc-200/70 pt-5">
               <p className="text-xs font-medium text-zinc-500">Precio de venta</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900">
+              <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900">
                 {formatCop(priceCents)}
               </p>
             </div>
 
-            <ul className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
+            <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm">
               <li className="flex justify-between text-zinc-600">
                 <span>Costo</span>
-                <span className="tabular-nums font-medium text-zinc-900">
+                <span className="tabular-nums text-zinc-900">
                   {formatCop(costCents)}
                 </span>
               </li>
-              <li className="flex justify-between font-semibold text-zinc-900">
+              <li className="flex justify-between font-medium text-zinc-900">
                 <span>Precio venta</span>
                 <span className="tabular-nums">{formatCop(priceCents)}</span>
               </li>
@@ -317,7 +321,7 @@ export function NewProductForm({
 
             <button
               type="submit"
-              className="mt-5 w-full rounded-lg bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+              className="mt-5 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
               Crear producto
             </button>
@@ -330,8 +334,8 @@ export function NewProductForm({
 
 export function NewProductHeader() {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
+    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
         <p className="text-xs font-medium text-zinc-500">
           <Link href="/admin/products" className="hover:text-zinc-800">
             Inventario
@@ -339,7 +343,7 @@ export function NewProductHeader() {
           <span className="mx-1.5 text-zinc-300">/</span>
           <span className="text-zinc-700">Nuevo producto</span>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
           Nuevo producto
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
@@ -348,7 +352,7 @@ export function NewProductHeader() {
       </div>
       <Link
         href="/admin/products"
-        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900 sm:self-auto"
         aria-label="Volver al listado"
       >
         <span className="text-lg leading-none" aria-hidden>

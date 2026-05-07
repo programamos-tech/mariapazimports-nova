@@ -19,6 +19,12 @@ export default async function CheckoutReturnPage({
   const sp = await searchParams;
   const orderId =
     typeof sp.order_id === "string" ? sp.order_id : undefined;
+  const testCheckoutRaw = sp.test_checkout;
+  const testCheckout =
+    testCheckoutRaw === "1" ||
+    testCheckoutRaw === "true" ||
+    (Array.isArray(testCheckoutRaw) &&
+      (testCheckoutRaw[0] === "1" || testCheckoutRaw[0] === "true"));
 
   if (!orderId) {
     return (
@@ -59,6 +65,19 @@ export default async function CheckoutReturnPage({
       <h1 className="text-2xl font-semibold text-stone-900">
         Resultado del pago
       </h1>
+      {testCheckout ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="status"
+        >
+          <strong className="font-semibold">Modo prueba:</strong> no se llamó a
+          Wompi (falta <code className="rounded bg-amber-100/80 px-1">WOMPI_PRIVATE_KEY</code>{" "}
+          en local o tenés <code className="rounded bg-amber-100/80 px-1">CHECKOUT_SKIP_WOMPI</code>
+          ). El pedido quedó registrado como pendiente; en{" "}
+          <strong>Administración → Ventas</strong> deberías verlo. El stock no
+          se descuenta hasta que el cobro quede pagado (webhook o POS).
+        </div>
+      ) : null}
       <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-stone-100">
         <p className="text-sm text-stone-500">Pedido</p>
         <p className="font-mono text-sm text-stone-800">{order.id}</p>
@@ -70,8 +89,9 @@ export default async function CheckoutReturnPage({
           {order.customer_name} · {order.customer_email}
         </p>
         <p className="mt-4 text-xs text-stone-500">
-          El estado final lo confirma Wompi por webhook; si ves “Pendiente”, esperá
-          unos segundos y refrescá.
+          {testCheckout
+            ? "Cuando configures Wompi, el flujo normal abrirá el checkout y el webhook actualizará el estado."
+            : "El estado final lo confirma Wompi por webhook; si ves “Pendiente”, esperá unos segundos y refrescá."}
         </p>
       </div>
       <Link

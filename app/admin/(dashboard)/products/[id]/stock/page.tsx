@@ -59,7 +59,7 @@ export default async function AdminProductStockPage({ params }: Props) {
             <span className="mx-1.5 text-zinc-300">/</span>
             <span className="text-zinc-700">Actualizar stock</span>
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Actualizar stock
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
@@ -69,7 +69,7 @@ export default async function AdminProductStockPage({ params }: Props) {
         </div>
         <Link
           href={`/admin/products/${id}`}
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
           aria-label="Volver al producto"
         >
           <span className="text-lg leading-none" aria-hidden>

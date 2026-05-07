@@ -42,6 +42,13 @@ function buildQuery(
     if (next.payment === "all") p.delete("payment");
     else p.set("payment", next.payment);
   }
+  if (
+    next.q !== undefined ||
+    next.status !== undefined ||
+    next.payment !== undefined
+  ) {
+    p.delete("page");
+  }
   const qs = p.toString();
   return qs ? `${pathname}?${qs}` : pathname;
 }
@@ -81,8 +88,8 @@ export function VentasFiltersBar({ initialQ }: VentasFiltersBarProps) {
   }, [q, pushQuery, searchParams]);
 
   return (
-    <div className="flex flex-col gap-4 border-b border-zinc-100 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4 md:px-6">
-      <div className="relative min-w-0 flex-1 sm:max-w-xl">
+    <div className="flex flex-col gap-4 rounded-t-xl border-b border-zinc-100 px-4 py-4 sm:px-5 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-4">
+      <div className="relative min-w-0 w-full flex-1 lg:min-w-[12rem]">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
           <IconSearch />
         </span>
@@ -90,20 +97,20 @@ export function VentasFiltersBar({ initialQ }: VentasFiltersBarProps) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Factura, cliente…"
-          className={`${inputClass} pl-10`}
+          className={`${inputClass} w-full min-w-0 pl-10`}
           autoComplete="off"
           aria-label="Buscar por factura o cliente"
         />
       </div>
-      <div className="flex flex-wrap gap-4 sm:gap-5">
-        <div className="min-w-[140px]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:shrink-0 lg:gap-5">
+        <div className="min-w-0 sm:min-w-[140px]">
           <label className={`${sectionTitle} mb-2 block`}>Estado</label>
           <select
             value={status}
             onChange={(e) =>
               pushQuery({ status: e.target.value as VentaEstadoFilter })
             }
-            className={inputClass}
+            className={`${inputClass} w-full min-w-0`}
           >
             <option value="all">Todas</option>
             <option value="paid">Finalizada</option>
@@ -112,14 +119,14 @@ export function VentasFiltersBar({ initialQ }: VentasFiltersBarProps) {
             <option value="failed">Fallida</option>
           </select>
         </div>
-        <div className="min-w-[160px]">
+        <div className="min-w-0 sm:min-w-[160px]">
           <label className={`${sectionTitle} mb-2 block`}>Forma de pago</label>
           <select
             value={payment}
             onChange={(e) =>
               pushQuery({ payment: e.target.value as VentaPagoFilter })
             }
-            className={inputClass}
+            className={`${inputClass} w-full min-w-0`}
           >
             <option value="all">Todas</option>
             <option value="cash">Efectivo</option>
@@ -139,7 +146,7 @@ export function VentasRefreshButton() {
     <button
       type="button"
       onClick={() => router.refresh()}
-      className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
     >
       <svg
         viewBox="0 0 24 24"

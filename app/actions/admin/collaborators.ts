@@ -2,6 +2,7 @@
 
 import {
   normalizePermissions,
+  type CollaboratorJobRole,
   type PermissionMap,
 } from "@/lib/admin-permissions";
 import { slugUsername } from "@/lib/collaborator-utils";
@@ -38,8 +39,9 @@ export async function inviteCollaboratorAction(formData: FormData) {
   const loginUsernameRaw = String(formData.get("login_username") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const jobRole = String(formData.get("job_role") ?? "cashier") as "owner" | "cashier";
-  const branchLabel = String(formData.get("branch_label") ?? "").trim();
+  const jobRole = String(formData.get("job_role") ?? "cashier") as CollaboratorJobRole;
+  const branchLabelRaw = String(formData.get("branch_label") ?? "").trim();
+  const branchLabel = branchLabelRaw.length > 0 ? branchLabelRaw : null;
   const avatarVariant = String(formData.get("avatar_variant") ?? "A").trim().slice(0, 1) || "A";
 
   let permissions: PermissionMap = {};
@@ -55,8 +57,9 @@ export async function inviteCollaboratorAction(formData: FormData) {
   if (!displayName || !email || !password || password.length < 6) {
     redirectNewError("validation");
   }
-  if (!branchLabel) redirectNewError("validation");
-  if (jobRole !== "owner" && jobRole !== "cashier") redirectNewError("validation");
+  if (jobRole !== "owner" && jobRole !== "cashier" && jobRole !== "support") {
+    redirectNewError("validation");
+  }
 
   const loginUsername = (loginUsernameRaw || slugUsername(displayName)).toLowerCase();
 
@@ -138,8 +141,9 @@ export async function updateCollaboratorAction(formData: FormData) {
 
   const displayName = String(formData.get("display_name") ?? "").trim();
   const loginUsername = String(formData.get("login_username") ?? "").trim().toLowerCase();
-  const jobRole = String(formData.get("job_role") ?? "cashier") as "owner" | "cashier";
-  const branchLabel = String(formData.get("branch_label") ?? "").trim();
+  const jobRole = String(formData.get("job_role") ?? "cashier") as CollaboratorJobRole;
+  const branchLabelRaw = String(formData.get("branch_label") ?? "").trim();
+  const branchLabel = branchLabelRaw.length > 0 ? branchLabelRaw : null;
   const avatarVariant = String(formData.get("avatar_variant") ?? "A").trim().slice(0, 1) || "A";
   const isActive = String(formData.get("is_active") ?? "true") === "true";
   const password = String(formData.get("password") ?? "");
@@ -154,10 +158,10 @@ export async function updateCollaboratorAction(formData: FormData) {
     redirectEditError(profileId, "validation");
   }
 
-  if (!displayName || !loginUsername || !branchLabel) {
+  if (!displayName || !loginUsername) {
     redirectEditError(profileId, "validation");
   }
-  if (jobRole !== "owner" && jobRole !== "cashier") {
+  if (jobRole !== "owner" && jobRole !== "cashier" && jobRole !== "support") {
     redirectEditError(profileId, "validation");
   }
 

@@ -2,14 +2,19 @@
 
 import type { SVGProps } from "react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
-  distributeProductCounts,
-  megaMenuCategories,
-} from "@/lib/store-categories";
-import { storeBrand } from "@/lib/brand";
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { getCategoryIconComponent } from "@/lib/category-icons";
+import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
 
-type MenuId = "categories" | "deals" | "news" | "shipping" | null;
+type MenuId = "categories" | null;
 
 function IconChevronDown(props: SVGProps<SVGSVGElement>) {
   return (
@@ -19,14 +24,32 @@ function IconChevronDown(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function StoreNavDropdowns({ productCount }: { productCount: number }) {
+/** Ítem activo: línea inferior (patrón típico de tiendas), sin fondo tipo píldora. */
+function navLinkClass(active: boolean) {
+  return `inline-flex border-b-2 px-1 pb-1 pt-1.5 text-sm font-medium transition-colors ${
+    active
+      ? "border-[#556654] text-stone-900"
+      : "border-transparent text-stone-600 hover:border-stone-300/90 hover:text-stone-900"
+  }`;
+}
+
+export function StoreNavDropdowns({
+  menuCategories,
+}: {
+  menuCategories: StoreCategoryMenuItem[];
+}) {
+  const pathname = usePathname();
   const [open, setOpen] = useState<MenuId>(null);
+  const [categoriesPanelTop, setCategoriesPanelTop] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const categoriesTriggerRef = useRef<HTMLButtonElement>(null);
   const baseId = useId();
 
-  const counts = distributeProductCounts(productCount, megaMenuCategories.length);
-
   const close = useCallback(() => setOpen(null), []);
+
+  const inicioActive = pathname === "/";
+  const productosActive = pathname === "/products" || pathname.startsWith("/products/");
+  const quienSoyActive = pathname === "/quien-soy";
 
   useEffect(() => {
     if (!open) return;
@@ -44,13 +67,45 @@ export function StoreNavDropdowns({ productCount }: { productCount: number }) {
     };
   }, [open, close]);
 
+  useLayoutEffect(() => {
+    if (open !== "categories") return;
+    const el = categoriesTriggerRef.current;
+    if (!el) return;
+    const syncTop = () => {
+      const r = el.getBoundingClientRect();
+      setCategoriesPanelTop(r.bottom + 8);
+    };
+    syncTop();
+    window.addEventListener("resize", syncTop);
+    window.addEventListener("scroll", syncTop, true);
+    return () => {
+      window.removeEventListener("resize", syncTop);
+      window.removeEventListener("scroll", syncTop, true);
+    };
+  }, [open]);
+
   return (
-    <div ref={wrapRef} className="relative flex flex-wrap items-center gap-1">
-      {/* Categorías — mega panel */}
+    <nav
+      ref={wrapRef}
+      aria-label="Principal"
+      className="relative flex flex-wrap items-center gap-1"
+    >
+      <Link href="/" className={navLinkClass(inicioActive)}>
+        Inicio
+      </Link>
+      <Link href="/products" className={navLinkClass(productosActive)}>
+        Productos
+      </Link>
+
       <div className="relative">
         <button
+          ref={categoriesTriggerRef}
           type="button"
-          className="flex items-center gap-0.5 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900 data-[open=true]:bg-[#f4f0ea] data-[open=true]:text-stone-900"
+          className={`flex items-center gap-0.5 border-b-2 px-1 pb-1 pt-1.5 text-sm font-medium transition-colors ${
+            open === "categories"
+              ? "border-[#556654] text-stone-900"
+              : "border-transparent text-stone-600 hover:border-stone-300/90 hover:text-stone-900"
+          }`}
           data-open={open === "categories"}
           aria-expanded={open === "categories"}
           aria-controls={`${baseId}-categories-panel`}
@@ -65,48 +120,50 @@ export function StoreNavDropdowns({ productCount }: { productCount: number }) {
             id={`${baseId}-categories-panel`}
             role="region"
             aria-labelledby={`${baseId}-categories-trigger`}
-            className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,42rem)] rounded-2xl border border-stone-200/90 bg-white p-5 shadow-xl shadow-stone-200/80 ring-1 ring-stone-100 sm:left-1/2 sm:-translate-x-1/2"
+            style={{ top: categoriesPanelTop }}
+            className="fixed left-1/2 z-50 max-h-[min(85vh,30rem)] w-[min(100vw-2rem,40rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xl shadow-stone-200/80 ring-1 ring-stone-100"
           >
             <h2 className="text-base font-semibold text-stone-900">
               Categorías populares
             </h2>
             <p className="mt-0.5 text-xs text-stone-500">
-              Explorá el catálogo de {storeBrand}
+              Explorá el catálogo de María Paz Importaciones
             </p>
-            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {megaMenuCategories.map((c, i) => {
-                const n = counts[i] ?? 0;
-                const label =
-                  n === 0
-                    ? "Explorá el catálogo"
-                    : n === 1
-                      ? "1 producto disponible"
-                      : `${n} productos disponibles`;
-                return (
-                  <li key={c.id}>
-                    <Link
-                      href="/products"
-                      onClick={close}
-                      className="flex items-center gap-3 rounded-xl border border-stone-100 bg-[#faf8f5] p-3 transition hover:border-[#c7d4c2] hover:bg-white hover:shadow-sm"
-                    >
-                      <div
-                        className={`flex size-14 shrink-0 items-center justify-center rounded-lg text-2xl ${c.tint}`}
-                        aria-hidden
+            {menuCategories.length === 0 ? (
+              <p className="mt-4 text-sm text-stone-500">
+                Todavía no hay categorías. Creálas en Administración → Catálogo.
+              </p>
+            ) : (
+              <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {menuCategories.map((c) => {
+                  const Icon = getCategoryIconComponent(c.iconKey);
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        href={`/products?category=${c.id}`}
+                        onClick={close}
+                        className="flex items-center gap-2.5 rounded-xl border border-stone-100 bg-[#faf8f5] p-2.5 transition hover:border-[#c7d4c2] hover:bg-white hover:shadow-sm"
                       >
-                        {c.emoji}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-stone-900">{c.name}</p>
-                        <p className="text-xs text-stone-500">{c.sub}</p>
-                        <p className="mt-0.5 text-xs font-medium text-[#6b7f6a]">
-                          {label}
-                        </p>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                        <div
+                          className={`flex size-11 shrink-0 items-center justify-center rounded-lg ${c.tint}`}
+                          aria-hidden
+                        >
+                          <Icon className="size-5 text-zinc-700" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-semibold leading-tight text-stone-900">
+                            {c.name}
+                          </p>
+                          <p className="mt-0.5 text-xs leading-tight text-stone-500">
+                            {c.sub}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
             <Link
               href="/products"
               onClick={close}
@@ -118,117 +175,9 @@ export function StoreNavDropdowns({ productCount }: { productCount: number }) {
         ) : null}
       </div>
 
-      {/* Ofertas */}
-      <div className="relative">
-        <button
-          type="button"
-          className="flex items-center gap-0.5 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900 data-[open=true]:bg-[#f4f0ea]"
-          data-open={open === "deals"}
-          aria-expanded={open === "deals"}
-          onClick={() => setOpen((v) => (v === "deals" ? null : "deals"))}
-        >
-          Ofertas
-          <IconChevronDown className="size-4 text-stone-400" />
-        </button>
-        {open === "deals" ? (
-          <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-xl border border-stone-200 bg-white p-3 shadow-xl ring-1 ring-stone-100">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
-              Promos
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>
-                <Link
-                  href="/products"
-                  onClick={close}
-                  className="block rounded-lg px-2 py-2 text-sm text-stone-700 hover:bg-[#f4f0ea]"
-                >
-                  Seleccionados con descuento
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/products"
-                  onClick={close}
-                  className="block rounded-lg px-2 py-2 text-sm text-stone-700 hover:bg-[#f4f0ea]"
-                >
-                  Outlet
-                </Link>
-              </li>
-            </ul>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Novedades */}
-      <div className="relative">
-        <button
-          type="button"
-          className="flex items-center gap-0.5 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900 data-[open=true]:bg-[#f4f0ea]"
-          data-open={open === "news"}
-          aria-expanded={open === "news"}
-          onClick={() => setOpen((v) => (v === "news" ? null : "news"))}
-        >
-          Novedades
-          <IconChevronDown className="size-4 text-stone-400" />
-        </button>
-        {open === "news" ? (
-          <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-xl border border-stone-200 bg-white p-3 shadow-xl ring-1 ring-stone-100">
-            <p className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
-              Recién llegado
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>
-                <Link
-                  href="/products"
-                  onClick={close}
-                  className="block rounded-lg px-2 py-2 text-sm text-stone-700 hover:bg-[#f4f0ea]"
-                >
-                  Últimos productos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/products"
-                  onClick={close}
-                  className="block rounded-lg px-2 py-2 text-sm text-stone-700 hover:bg-[#f4f0ea]"
-                >
-                  Lo más visto
-                </Link>
-              </li>
-            </ul>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Envíos */}
-      <div className="relative">
-        <button
-          type="button"
-          className="flex items-center gap-0.5 rounded-lg px-2 py-1.5 text-sm font-medium text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900 data-[open=true]:bg-[#f4f0ea]"
-          data-open={open === "shipping"}
-          aria-expanded={open === "shipping"}
-          onClick={() => setOpen((v) => (v === "shipping" ? null : "shipping"))}
-        >
-          Envíos
-          <IconChevronDown className="size-4 text-stone-400" />
-        </button>
-        {open === "shipping" ? (
-          <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-4 shadow-xl ring-1 ring-stone-100 sm:right-auto sm:left-0">
-            <p className="text-sm font-semibold text-stone-900">Envíos nacionales</p>
-            <p className="mt-2 text-xs leading-relaxed text-stone-600">
-              Tiempos y costos según zona. Esta plantilla muestra texto de ejemplo;
-              personalizalo por cliente en el fork.
-            </p>
-            <Link
-              href="/products"
-              onClick={close}
-              className="mt-3 inline-block text-sm font-semibold text-[#6b7f6a] hover:underline"
-            >
-              Seguir comprando →
-            </Link>
-          </div>
-        ) : null}
-      </div>
-    </div>
+      <Link href="/quien-soy" className={navLinkClass(quienSoyActive)}>
+        Quién Soy
+      </Link>
+    </nav>
   );
 }

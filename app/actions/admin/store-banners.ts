@@ -84,7 +84,6 @@ export async function uploadStoreBanner(formData: FormData) {
   const imagePath = `store-banners/${objectPath}`;
   const hrefRaw = String(formData.get("href") ?? "").trim();
   const href = hrefRaw.length > 0 ? hrefRaw : null;
-  const altText = String(formData.get("alt_text") ?? "").trim();
 
   const { data: maxRows } = await supabase
     .from("store_banners")
@@ -101,7 +100,7 @@ export async function uploadStoreBanner(formData: FormData) {
     placement,
     image_path: imagePath,
     href,
-    alt_text: altText,
+    alt_text: "",
     sort_order: sortOrder,
     is_published: true,
   });
@@ -151,7 +150,6 @@ export async function updateStoreBanner(formData: FormData) {
 
   const hrefRaw = String(formData.get("href") ?? "").trim();
   const href = hrefRaw.length > 0 ? hrefRaw : null;
-  const altText = String(formData.get("alt_text") ?? "").trim();
   const sortOrder = Math.max(0, Math.floor(Number(formData.get("sort_order") ?? 0)));
   const isPublished = formData.get("is_published") === "on";
 
@@ -159,7 +157,7 @@ export async function updateStoreBanner(formData: FormData) {
     .from("store_banners")
     .update({
       href,
-      alt_text: altText,
+      alt_text: "",
       sort_order: sortOrder,
       is_published: isPublished,
     })

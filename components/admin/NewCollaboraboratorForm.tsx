@@ -16,6 +16,7 @@ import {
   mergePermissionsWithDefaults,
   permissionsFromRoleTemplate,
   PERMISSION_MODULES,
+  type CollaboratorJobRole,
   type PermissionKey,
   type PermissionMap,
 } from "@/lib/admin-permissions";
@@ -28,8 +29,7 @@ export type CollaboratorInitial = {
   display_name: string | null;
   login_username: string | null;
   public_email: string | null;
-  job_role: "owner" | "cashier";
-  branch_label: string | null;
+  job_role: CollaboratorJobRole;
   avatar_variant: string | null;
   permissions: PermissionMap | null;
   is_active: boolean;
@@ -37,16 +37,16 @@ export type CollaboratorInitial = {
 
 export function NewCollaboratorHeader() {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
+    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
         <p className="text-xs font-medium text-zinc-500">
           <Link href="/admin/usuarios" className="hover:text-zinc-800">
-            Usuarios y roles
+            Equipo
           </Link>
           <span className="mx-1.5 text-zinc-300">/</span>
           <span className="text-zinc-700">Nuevo colaborador</span>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
           Nuevo colaborador
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
@@ -55,7 +55,7 @@ export function NewCollaboratorHeader() {
       </div>
       <Link
         href="/admin/usuarios"
-        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900 sm:self-auto"
         aria-label="Volver al listado"
       >
         <span className="text-lg leading-none" aria-hidden>
@@ -68,23 +68,23 @@ export function NewCollaboratorHeader() {
 
 export function EditCollaboratorHeader({ name }: { name: string }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
+    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
         <p className="text-xs font-medium text-zinc-500">
           <Link href="/admin/usuarios" className="hover:text-zinc-800">
-            Usuarios y roles
+            Equipo
           </Link>
           <span className="mx-1.5 text-zinc-300">/</span>
           <span className="text-zinc-700">Editar</span>
         </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
           Editar colaborador
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-500">{name}</p>
+        <p className="mt-2 max-w-2xl break-words text-sm text-zinc-500">{name}</p>
       </div>
       <Link
         href="/admin/usuarios"
-        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900 sm:self-auto"
         aria-label="Volver al listado"
       >
         <span className="text-lg leading-none" aria-hidden>
@@ -95,25 +95,25 @@ export function EditCollaboratorHeader({ name }: { name: string }) {
   );
 }
 
-function roleLabel(role: "owner" | "cashier") {
-  return role === "owner" ? "Dueño" : "Cajero";
+function roleLabel(role: CollaboratorJobRole) {
+  if (role === "owner") return "Dueño";
+  if (role === "support") return "Apoyo";
+  return "Cajero";
 }
 
 type Props = {
   mode: "create" | "edit";
-  branchDefault: string;
   storeLabel: string;
   initial?: CollaboratorInitial;
 };
 
-export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initial }: Props) {
+export function NewCollaboraboratorForm({ mode, storeLabel, initial }: Props) {
   const [displayName, setDisplayName] = useState(initial?.display_name ?? "");
   const [loginUsername, setLoginUsername] = useState(initial?.login_username ?? "");
   const [usernameTouched, setUsernameTouched] = useState(mode === "edit");
   const [email, setEmail] = useState(initial?.public_email ?? "");
   const [password, setPassword] = useState("");
-  const [jobRole, setJobRole] = useState<"owner" | "cashier">(initial?.job_role ?? "cashier");
-  const [branchLabel, setBranchLabel] = useState(initial?.branch_label ?? branchDefault);
+  const [jobRole, setJobRole] = useState<CollaboratorJobRole>(initial?.job_role ?? "cashier");
   const [avatarVariant, setAvatarVariant] = useState(
     (initial?.avatar_variant ?? "A").slice(0, 1).toUpperCase() || "A",
   );
@@ -154,13 +154,11 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
     displayName.trim().length > 0 &&
     loginUsername.trim().length > 0 &&
     email.includes("@") &&
-    password.length >= 6 &&
-    branchLabel.trim().length > 0;
+    password.length >= 6;
 
   const canSubmitEdit =
     displayName.trim().length > 0 &&
     loginUsername.trim().length > 0 &&
-    branchLabel.trim().length > 0 &&
     (password.length === 0 || password.length >= 6);
 
   const canSubmit = mode === "create" ? canSubmitCreate : canSubmitEdit;
@@ -175,22 +173,22 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
       ) : null}
       <input type="hidden" name="permissions_json" value={payloadJson} readOnly />
 
-      <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
-        <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <div className="grid gap-6 xl:grid-cols-3 xl:gap-8">
+        <div className="min-w-0 space-y-6 xl:col-span-2">
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className={sectionTitle}>Datos del colaborador</h2>
 
             <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start">
-              <div className="shrink-0">
+              <div className="min-w-0 shrink-0">
                 <p className={labelClass}>Avatar</p>
-                <div className="mt-2 flex items-center gap-4">
+                <div className="mt-2 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                   <CustomerAvatar
                     seed={avatarSeed}
                     size={72}
                     className="shadow-md ring-2 ring-zinc-200/90"
                     label="Avatar del colaborador"
                   />
-                  <div className="min-w-0">
+                  <div className="w-full min-w-0 sm:w-auto sm:flex-1">
                     <label className="sr-only" htmlFor="avatar-variant">
                       Variante de personaje
                     </label>
@@ -318,30 +316,13 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
                   id="job_role"
                   name="job_role"
                   value={jobRole}
-                  onChange={(e) => setJobRole(e.target.value as "owner" | "cashier")}
+                  onChange={(e) => setJobRole(e.target.value as CollaboratorJobRole)}
                   className={inputClass}
                 >
-                  <option value="cashier">Cajero</option>
                   <option value="owner">Dueño</option>
+                  <option value="cashier">Cajero</option>
+                  <option value="support">Apoyo</option>
                 </select>
-              </div>
-              <div>
-                <label htmlFor="branch_label" className={labelClass}>
-                  Sucursal <span className="text-red-600">*</span>
-                </label>
-                <select
-                  id="branch_label"
-                  name="branch_label"
-                  value={branchLabel}
-                  onChange={(e) => setBranchLabel(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value={branchDefault}>{branchDefault}</option>
-                </select>
-                <p className="mt-2 text-xs text-zinc-500">
-                  El colaborador trabajará con datos de inventario, ventas y clientes de esta
-                  sucursal.
-                </p>
               </div>
               {mode === "edit" ? (
                 <div className="flex items-center gap-3 sm:col-span-2">
@@ -367,29 +348,29 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
           </section>
         </div>
 
-        <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className={sectionTitle}>Permisos</h2>
+        <div className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:col-span-1 xl:self-start">
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <h2 className={`${sectionTitle} min-w-0`}>Permisos</h2>
               <button
                 type="button"
                 onClick={restoreByRole}
-                className="shrink-0 text-xs font-semibold text-blue-700 hover:underline"
+                className="shrink-0 self-start text-xs font-semibold text-blue-700 hover:underline sm:self-auto"
               >
                 Restaurar por rol
               </button>
             </div>
-            <div className="mt-4 max-h-[min(28rem,55vh)] space-y-6 overflow-y-auto pr-1">
+            <div className="mt-4 max-h-[min(28rem,55vh)] min-w-0 space-y-6 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
               {PERMISSION_MODULES.map((mod) => (
                 <div key={mod.id}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
                     {mod.label}
                   </p>
-                  <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                  <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     {mod.items.map((item) => (
                       <label
                         key={item.key}
-                        className={`flex cursor-pointer items-start gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:bg-zinc-50 ${item.readOnly ? "opacity-80" : ""}`}
+                        className={`flex min-w-0 cursor-pointer items-start gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:bg-zinc-50 ${item.readOnly ? "opacity-80" : ""}`}
                       >
                         <input
                           type="checkbox"
@@ -398,7 +379,9 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
                           disabled={item.readOnly}
                           className="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
                         />
-                        <span className="text-sm leading-snug text-zinc-800">{item.label}</span>
+                        <span className="min-w-0 break-words text-sm leading-snug text-zinc-800">
+                          {item.label}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -407,7 +390,7 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className={sectionTitle}>Resumen</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-2 border-b border-zinc-100 pb-2">
@@ -425,10 +408,6 @@ export function NewCollaboraboratorForm({ mode, branchDefault, storeLabel, initi
               <div className="flex justify-between gap-2">
                 <dt className="text-zinc-500">Rol</dt>
                 <dd className="text-right font-medium text-zinc-900">{summaryRole}</dd>
-              </div>
-              <div className="flex justify-between gap-2 pt-1">
-                <dt className="text-zinc-500">Sucursal</dt>
-                <dd className="max-w-[58%] truncate text-right text-zinc-800">{branchLabel || "—"}</dd>
               </div>
             </dl>
             <button

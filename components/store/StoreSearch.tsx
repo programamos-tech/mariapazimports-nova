@@ -102,7 +102,7 @@ export function StoreSearch() {
   const showPanel = open && debounced.length >= 2;
 
   return (
-    <div ref={wrapRef} className="relative min-w-[200px] flex-1 lg:max-w-xl">
+    <div ref={wrapRef} className="relative min-w-0 w-full max-w-none flex-1 lg:min-w-[12rem]">
       <form
         onSubmit={onSubmit}
         className="flex items-center gap-2 rounded-full border border-stone-200 bg-[#faf8f5] py-2 pl-4 pr-3 shadow-sm"
@@ -146,7 +146,7 @@ export function StoreSearch() {
           id="store-search-results"
           role="listbox"
           aria-label="Resultados de búsqueda"
-          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,22rem)] w-[min(100%,28rem)] overflow-y-auto rounded-xl border border-stone-200/90 bg-white shadow-xl shadow-stone-200/90 ring-1 ring-stone-100 sm:left-auto sm:right-0 sm:ml-auto sm:mr-0 lg:w-[28rem]"
+          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,22rem)] w-full min-w-0 overflow-y-auto rounded-xl border border-stone-200/90 bg-white shadow-xl shadow-stone-200/90 ring-1 ring-stone-100"
         >
           {loading ? (
             <div className="space-y-0 p-2">

@@ -13,6 +13,41 @@ export function ventaFormaPagoLabel(wompiReference: string | null | undefined): 
   return "En línea";
 }
 
+/** Pill de forma de pago (colores para escanear la tabla). */
+export function ventaFormaPagoBadge(
+  wompiReference: string | null | undefined,
+): { label: string; className: string } {
+  const r = wompiReference?.trim() ?? "";
+  if (r === "POS:cash") {
+    return {
+      label: "Efectivo",
+      className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/90",
+    };
+  }
+  if (r === "POS:transfer") {
+    return {
+      label: "Transferencia",
+      className: "bg-sky-50 text-sky-900 ring-1 ring-sky-200/90",
+    };
+  }
+  if (r === "POS:mixed") {
+    return {
+      label: "Mixto",
+      className: "bg-violet-50 text-violet-900 ring-1 ring-violet-200/90",
+    };
+  }
+  if (r.startsWith("POS:")) {
+    return {
+      label: "Mostrador",
+      className: "bg-zinc-100 text-zinc-800 ring-1 ring-zinc-200/80",
+    };
+  }
+  return {
+    label: "En línea",
+    className: "bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200/90",
+  };
+}
+
 export type VentaPagoFilter = "all" | "cash" | "transfer" | "mixed" | "online";
 
 export function matchesVentaPagoFilter(
@@ -31,12 +66,43 @@ export function matchesVentaPagoFilter(
 
 export type VentaEstadoFilter = "all" | "paid" | "cancelled" | "pending" | "failed";
 
+/** Estado del cobro (columna distinta al ciclo de factura en el detalle). */
+export function ventaPagoRecibidoBadge(status: string): { label: string; className: string } {
+  switch (status) {
+    case "paid":
+      return {
+        label: "Pagado",
+        className: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/90",
+      };
+    case "pending":
+      return {
+        label: "Pendiente",
+        className: "bg-amber-50 text-amber-900 ring-1 ring-amber-100",
+      };
+    case "failed":
+      return {
+        label: "Fallido",
+        className: "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200/80",
+      };
+    case "cancelled":
+      return {
+        label: "Cancelado",
+        className: "bg-red-50 text-red-700 ring-1 ring-red-100",
+      };
+    default:
+      return {
+        label: status,
+        className: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/80",
+      };
+  }
+}
+
 export function ventaEstadoBadge(status: string): { label: string; className: string } {
   switch (status) {
     case "paid":
       return {
         label: "Finalizada",
-        className: "bg-zinc-100 text-zinc-800 ring-1 ring-zinc-200/80",
+        className: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/90",
       };
     case "cancelled":
       return {

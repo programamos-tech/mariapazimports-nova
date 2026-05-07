@@ -1,17 +1,6 @@
 import { createAvatar } from "@dicebear/core";
 import * as notionists from "@dicebear/notionists";
-
-/** Fondos circulares para el estilo Notionists. */
-const CIRCLE_BACKGROUNDS = [
-  "ffd5dc",
-  "b8e0ff",
-  "c8f7c5",
-  "fff3bf",
-  "e9d5ff",
-  "ffe4c9",
-  "d4f1f4",
-  "f5d0c5",
-];
+import { ADMIN_SIDEBAR_BG } from "@/lib/admin-theme";
 
 type Props = {
   /** Email o id (vía `customerAvatarSeed`) → mismo personaje siempre. */
@@ -29,7 +18,7 @@ export function CustomerAvatar({ seed, size = 40, className = "", label }: Props
   const svg = createAvatar(notionists, {
     seed: safe,
     size,
-    backgroundColor: CIRCLE_BACKGROUNDS,
+    backgroundColor: [ADMIN_SIDEBAR_BG.replace(/^#/, "")],
     radius: 50,
   }).toString();
 

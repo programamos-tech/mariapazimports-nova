@@ -38,82 +38,80 @@ function BannerRowEditor({ row }: { row: StoreBannerRow }) {
   const url = storagePublicObjectUrl(row.image_path);
 
   return (
-    <li className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 sm:flex-row sm:items-start">
-      <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-lg bg-zinc-200">
-        {url ? (
-          <Image
-            src={url}
-            alt={row.alt_text || "Banner"}
-            fill
-            sizes="160px"
-            className="object-cover"
-            unoptimized={shouldUnoptimizeStorageImageUrl(url)}
-          />
-        ) : null}
+    <li className="min-w-0 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+        <div className="relative mx-auto aspect-[5/3] w-full max-w-md shrink-0 overflow-hidden rounded-lg bg-zinc-200 sm:mx-0 sm:aspect-auto sm:h-28 sm:w-44">
+          {url ? (
+            <Image
+              src={url}
+              alt="Banner"
+              fill
+              sizes="(max-width: 640px) 100vw, 176px"
+              className="object-cover"
+              unoptimized={shouldUnoptimizeStorageImageUrl(url)}
+            />
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <form action={deleteStoreBanner} className="w-full sm:w-auto">
+              <input type="hidden" name="id" value={row.id} readOnly />
+              <button
+                type="submit"
+                className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50 sm:w-auto"
+              >
+                Eliminar
+              </button>
+            </form>
+          </div>
+
+          <form action={updateStoreBanner} className="space-y-3">
+            <input type="hidden" name="id" value={row.id} readOnly />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="min-w-0 sm:col-span-2">
+                <label className={labelClass}>Enlace (opcional)</label>
+                <input
+                  name="href"
+                  type="url"
+                  defaultValue={row.href ?? ""}
+                  placeholder="https://…"
+                  className={inputClass}
+                />
+              </div>
+              <div className="min-w-0">
+                <label className={labelClass}>Orden</label>
+                <input
+                  name="sort_order"
+                  type="number"
+                  min={0}
+                  defaultValue={row.sort_order}
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex min-w-0 items-end gap-2 pb-0.5">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-800">
+                  <input
+                    type="checkbox"
+                    name="is_published"
+                    defaultChecked={row.is_published}
+                    className="size-4 shrink-0 rounded border-zinc-300 text-zinc-900"
+                  />
+                  Publicado
+                </label>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 sm:w-auto sm:text-xs"
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-      <form action={updateStoreBanner} className="min-w-0 flex-1 space-y-3">
-        <input type="hidden" name="id" value={row.id} readOnly />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className={labelClass}>Enlace (opcional)</label>
-            <input
-              name="href"
-              type="url"
-              defaultValue={row.href ?? ""}
-              placeholder="https://…"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Texto alternativo</label>
-            <input
-              name="alt_text"
-              type="text"
-              defaultValue={row.alt_text ?? ""}
-              placeholder="Descripción breve"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Orden</label>
-            <input
-              name="sort_order"
-              type="number"
-              min={0}
-              defaultValue={row.sort_order}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex items-end gap-2 pb-0.5">
-            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-zinc-800">
-              <input
-                type="checkbox"
-                name="is_published"
-                defaultChecked={row.is_published}
-                className="size-4 rounded border-zinc-300 text-zinc-900"
-              />
-              Publicado
-            </label>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
-            className="rounded-lg bg-zinc-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-800"
-          >
-            Guardar cambios
-          </button>
-        </div>
-      </form>
-      <form action={deleteStoreBanner} className="shrink-0 self-end sm:self-start">
-        <input type="hidden" name="id" value={row.id} readOnly />
-        <button
-          type="submit"
-          className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm hover:bg-red-50"
-        >
-          Eliminar
-        </button>
-      </form>
     </li>
   );
 }
@@ -128,7 +126,7 @@ function UploadBlock({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-4">
+    <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-4 sm:p-5">
       <p className="text-sm font-medium text-zinc-800">{title}</p>
       <p className="mt-1 text-xs text-zinc-500">{hint}</p>
       <form
@@ -150,15 +148,6 @@ function UploadBlock({
         <div>
           <label className={labelClass}>Enlace al hacer clic (opcional)</label>
           <input name="href" type="url" placeholder="https://…" className={inputClass} />
-        </div>
-        <div>
-          <label className={labelClass}>Texto alternativo (opcional)</label>
-          <input
-            name="alt_text"
-            type="text"
-            placeholder="Ej. Oferta de verano"
-            className={inputClass}
-          />
         </div>
         <button
           type="submit"
@@ -185,7 +174,7 @@ function Section({
   const list = rows.filter((r) => r.placement === placement);
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className={sectionTitle}>{label}</h2>
       <p className="mt-2 text-sm text-zinc-500">{description}</p>
 

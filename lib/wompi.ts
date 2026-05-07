@@ -12,6 +12,16 @@ export function getWompiEnv(): WompiEnv {
   return process.env.WOMPI_ENV === "production" ? "production" : "sandbox";
 }
 
+/** Sin `WOMPI_PRIVATE_KEY`, en desarrollo (o con `CHECKOUT_SKIP_WOMPI=true`) el checkout no llama a Wompi. */
+export function shouldSkipWompiPayment(): boolean {
+  if (process.env.WOMPI_PRIVATE_KEY?.trim()) return false;
+  return (
+    process.env.NODE_ENV === "development" ||
+    process.env.CHECKOUT_SKIP_WOMPI === "1" ||
+    process.env.CHECKOUT_SKIP_WOMPI === "true"
+  );
+}
+
 type CreatePaymentLinkInput = {
   name: string;
   description: string;

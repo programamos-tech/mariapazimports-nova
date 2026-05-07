@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import type { CSSProperties } from "react";
+import { Geist_Mono, Montserrat } from "next/font/google";
+import { storeBrand, storeShortDescription } from "@/lib/brand";
+import { ADMIN_SIDEBAR_BG, STORE_CHROME_BG } from "@/lib/admin-theme";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -12,11 +15,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const storeName = process.env.NEXT_PUBLIC_STORE_NAME ?? "programamos templates";
-
 export const metadata: Metadata = {
-  title: storeName,
-  description: "Plantilla de tienda — catálogo, carrito y pagos.",
+  title: storeBrand,
+  description: storeShortDescription,
 };
 
 export default function RootLayout({
@@ -27,10 +28,18 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
       style={{ colorScheme: "light" }}
     >
-      <body className="flex min-h-full flex-col bg-white text-stone-800">
+      <body
+        className="flex min-h-full flex-col bg-white text-stone-800"
+        style={
+          {
+            "--admin-sidebar-bg": ADMIN_SIDEBAR_BG,
+            "--store-chrome-bg": STORE_CHROME_BG,
+          } as CSSProperties
+        }
+      >
         {children}
       </body>
     </html>

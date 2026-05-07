@@ -116,7 +116,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
               label={`Avatar de ${customer.name}`}
             />
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
                 {customer.name}
               </h1>
               <p className="mt-1 text-sm text-zinc-500">{metaLine}</p>
@@ -185,7 +185,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
             Facturas
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
@@ -213,7 +213,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
         </section>
 
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
             Top productos comprados
           </h2>
           {topProducts.length === 0 ? (
@@ -247,7 +247,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
       <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
               Créditos
             </h2>
             <p className="mt-1 text-sm text-zinc-500">

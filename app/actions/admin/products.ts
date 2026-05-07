@@ -1,5 +1,6 @@
 "use server";
 
+import { logAdminActivity } from "@/lib/admin-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -217,6 +218,15 @@ export async function createProduct(formData: FormData) {
   }
 
   const id = row.id as string;
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "product_created",
+    entityType: "product",
+    entityId: id,
+    summary: `Nuevo producto: ${name} (${reference})`,
+    metadata: { price_cents, stock_warehouse: stockWarehouse, stock_local: stockLocal },
+  });
+  revalidatePath("/admin/actividades");
   const uploaded = await uploadProductImageFromForm(supabase, id, formData);
   if (uploaded.status === "ok") {
     await supabase
@@ -296,6 +306,16 @@ export async function updateProduct(productId: string, formData: FormData) {
     }
     redirect(`/admin/products/${productId}/edit?error=db`);
   }
+
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "product_updated",
+    entityType: "product",
+    entityId: productId,
+    summary: `Producto actualizado: ${name} (${reference})`,
+    metadata: { price_cents, stock_warehouse: stockWarehouse, stock_local: stockLocal },
+  });
+  revalidatePath("/admin/actividades");
 
   const uploaded = await uploadProductImageFromForm(supabase, productId, formData);
   if (uploaded.status === "ok") {
@@ -382,6 +402,24 @@ export async function adjustProductStock(productId: string, formData: FormData) 
 
   if (error) redirect("/admin/products?error=stock");
 
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "stock_adjusted",
+    entityType: "product",
+    entityId: productId,
+    summary: `Stock ${isWarehouse ? "depósito" : "tienda"} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
+    metadata: {
+      location: isWarehouse ? "warehouse" : "local",
+      movement_mode: movementMode,
+      quantity: qty,
+      previous_local: curLocal,
+      previous_warehouse: curWh,
+      next_local: nextLocal,
+      next_warehouse: nextWh,
+    },
+  });
+  revalidatePath("/admin/actividades");
+
   const returnTo = safeStockAdjustReturnTo(String(formData.get("return_to") ?? ""));
 
   revalidatePath("/products");
@@ -444,6 +482,23 @@ export async function transferProductStock(productId: string, formData: FormData
     .eq("id", productId);
 
   if (error) redirect(`${transferPage}?error=transfer`);
+
+  await logAdminActivity(supabase, {
+    actorId: user.id,
+    actionType: "stock_transferred",
+    entityType: "product",
+    entityId: productId,
+    summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${qty} u.`,
+    metadata: {
+      direction,
+      quantity: qty,
+      previous_local: curLocal,
+      previous_warehouse: curWh,
+      next_local: nextLocal,
+      next_warehouse: nextWh,
+    },
+  });
+  revalidatePath("/admin/actividades");
 
   const returnTo = safeStockAdjustReturnTo(String(formData.get("return_to") ?? ""));
 

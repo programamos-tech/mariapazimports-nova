@@ -1,14 +1,7 @@
-/** Catálogo visual para mega-menú (sin tabla `categories` en DB aún). */
-export const megaMenuCategories = [
-  { id: "hogar", name: "Hogar", sub: "Mobiliario y decoración", emoji: "🪑", tint: "bg-[#eef4ec]" },
-  { id: "bolsos", name: "Bolsos", sub: "Accesorios", emoji: "👜", tint: "bg-[#faf3ee]" },
-  { id: "tech", name: "Tech", sub: "Gadgets y audio", emoji: "🎧", tint: "bg-[#ecf4f6]" },
-  { id: "moda", name: "Moda", sub: "Ropa y calzado", emoji: "👟", tint: "bg-[#f3eff6]" },
-  { id: "bienestar", name: "Bienestar", sub: "Cuidado personal", emoji: "🧴", tint: "bg-[#f5f3ea]" },
-  { id: "regalos", name: "Regalos", sub: "Detalles especiales", emoji: "🎁", tint: "bg-[#faf5ed]" },
-] as const;
-
-/** Reparte `total` en 6 enteros que suman `total` (estilo “N ítems” por fila). */
+/**
+ * @deprecated Los menús de categoría usan `fetchStoreCategoriesWithCounts`.
+ * Se mantiene el archivo por si algún import legacy lo espera.
+ */
 export function distributeProductCounts(total: number, n: number): number[] {
   if (n <= 0) return [];
   const base = Math.floor(total / n);

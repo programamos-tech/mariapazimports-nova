@@ -57,7 +57,7 @@ export function ProductDeleteConfirmForm({
         if (pending) e.preventDefault();
       }}
     >
-      <h2 id="product-delete-dialog-title" className="text-lg font-bold text-zinc-900">
+      <h2 id="product-delete-dialog-title" className="text-lg font-semibold text-zinc-900">
         ¿Eliminar este producto?
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-zinc-600">
@@ -93,7 +93,7 @@ export function ProductDeleteConfirmForm({
           type="button"
           title="Eliminar producto"
           aria-label="Eliminar producto"
-          className="inline-flex size-10 items-center justify-center rounded-full border-2 border-red-200 bg-white text-red-600 shadow-sm transition hover:bg-red-50"
+          className="inline-flex size-10 items-center justify-center rounded-full border border-red-200/90 bg-white text-red-600 transition hover:bg-red-50"
           onClick={openDialog}
         >
           <IconTrash />
