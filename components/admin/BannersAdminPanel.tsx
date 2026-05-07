@@ -131,7 +131,6 @@ function UploadBlock({
       <p className="mt-1 text-xs text-zinc-500">{hint}</p>
       <form
         action={uploadStoreBanner}
-        encType="multipart/form-data"
         className="mt-4 space-y-3"
       >
         <input type="hidden" name="placement" value={placement} readOnly />

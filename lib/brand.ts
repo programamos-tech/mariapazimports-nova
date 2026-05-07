@@ -40,6 +40,15 @@ export const storeAnnouncementMessage =
   process.env.NEXT_PUBLIC_STORE_ANNOUNCEMENT ??
   "Productos 100% originales — envíos nacionales";
 
+/** Mensaje corto del banner de bienvenida de la tienda. */
+export const storeWelcomeDiscountMessage =
+  process.env.NEXT_PUBLIC_STORE_WELCOME_BANNER ??
+  "Bienvenida: 10% OFF en tu primera compra";
+
+/** Código promocional visible en el banner de bienvenida. */
+export const storeWelcomeDiscountCode =
+  process.env.NEXT_PUBLIC_STORE_WELCOME_CODE ?? "BIENVENIDA10";
+
 /** Email de contacto visible en el footer. */
 export const storeSupportEmail =
   process.env.NEXT_PUBLIC_STORE_EMAIL ?? "hola@mariapazimports.com";
@@ -52,3 +61,8 @@ export const storeSupportHours =
 export const storeInstagramUrl =
   process.env.NEXT_PUBLIC_STORE_INSTAGRAM_URL ??
   "https://www.instagram.com/mariapazimports/";
+
+/** Mensaje precargado para abrir WhatsApp. */
+export const storeWhatsAppPrefilledText =
+  process.env.NEXT_PUBLIC_WHATSAPP_TEXT ??
+  "Hola, quiero asesoría para elegir mis productos.";

@@ -110,6 +110,8 @@ export default async function CheckoutPage({
                 : "Hay productos en tu carrito que ya no están publicados. Volvé al carrito para actualizarlo.")}
             {error === "order" && "No se pudo crear el pedido."}
             {error === "items" && "No se pudieron guardar los ítems del pedido."}
+            {error === "coupon_invalid" &&
+              "El cupón no es válido o ya no está activo. Revisalo e intentá de nuevo."}
             {error === "wompi" &&
               (message
                 ? `Wompi: ${decodeURIComponent(message)}`
@@ -120,6 +122,7 @@ export default async function CheckoutPage({
               "missing_shipping",
               "products",
               "unpublished",
+              "coupon_invalid",
               "order",
               "items",
               "wompi",
@@ -299,19 +302,16 @@ export default async function CheckoutPage({
                   </p>
                   <div className="flex gap-2">
                     <input
+                      name="couponCode"
                       type="text"
-                      disabled
                       placeholder="Código de cupón"
-                      className={`${inputClass} flex-1 opacity-60`}
+                      className={`${inputClass} flex-1`}
                     />
-                    <button
-                      type="button"
-                      disabled
-                      className="shrink-0 rounded-full bg-[#6b7f6a] px-4 py-2.5 text-sm font-semibold text-white opacity-50"
-                    >
-                      Aplicar
-                    </button>
                   </div>
+                  <p className="mt-2 text-xs text-stone-500">
+                    Al confirmar el pedido, si el código coincide con el modal activo,
+                    se aplica 10% de descuento.
+                  </p>
                 </div>
               </section>
 

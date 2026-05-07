@@ -8,6 +8,7 @@ import {
   getWompiEnv,
   shouldSkipWompiPayment,
 } from "@/lib/wompi";
+import { fetchActiveWelcomeModal } from "@/lib/store-welcome-modal";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -33,6 +34,7 @@ export async function startCheckout(formData: FormData) {
   const shippingCity = String(formData.get("city") ?? "").trim();
   const shippingPostalCode = String(formData.get("zipCode") ?? "").trim();
   const shippingPhone = String(formData.get("mobile") ?? "").trim();
+  const couponCode = String(formData.get("couponCode") ?? "").trim();
 
   if (!resolvedName) {
     redirect("/checkout?error=missing_name");
@@ -97,6 +99,17 @@ export async function startCheckout(formData: FormData) {
     });
   }
 
+  let discount = 0;
+  if (couponCode) {
+    const activeWelcome = await fetchActiveWelcomeModal(supabase);
+    const activeCode = (activeWelcome?.discount_code ?? "").trim();
+    if (!activeCode || activeCode.toLowerCase() !== couponCode.toLowerCase()) {
+      redirect("/checkout?error=coupon_invalid");
+    }
+    discount = Math.max(0, Math.round(total * 0.1));
+  }
+  const totalWithDiscount = Math.max(0, total - discount);
+
   const first = byId.get(normalized[0]!.productId);
   const currency = first?.currency ?? "COP";
 
@@ -149,7 +162,7 @@ export async function startCheckout(formData: FormData) {
       customer_id: customerId,
       customer_email: customerEmail,
       customer_name: resolvedName,
-      total_cents: total,
+      total_cents: totalWithDiscount,
       currency,
       status: "pending",
       shipping_address: shippingAddress,
@@ -209,7 +222,7 @@ export async function startCheckout(formData: FormData) {
   const link = await createPaymentLink({
     name: `${storeBrand} · Pedido`,
     description: `Pedido ${orderId}`,
-    amountInCents: total,
+    amountInCents: totalWithDiscount,
     currency,
     redirectUrl: returnUrl,
     sku: orderId,
