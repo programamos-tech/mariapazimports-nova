@@ -22,17 +22,24 @@ function prettyDayLabel(key: string) {
 
 export default async function AdminHomePage() {
   const supabase = await createSupabaseServerClient();
-  const [productsRes, ordersRes] = await Promise.all([
+  const [productsRes, ordersRes, expensesRes] = await Promise.all([
     supabase
       .from("products")
       .select("stock_quantity,cost_cents"),
     supabase
       .from("orders")
       .select("status,total_cents,created_at,wompi_reference"),
+    supabase
+      .from("store_expenses")
+      .select("id,concept,category,amount_cents,payment_method,notes,expense_date,created_at")
+      .order("expense_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(200),
   ]);
 
   const products = productsRes.data ?? [];
   const orders = ordersRes.data ?? [];
+  const expenses = expensesRes.data ?? [];
   const todayKey = new Date().toISOString().slice(0, 10);
 
   let totalIngresos = 0;
@@ -41,6 +48,8 @@ export default async function AdminHomePage() {
   let anuladas = 0;
   let gananciaBruta = 0;
   let ventasVirtuales = 0;
+  let egresosHoy = 0;
+  let cantidadEgresosHoy = 0;
 
   for (const o of orders) {
     const createdAt = typeof o.created_at === "string" ? o.created_at : null;
@@ -60,6 +69,17 @@ export default async function AdminHomePage() {
     } else if (o.status === "cancelled") {
       anuladas += 1;
     }
+  }
+  for (const e of expenses) {
+    const dateKey =
+      typeof e.expense_date === "string"
+        ? e.expense_date
+        : typeof e.created_at === "string"
+          ? e.created_at.slice(0, 10)
+          : null;
+    if (!dateKey || dateKey !== todayKey) continue;
+    egresosHoy += Number(e.amount_cents ?? 0);
+    cantidadEgresosHoy += 1;
   }
 
   const stockInversion = products.reduce((sum, p) => {
@@ -150,7 +170,11 @@ export default async function AdminHomePage() {
             ["Efectivo", formatCop(efectivo), totalIngresos > 0 ? `${Math.round((efectivo / totalIngresos) * 100)}% del total` : "0% del total"],
             ["Transferencia", formatCop(transferencia), totalIngresos > 0 ? `${Math.round((transferencia / totalIngresos) * 100)}% del total` : "0% del total"],
             ["Facturas anuladas", String(anuladas), "Facturas anuladas"],
-            ["Garantías", "0", "Completadas"],
+            [
+              "Egresos",
+              formatCop(egresosHoy),
+              `${cantidadEgresosHoy} registrados hoy`,
+            ],
             ["Ganancia bruta", formatCop(gananciaBruta), "Por ventas del periodo"],
             ["Stock (inversión)", formatCop(stockInversion), "Inversión en stock"],
             [

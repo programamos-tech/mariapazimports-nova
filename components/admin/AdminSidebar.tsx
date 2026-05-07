@@ -52,6 +52,17 @@ const navSections: {
         ),
       },
       {
+        href: "/admin/egresos",
+        label: "Egresos",
+        icon: (
+          <Icon>
+            <path d="M4 6h16v12H4z" />
+            <path d="M8 10h8" />
+            <path d="M8 14h5" />
+          </Icon>
+        ),
+      },
+      {
         href: "/admin/products",
         label: "Productos",
         icon: (
