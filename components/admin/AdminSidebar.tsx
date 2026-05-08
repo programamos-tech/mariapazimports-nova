@@ -126,6 +126,18 @@ const navSections: {
         ),
       },
       {
+        href: "/admin/coupons",
+        label: "Cupones",
+        icon: (
+          <Icon>
+            <path d="M20 12V8H4v4" />
+            <path d="M12 8v11" />
+            <path d="M8 19h8" />
+            <path d="M8 5h8v3H8z" />
+          </Icon>
+        ),
+      },
+      {
         href: "/admin/settings",
         label: "Ajustes",
         icon: (
@@ -160,6 +172,7 @@ function isActive(pathname: string, href: string) {
 const PRODUCTS_HREF = "/admin/products";
 const VENTAS_HUB_HREF = "/admin/ventas";
 const CUSTOMERS_HREF = "/admin/customers";
+const COUPONS_HREF = "/admin/coupons";
 const USUARIOS_HREF = "/admin/usuarios";
 
 function navItemActive(
@@ -180,6 +193,9 @@ function navItemActive(
   }
   if (href === CUSTOMERS_HREF) {
     return pathname === CUSTOMERS_HREF || pathname.startsWith(`${CUSTOMERS_HREF}/`);
+  }
+  if (href === COUPONS_HREF) {
+    return pathname === COUPONS_HREF || pathname.startsWith(`${COUPONS_HREF}/`);
   }
   return isActive(pathname, href);
 }

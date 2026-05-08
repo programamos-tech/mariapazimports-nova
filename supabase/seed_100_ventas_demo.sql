@@ -1,9 +1,9 @@
 -- Simula ~100 ventas (orders + order_items) para probar Reportes, Ventas y dashboards.
--- Ejecutá en Supabase → SQL Editor (rol que omita RLS, p. ej. postgres) o: `supabase db execute -f ...`
+-- Ejecuta en Supabase → SQL Editor (rol que omita RLS, p. ej. postgres) o: `supabase db execute -f ...`
 --
 -- No descuenta stock de productos (solo datos de lectura para la UI).
 -- Si ya corriste el script, los clientes sim.* no se duplican; las órdenes sí se agregan de nuevo
--- si volvés a ejecutar — borrá órdenes de prueba antes si querés empezar de cero:
+-- si vuelves a ejecutar — borra órdenes de prueba antes si quieres empezar de cero:
 --   DELETE FROM public.orders WHERE customer_email LIKE 'sim.ventas.%@example.local';
 
 BEGIN;
@@ -45,12 +45,12 @@ DECLARE
 BEGIN
   SELECT count(*)::int INTO prod_n FROM public.products;
   IF prod_n < 1 THEN
-    RAISE EXCEPTION 'No hay productos en public.products. Creá al menos uno antes de correr este seed.';
+    RAISE EXCEPTION 'No hay productos en public.products. Crea al menos uno antes de correr este seed.';
   END IF;
 
   SELECT count(*)::int INTO cust_n FROM public.customers;
   IF cust_n < 1 THEN
-    RAISE EXCEPTION 'No hay clientes. El bloque INSERT anterior debería haber creado sim.ventas.* — revisá la migración de customers.';
+    RAISE EXCEPTION 'No hay clientes. El bloque INSERT anterior debería haber creado sim.ventas.* — revisa la migración de customers.';
   END IF;
 
   FOR i IN 1..100 LOOP

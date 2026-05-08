@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import {
+  STORE_HEADER_ICON_LG,
+  STORE_HEADER_ICON_STROKE,
+} from "@/lib/store-header-icons";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 
 export function StoreFavoritesNavLink() {
@@ -14,19 +18,15 @@ export function StoreFavoritesNavLink() {
       aria-label={
         count > 0 ? `Favoritos, ${count} producto${count === 1 ? "" : "s"}` : "Favoritos"
       }
-      className={`relative flex size-10 items-center justify-center rounded-lg transition-colors hover:bg-[#f4f0ea] ${
-        filled ? "text-rose-500 hover:text-rose-600" : "text-stone-600 hover:text-rose-600"
-      }`}
+      className="flex items-center justify-center rounded-none p-1.5 text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2"
     >
       <Heart
-        className="size-5"
-        strokeWidth={2}
+        className={STORE_HEADER_ICON_LG}
+        strokeWidth={STORE_HEADER_ICON_STROKE}
         fill={filled ? "currentColor" : "none"}
       />
       {ready && count > 0 ? (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white">
-          {count > 9 ? "9+" : count}
-        </span>
+        <span className="sr-only">{count} guardados</span>
       ) : null}
     </Link>
   );

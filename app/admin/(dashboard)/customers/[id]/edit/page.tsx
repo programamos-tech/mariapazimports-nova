@@ -50,11 +50,11 @@ export default async function AdminCustomerEditPage({ params, searchParams }: Pr
           ) : error === "duplicate_email" ? (
             "Ya existe otro cliente con ese correo electrónico."
           ) : error === "addresses_invalid" ? (
-            "Los datos de dirección no son válidos. Recargá la página e intentá de nuevo."
+            "Los datos de dirección no son válidos. Recarga la página e intenta de nuevo."
           ) : (
             <>
               No se pudo guardar en la base de datos. Si falta la tabla de direcciones,
-              ejecutá la migración{" "}
+              ejecuta la migración{" "}
               <code className="rounded bg-red-100/80 px-1 py-0.5 text-xs">
                 20260513120000_customer_addresses.sql
               </code>{" "}

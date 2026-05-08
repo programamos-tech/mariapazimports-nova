@@ -131,21 +131,28 @@ export function AdminDateInput({
   value,
   onChange,
   required,
+  allowEmpty = false,
+  emptyLabel = "dd/mm/aaaa",
 }: {
   id?: string;
   name: string;
   value: string;
   onChange: (next: string) => void;
   required?: boolean;
+  /** Si es true y `value` está vacío, no se asume “hoy” y se puede borrar la fecha. */
+  allowEmpty?: boolean;
+  emptyLabel?: string;
 }) {
   const anchorRef = useRef<HTMLDivElement>(null);
-  const selected = parseDateInput(value) ?? new Date();
+  const selectedDate = allowEmpty
+    ? (value.trim() ? parseDateInput(value) : null)
+    : (parseDateInput(value) ?? new Date());
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState(() => new Date(selected.getFullYear(), selected.getMonth(), 1));
-
-  useEffect(() => {
-    setView(new Date(selected.getFullYear(), selected.getMonth(), 1));
-  }, [value]); // sincroniza cuando cambia desde fuera
+  const [view, setView] = useState(() =>
+    selectedDate
+      ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      : new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -174,11 +181,29 @@ export function AdminDateInput({
       <button
         id={id}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((prev) => {
+            if (prev) return false;
+            const p = allowEmpty
+              ? (value.trim() ? parseDateInput(value) : null)
+              : (parseDateInput(value) ?? new Date());
+            const base = p ?? new Date();
+            setView(new Date(base.getFullYear(), base.getMonth(), 1));
+            return true;
+          });
+        }}
         className={`${productInputClass} flex items-center justify-between text-left`}
       >
-        <span className="tabular-nums">
-          {selected.toLocaleDateString("es-CO")}
+        <span
+          className={
+            selectedDate
+              ? "tabular-nums text-zinc-900"
+              : "text-zinc-400"
+          }
+        >
+          {selectedDate
+            ? selectedDate.toLocaleDateString("es-CO")
+            : emptyLabel}
         </span>
         <svg viewBox="0 0 24 24" className="size-4 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={1.8}>
           <rect x="3.5" y="5" width="17" height="15" rx="2" />
@@ -216,9 +241,10 @@ export function AdminDateInput({
             {days.map((d) => {
               const inMonth = d.getMonth() === view.getMonth();
               const active =
-                d.getFullYear() === selected.getFullYear() &&
-                d.getMonth() === selected.getMonth() &&
-                d.getDate() === selected.getDate();
+                selectedDate !== null &&
+                d.getFullYear() === selectedDate.getFullYear() &&
+                d.getMonth() === selectedDate.getMonth() &&
+                d.getDate() === selectedDate.getDate();
               return (
                 <button
                   key={d.toISOString()}
@@ -241,14 +267,28 @@ export function AdminDateInput({
               );
             })}
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => onChange(toInputDate(new Date()))}
-              className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
-            >
-              Hoy
-            </button>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              {allowEmpty ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
+                  className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  Borrar
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onChange(toInputDate(new Date()))}
+                className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Hoy
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setOpen(false)}

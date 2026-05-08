@@ -1,58 +1,21 @@
-import type { SVGProps } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   storeBrand,
   storeCopyrightHolder,
   storeInstagramUrl,
-  storeShortDescription,
+  storeLogoPath,
   storeSupportEmail,
   storeSupportHours,
   storeSupportPhone,
-  storeTagline,
+  storeWhatsAppUrl,
 } from "@/lib/brand";
 
-function IconMail(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden {...props}>
-      <path d="M4 6h16v12H4V6Z" strokeLinejoin="round" />
-      <path d="m4 7 8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const footerColumnTitle =
+  "text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900";
 
-function IconPhone(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden {...props}>
-      <path
-        d="M6.5 4h3l1.5 4-2 1.5c1 3 3.5 5.5 6.5 6.5L15 15l4 1.5v3a1 1 0 0 1-1 1A15 15 0 0 1 6.5 5a1 1 0 0 1 1-1Z"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconClock(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v6l3.5 2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconInstagram(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden {...props}>
-      <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
-      <circle cx="12" cy="12" r="4" />
-      <path d="M17.5 6.5h.01" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-const footerLinkClass =
-  "text-sm text-stone-600 transition hover:text-[#3d5240] hover:underline underline-offset-4";
+const footerLink =
+  "block text-sm leading-relaxed text-stone-700 transition hover:text-stone-900 hover:underline underline-offset-4";
 
 const telHref = `tel:${storeSupportPhone.replace(/[^\d+]/g, "")}`;
 
@@ -60,131 +23,145 @@ export function StoreFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-stone-200/80 bg-[var(--store-chrome-bg)]">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:py-14 lg:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
-          <div className="lg:col-span-4">
-            <Link
-              href="/"
-              className="group inline-block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#6b7f6a] focus-visible:ring-offset-2"
-            >
-              <Image
-                src="/logobackoficce.png"
-                alt={storeBrand}
-                width={560}
-                height={239}
-                className="h-16 w-auto max-w-[min(100%,22rem)] object-contain object-left transition-opacity group-hover:opacity-90 sm:h-20 sm:max-w-[min(100%,28rem)] lg:h-24 lg:max-w-[min(100%,34rem)]"
-              />
-            </Link>
-            <p className="mt-2 text-xs font-medium text-stone-600">{storeTagline}</p>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-stone-600">
-              {storeShortDescription}
-            </p>
-          </div>
+    <footer className="border-t border-stone-200/90">
+      {/* 1 · Columnas de navegación */}
+      <div className="bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12 xl:gap-16">
+            <div className="shrink-0 lg:max-w-[13rem] lg:pt-0.5">
+              <Link
+                href="/"
+                className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
+              >
+                <Image
+                  src={storeLogoPath}
+                  alt={storeBrand}
+                  width={400}
+                  height={220}
+                  className="h-11 w-auto object-contain object-left sm:h-12 lg:h-[3.35rem]"
+                />
+              </Link>
+            </div>
+            <div className="min-w-0 flex-1 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+              <div>
+                <p className={footerColumnTitle}>Ayuda</p>
+                <ul className="mt-5 space-y-3">
+                  <li>
+                    <a href={telHref} className={footerLink}>
+                      Llámanos · {storeSupportPhone}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={`mailto:${storeSupportEmail}`}
+                      className={footerLink}
+                    >
+                      {storeSupportEmail}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={storeWhatsAppUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={footerLink}
+                    >
+                      WhatsApp
+                    </a>
+                  </li>
+                  <li>
+                    <span className="text-sm leading-relaxed text-stone-600">
+                      {storeSupportHours}
+                    </span>
+                  </li>
+                </ul>
+              </div>
 
-          <div className="lg:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-              Comprar
-            </p>
-            <ul className="mt-4 space-y-3">
-              <li>
-                <Link href="/" className={footerLinkClass}>
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link href="/products" className={footerLinkClass}>
-                  Productos
-                </Link>
-              </li>
-              <li>
-                <Link href="/checkout" className={footerLinkClass}>
-                  Carrito
-                </Link>
-              </li>
-              <li>
-                <Link href="/checkout" className={footerLinkClass}>
-                  Checkout
-                </Link>
-              </li>
-            </ul>
-          </div>
+              <div>
+                <p className={footerColumnTitle}>Tienda</p>
+                <ul className="mt-5 space-y-3">
+                  <li>
+                    <Link href="/" className={footerLink}>
+                      Inicio
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/products" className={footerLink}>
+                      Productos
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/checkout" className={footerLink}>
+                      Bolsa
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/favoritos" className={footerLink}>
+                      Favoritos
+                    </Link>
+                  </li>
+                </ul>
+              </div>
 
-          <div className="lg:col-span-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-              Información
-            </p>
-            <ul className="mt-4 space-y-3">
-              <li>
-                <Link href="/products" className={footerLinkClass}>
-                  Catálogo completo
-                </Link>
-              </li>
-              <li>
-                <Link href="/quien-soy" className={footerLinkClass}>
-                  Quién Soy
-                </Link>
-              </li>
-            </ul>
-          </div>
+              <div>
+                <p className={footerColumnTitle}>Sobre nosotros</p>
+                <ul className="mt-5 space-y-3">
+                  <li>
+                    <Link href="/quien-soy" className={footerLink}>
+                      Quién soy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/products" className={footerLink}>
+                      Catálogo completo
+                    </Link>
+                  </li>
+                </ul>
+              </div>
 
-          <div className="lg:col-span-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-              Contacto
-            </p>
-            <ul className="mt-4 space-y-4">
-              <li>
-                <a
-                  href={telHref}
-                  className="flex gap-3 text-sm text-stone-700 transition hover:text-[#3d5240]"
-                >
-                  <IconPhone className="mt-0.5 size-4 shrink-0 text-[#6b7f6a]" />
-                  <span>{storeSupportPhone}</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`mailto:${storeSupportEmail}`}
-                  className="flex gap-3 break-all text-sm text-stone-700 transition hover:text-[#3d5240]"
-                >
-                  <IconMail className="mt-0.5 size-4 shrink-0 text-[#6b7f6a]" />
-                  <span>{storeSupportEmail}</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={storeInstagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex gap-3 text-sm text-stone-700 transition hover:text-[#3d5240]"
-                >
-                  <IconInstagram className="mt-0.5 size-4 shrink-0 text-[#6b7f6a]" />
-                  <span>Instagram</span>
-                </a>
-              </li>
-              <li className="flex gap-3 text-sm text-stone-600">
-                <IconClock className="mt-0.5 size-4 shrink-0 text-[#6b7f6a]" />
-                <span>{storeSupportHours}</span>
-              </li>
-            </ul>
+              <div>
+                <p className={footerColumnTitle}>Síguenos</p>
+                <ul className="mt-5 space-y-3">
+                  <li>
+                    <a
+                      href={storeInstagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={footerLink}
+                    >
+                      Instagram
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-stone-200/80 pt-8 sm:flex-row sm:items-center sm:justify-between">
+      {/* 2 · Legal */}
+      <div className="border-t border-stone-200/90 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="text-xs text-stone-500 sm:text-sm">
+            <p className="text-[11px] text-stone-500 sm:text-xs">
               © {year} {storeCopyrightHolder}. Todos los derechos reservados.
             </p>
-            <p className="font-berea-nova berea-signature text-[11px] font-semibold sm:text-xs">
+            <p className="font-berea-nova berea-signature text-[10px] font-semibold text-stone-400 sm:text-[11px]">
               By Berea Studio
             </p>
           </div>
-          <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm">
-            <Link href="#" className={`${footerLinkClass} text-stone-500`}>
+          <nav
+            aria-label="Legal y equipo"
+            className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-stone-500 sm:text-xs"
+          >
+            <Link href="#" className={`${footerLink} text-stone-500`}>
               Privacidad
             </Link>
-            <Link href="#" className={`${footerLinkClass} text-stone-500`}>
-              Términos
+            <Link href="#" className={`${footerLink} text-stone-500`}>
+              Términos de uso
+            </Link>
+            <Link href="/admin" className={`${footerLink} font-medium text-stone-600`}>
+              Backoffice
             </Link>
           </nav>
         </div>

@@ -1,11 +1,13 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { CategoryListingHero } from "@/components/store/CategoryListingHero";
 import { ProductsListingPromo } from "@/components/store/ProductsListingPromo";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
-import { ProductsFilterSortBar } from "@/components/store/ProductsFilterSortBar";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import { parseProductsCategoryId } from "@/lib/product-list-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
+import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
+import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 
 export const dynamic = "force-dynamic";
 
@@ -32,22 +34,42 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   let categoryName: string | null = null;
   let categoryFilterId: string | null = null;
+  let categoryListingHeroPath: string | null = null;
+  let categoryListingHeroAlt: string | null = null;
   if (categoryId) {
     const { data: cat } = await supabase
       .from("categories")
-      .select("name")
+      .select("name,listing_hero_image_path,listing_hero_alt_text")
       .eq("id", categoryId)
       .maybeSingle();
     if (cat?.name) {
       categoryName = cat.name;
       categoryFilterId = categoryId;
+      categoryListingHeroPath =
+        typeof cat.listing_hero_image_path === "string" &&
+        cat.listing_hero_image_path.trim()
+          ? cat.listing_hero_image_path.trim()
+          : null;
+      categoryListingHeroAlt =
+        typeof cat.listing_hero_alt_text === "string" &&
+        cat.listing_hero_alt_text.trim()
+          ? cat.listing_hero_alt_text.trim()
+          : null;
     }
   }
+
+  const categoryHeroResolvedSrc = categoryListingHeroPath
+    ? resolveCategoryListingHeroSrc(categoryListingHeroPath)
+    : null;
+  const categoryView = Boolean(categoryFilterId && categoryName);
+  const showCategoryListingHero = Boolean(
+    categoryView && categoryHeroResolvedSrc,
+  );
 
   let query = supabase
     .from("products")
     .select(
-      "id,name,description,price_cents,image_path,stock_quantity,created_at",
+      "id,name,brand,description,price_cents,image_path,stock_quantity,size_value,size_unit,created_at",
     )
     .eq("is_published", true);
 
@@ -78,72 +100,77 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
 
-  const productsBanners = await fetchPublishedBanners(supabase, "products");
+  const productsBanners = categoryView
+    ? []
+    : await fetchPublishedBanners(supabase, "products");
+  const couponPctByProductId =
+    await fetchStorefrontCouponDiscountPercentByProductId(supabase);
 
   const invalidCategory = Boolean(categoryId && !categoryName);
-  const sectionTitle = invalidCategory
-    ? "Categoría no encontrada"
-    : q
-      ? `Resultados para «${q}»`
-      : categoryName
-        ? `Productos · ${categoryName}`
-        : "Productos para vos";
-
   return (
     <div className="bg-white">
-      <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:py-10">
-        {productsBanners.length > 0 ? (
-          <StoreBannerCarousel
-            variant="products"
-            slides={productsBanners.map((b) => ({
-              id: b.id,
-              image_path: b.image_path,
-              href: b.href,
-              alt_text: b.alt_text,
-            }))}
-          />
-        ) : (
-          <ProductsListingPromo />
-        )}
-
-        <ProductsFilterSortBar
-          q={q}
-          sort={sort}
-          categoryId={categoryFilterId ?? undefined}
+      {showCategoryListingHero &&
+      categoryListingHeroPath &&
+      categoryName &&
+      categoryHeroResolvedSrc ? (
+        <CategoryListingHero
+          imagePath={categoryListingHeroPath}
+          title={categoryName}
+          alt={categoryListingHeroAlt}
         />
+      ) : null}
 
-        <div>
-          <h1 className="text-xl font-bold text-stone-900 sm:text-2xl">
-            {sectionTitle}
-          </h1>
-          <p className="mt-1 text-sm text-stone-500">
-            Elegí favoritos y agregalos al carrito en un clic.
-          </p>
-        </div>
+      <div
+        className={`mx-auto max-w-7xl space-y-10 px-4 sm:space-y-12 lg:py-14 ${
+          categoryView
+            ? "py-8 sm:py-10"
+            : "py-10 sm:py-12 lg:py-14"
+        }`}
+      >
+        {!categoryView ? (
+          productsBanners.length > 0 ? (
+            <StoreBannerCarousel
+              variant="products"
+              slides={productsBanners.map((b) => ({
+                id: b.id,
+                image_path: b.image_path,
+                href: b.href,
+                alt_text: b.alt_text,
+              }))}
+            />
+          ) : (
+            <ProductsListingPromo />
+          )
+        ) : null}
 
         {list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             {invalidCategory
-              ? "Esa categoría no existe o fue eliminada. Volvé al catálogo completo."
+              ? "Esa categoría no existe o fue eliminada. Vuelve al catálogo completo."
               : q
-                ? "No hay productos que coincidan. Probá otra búsqueda o orden."
+                ? "No hay productos que coincidan. Prueba otra búsqueda o orden."
                 : categoryName
                   ? "Todavía no hay productos publicados en esta categoría."
-                  : "Aún no hay productos publicados. Cargalos desde el admin."}
+                  : "Aún no hay productos publicados. Cárgalos desde el admin."}
           </p>
         ) : (
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {list.map((p) => (
+          <ul className="grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
+            {list.map((p, index) => (
               <li key={p.id}>
                 <ProductListingCard
+                  accentImageBg={index % 4 === 3}
                   cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
                   product={{
                     id: p.id,
                     name: p.name,
+                    brand: p.brand,
                     description: p.description,
                     price_cents: p.price_cents,
                     image_path: p.image_path,
                     stock_quantity: p.stock_quantity,
+                    size_value: p.size_value,
+                    size_unit: p.size_unit,
                   }}
                 />
               </li>

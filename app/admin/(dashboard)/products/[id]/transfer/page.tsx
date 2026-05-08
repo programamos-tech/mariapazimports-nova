@@ -60,7 +60,7 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
           </p>
           {err ? (
             <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
-              No se pudo transferir. Verificá que la cantidad sea mayor que cero y no supere el stock en
+              No se pudo transferir. Verifica que la cantidad sea mayor que cero y no supere el stock en
               el origen.
             </p>
           ) : null}

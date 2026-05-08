@@ -2,13 +2,15 @@
 
 import { getCart, normalizeCartForCheckout, setCart } from "@/lib/cart";
 import { storeBrand } from "@/lib/brand";
+import { ensureStoreCustomerLinked } from "@/lib/store-customer-service";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   createPaymentLink,
   getWompiEnv,
   shouldSkipWompiPayment,
 } from "@/lib/wompi";
-import { fetchActiveWelcomeModal } from "@/lib/store-welcome-modal";
+import { findActiveStoreCouponForCheckout } from "@/lib/store-coupons";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -39,16 +41,48 @@ export async function startCheckout(formData: FormData) {
   if (!resolvedName) {
     redirect("/checkout?error=missing_name");
   }
-  if (!isEmail(customerEmail)) {
-    redirect("/checkout?error=invalid_email");
-  }
   if (!shippingAddress || !shippingCity || !shippingPhone) {
     redirect("/checkout?error=missing_shipping");
   }
 
+  const sessionSb = await createSupabaseServerClient();
+  const {
+    data: { user: sessionUser },
+  } = await sessionSb.auth.getUser();
+
+  let customerEmailForOrder = customerEmail;
+
+  if (sessionUser?.email) {
+    const { data: adminProf } = await sessionSb
+      .from("profiles")
+      .select("id")
+      .eq("id", sessionUser.id)
+      .maybeSingle();
+
+    if (!adminProf) {
+      const sessionMeta = sessionUser.user_metadata as
+        | { document_id?: string }
+        | undefined;
+      const linked = await ensureStoreCustomerLinked(
+        sessionUser.id,
+        sessionUser.email,
+        resolvedName,
+        sessionMeta?.document_id ?? null,
+      );
+      if (!linked) {
+        redirect("/checkout?error=account_link");
+      }
+      customerEmailForOrder = sessionUser.email;
+    }
+  }
+
+  if (!isEmail(customerEmailForOrder)) {
+    redirect("/checkout?error=invalid_email");
+  }
+
   const cart = await getCart();
   if (!cart.length) {
-    redirect("/cart?error=empty");
+    redirect("/checkout?error=empty");
   }
 
   const supabase = createSupabaseServiceClient();
@@ -73,7 +107,7 @@ export async function startCheckout(formData: FormData) {
   }
 
   if (!normalized.length) {
-    redirect("/cart?error=empty");
+    redirect("/checkout?error=empty");
   }
 
   let total = 0;
@@ -87,7 +121,7 @@ export async function startCheckout(formData: FormData) {
   for (const line of normalized) {
     const p = byId.get(line.productId);
     if (!p) {
-      redirect("/cart?error=removed");
+      redirect("/checkout?error=removed");
     }
     const sub = p.price_cents * line.quantity;
     total += sub;
@@ -101,19 +135,42 @@ export async function startCheckout(formData: FormData) {
 
   let discount = 0;
   if (couponCode) {
-    const activeWelcome = await fetchActiveWelcomeModal(supabase);
-    const activeCode = (activeWelcome?.discount_code ?? "").trim();
-    if (!activeCode || activeCode.toLowerCase() !== couponCode.toLowerCase()) {
+    const couponMatch = await findActiveStoreCouponForCheckout(
+      supabase,
+      couponCode,
+    );
+    if (!couponMatch) {
       redirect("/checkout?error=coupon_invalid");
     }
-    discount = Math.max(0, Math.round(total * 0.1));
+    const eligible =
+      couponMatch.eligible_product_ids === null
+        ? total
+        : normalized.reduce((sum, line) => {
+            if (!couponMatch.eligible_product_ids!.has(line.productId)) {
+              return sum;
+            }
+            const p = byId.get(line.productId);
+            if (!p) return sum;
+            return sum + p.price_cents * line.quantity;
+          }, 0);
+    if (
+      couponMatch.eligible_product_ids !== null &&
+      couponMatch.eligible_product_ids.size > 0 &&
+      eligible <= 0
+    ) {
+      redirect("/checkout?error=coupon_no_eligible_items");
+    }
+    discount = Math.max(
+      0,
+      Math.round((eligible * couponMatch.discount_percent) / 100),
+    );
   }
   const totalWithDiscount = Math.max(0, total - discount);
 
   const first = byId.get(normalized[0]!.productId);
   const currency = first?.currency ?? "COP";
 
-  const emailLc = customerEmail.toLowerCase();
+  const emailLc = customerEmailForOrder.toLowerCase();
 
   const { data: existingCustomer } = await supabase
     .from("customers")
@@ -160,7 +217,7 @@ export async function startCheckout(formData: FormData) {
     .from("orders")
     .insert({
       customer_id: customerId,
-      customer_email: customerEmail,
+      customer_email: customerEmailForOrder,
       customer_name: resolvedName,
       total_cents: totalWithDiscount,
       currency,
@@ -196,6 +253,7 @@ export async function startCheckout(formData: FormData) {
 
   revalidatePath("/admin/ventas");
   revalidatePath("/admin/orders");
+  revalidatePath("/cuenta/pedidos");
 
   const returnUrl = `${siteUrl()}/checkout/return?order_id=${orderId}`;
 

@@ -20,7 +20,7 @@ export default async function AdminBannersPage({ searchParams }: Props) {
           Banners
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-zinc-600">
-          Subí imágenes para el hero del inicio y para la parte superior del catálogo. Podés tener
+          Sube imágenes para el hero del inicio y para la parte superior del catálogo. Puedes tener
           varias por ubicación; en la tienda se muestran en carrusel con autoplay.
         </p>
       </div>

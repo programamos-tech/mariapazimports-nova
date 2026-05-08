@@ -71,16 +71,16 @@ function friendlyAuthError(raw: string): string {
     m.includes("invalid_grant") ||
     m.includes("wrong password")
   ) {
-    return "Correo o contraseña incorrectos. Si eliminaste el usuario en Supabase o cambió la clave, creá de nuevo la cuenta o pedí acceso al administrador.";
+    return "Correo o contraseña incorrectos. Si eliminaste el usuario en Supabase o cambió la clave, crea de nuevo la cuenta o pide acceso al administrador.";
   }
   if (m.includes("email not confirmed")) {
-    return "Tenés que confirmar el correo antes de entrar. Revisá tu bandeja o habilitá “Confirm email” en Auth.";
+    return "Tienes que confirmar el correo antes de entrar. Revisa tu bandeja o habilita “Confirm email” en Auth.";
   }
   if (m.includes("too many requests") || m.includes("rate limit")) {
-    return "Demasiados intentos. Esperá un momento y volvé a probar.";
+    return "Demasiados intentos. Espera un momento y vuelve a probar.";
   }
   if (m.includes("network") || m.includes("fetch")) {
-    return "No hay conexión o el servidor no respondió. Revisá tu internet e intentá de nuevo.";
+    return "No hay conexión o el servidor no respondió. Revisa tu internet e intenta de nuevo.";
   }
   return raw;
 }
@@ -93,7 +93,7 @@ export function AdminLoginForm() {
   const emailParam = searchParams.get("email");
   const [error, setError] = useState<string | null>(
     errParam === "no_profile"
-      ? `Tu usuario no tiene perfil de administrador. Creá la fila en public.profiles en Supabase.${uidParam ? ` UID detectado: ${uidParam}.` : ""}${emailParam ? ` Email detectado: ${emailParam}.` : ""}`
+      ? `Tu usuario no tiene perfil de administrador. Crea la fila en public.profiles en Supabase.${uidParam ? ` UID detectado: ${uidParam}.` : ""}${emailParam ? ` Email detectado: ${emailParam}.` : ""}`
       : null,
   );
   const [loading, setLoading] = useState(false);

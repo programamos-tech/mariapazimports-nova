@@ -1,33 +1,34 @@
-import type { SVGProps } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Search } from "lucide-react";
+import {
+  STORE_HEADER_ICON_LG,
+  STORE_HEADER_ICON_STROKE,
+} from "@/lib/store-header-icons";
+import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
-import { storeBrand } from "@/lib/brand";
+import { storeBrand, storeLogoPath } from "@/lib/brand";
 import { StoreAnnouncementBar } from "@/components/store/StoreAnnouncementBar";
-import { StoreFavoritesNavLink } from "@/components/store/StoreFavoritesNavLink";
+import { StoreHeaderActions } from "@/components/store/StoreHeaderActions";
 import { StoreNavDropdowns } from "@/components/store/StoreNavDropdowns";
 import { StoreSearch } from "@/components/store/StoreSearch";
 import { fetchStoreCategoriesWithCounts } from "@/lib/fetch-store-categories";
 
-function IconUser(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden {...props}>
-      <path d="M20 21a8 8 0 10-16 0" strokeLinecap="round" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function IconCart(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden {...props}>
-      <path d="M6 6h15l-1.5 9h-12z" strokeLinejoin="round" />
-      <path d="M6 6 5 3H2" strokeLinecap="round" />
-      <circle cx="9" cy="20" r="1" fill="currentColor" stroke="none" />
-      <circle cx="18" cy="20" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
+function accountFirstNameFromUser(user: User | null): string | null {
+  if (!user) return null;
+  const meta = user.user_metadata as Record<string, unknown> | undefined;
+  const full =
+    typeof meta?.full_name === "string"
+      ? meta.full_name
+      : typeof meta?.name === "string"
+        ? meta.name
+        : null;
+  const part = full?.trim().split(/\s+/).filter(Boolean)[0];
+  if (part) return part.length > 18 ? `${part.slice(0, 18)}…` : part;
+  const local = user.email?.split("@")[0];
+  if (local) return local.length > 18 ? `${local.slice(0, 18)}…` : local;
+  return null;
 }
 
 export async function StoreHeader() {
@@ -35,61 +36,62 @@ export async function StoreHeader() {
   const menuCategories = await fetchStoreCategoriesWithCounts(supabase);
   const cartItemCount = await getStorefrontCartItemCount();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userIconHref = user ? "/cuenta" : "/cuenta/entrar";
+  const userIconLabel = user ? "Mi cuenta" : "Iniciar sesión";
+  const accountFirstName = accountFirstNameFromUser(user);
+
   return (
-    <header className="border-b border-stone-200/80">
+    <header className="border-b border-stone-200/90 bg-white">
       <StoreAnnouncementBar />
 
-      {/* Fila principal del navbar: mismo fondo que el footer y la pantalla de carga */}
-      <div className="bg-[var(--store-chrome-bg)]">
-        <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
-            <div className="flex min-w-0 flex-wrap items-center gap-4 lg:shrink-0 lg:gap-8">
-              <Link
-                href="/"
-                className="group shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#6b7f6a] focus-visible:ring-offset-2"
-              >
-                <Image
-                  src="/logobackoficce.png"
-                  alt={storeBrand}
-                  width={400}
-                  height={171}
-                  className="h-12 w-auto max-w-[220px] object-contain object-left transition-opacity group-hover:opacity-90 sm:h-14 sm:max-w-[280px] lg:h-16 lg:max-w-[340px]"
-                  priority
-                />
-              </Link>
-              <StoreNavDropdowns menuCategories={menuCategories} />
-            </div>
+      <div className="relative flex items-center justify-between gap-3 px-4 py-4 lg:gap-6 lg:px-10 lg:py-5">
+        <div className="z-10 flex min-w-0 flex-1 items-center justify-start">
+          <StoreNavDropdowns
+            menuCategories={menuCategories}
+            accountHref={userIconHref}
+            accountLabel={userIconLabel}
+          />
+        </div>
 
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <StoreSearch />
-              <div className="flex shrink-0 flex-wrap items-center gap-0.5 sm:gap-1">
-                <Link
-                  href="/admin"
-                  aria-label="Cuenta"
-                  className="flex size-10 items-center justify-center rounded-lg text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
-                >
-                  <IconUser className="size-5" />
-                </Link>
-                <StoreFavoritesNavLink />
-                <Link
-                  href="/checkout"
-                  aria-label={
-                    cartItemCount > 0
-                      ? `Carrito, ${cartItemCount} productos. Ir a finalizar compra`
-                      : "Carrito. Ir a finalizar compra"
-                  }
-                  className="relative flex size-10 items-center justify-center rounded-lg text-stone-600 hover:bg-[#f4f0ea] hover:text-stone-900"
-                >
-                  <IconCart className="size-5" />
-                  {cartItemCount > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#3d5240] px-1 text-[10px] font-bold leading-none text-white">
-                      {cartItemCount > 99 ? "99+" : cartItemCount}
-                    </span>
-                  ) : null}
-                </Link>
-              </div>
-            </div>
-          </div>
+        <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-16 sm:px-44 md:px-48 lg:px-[13.5rem]">
+          <Link
+            href="/"
+            className="pointer-events-auto shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
+          >
+            <Image
+              src={storeLogoPath}
+              alt={storeBrand}
+              width={420}
+              height={230}
+              className="h-11 w-auto max-w-[min(58vw,300px)] object-contain object-center sm:h-[3.25rem] md:h-[3.65rem] lg:h-16"
+              priority
+            />
+          </Link>
+        </div>
+
+        <div className="z-10 flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4 lg:gap-6">
+          <Link
+            href="/products"
+            className="flex shrink-0 items-center justify-center p-1.5 text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2 sm:hidden"
+            aria-label="Buscar productos"
+          >
+            <Search
+              className={STORE_HEADER_ICON_LG}
+              strokeWidth={STORE_HEADER_ICON_STROKE}
+              aria-hidden
+            />
+          </Link>
+          <StoreSearch variant="minimal" />
+          <StoreHeaderActions
+            isLoggedIn={!!user}
+            cartItemCount={cartItemCount}
+            userIconHref={userIconHref}
+            userIconLabel={userIconLabel}
+            accountFirstName={accountFirstName}
+          />
         </div>
       </div>
     </header>

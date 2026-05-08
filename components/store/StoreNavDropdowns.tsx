@@ -1,183 +1,196 @@
 "use client";
 
-import type { SVGProps } from "react";
 import Link from "next/link";
+import { ChevronRight, Menu, UserRound, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useId, useState } from "react";
 import {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import { getCategoryIconComponent } from "@/lib/category-icons";
+  STORE_HEADER_ICON_LG,
+  STORE_HEADER_ICON_STROKE,
+} from "@/lib/store-header-icons";
 import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
-
-type MenuId = "categories" | null;
-
-function IconChevronDown(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden {...props}>
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-/** Ítem activo: línea inferior (patrón típico de tiendas), sin fondo tipo píldora. */
-function navLinkClass(active: boolean) {
-  return `inline-flex border-b-2 px-1 pb-1 pt-1.5 text-sm font-medium transition-colors ${
-    active
-      ? "border-[#556654] text-stone-900"
-      : "border-transparent text-stone-600 hover:border-stone-300/90 hover:text-stone-900"
-  }`;
-}
 
 export function StoreNavDropdowns({
   menuCategories,
+  accountHref,
+  accountLabel,
 }: {
   menuCategories: StoreCategoryMenuItem[];
+  accountHref: string;
+  accountLabel: string;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState<MenuId>(null);
-  const [categoriesPanelTop, setCategoriesPanelTop] = useState(0);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const categoriesTriggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
   const baseId = useId();
 
-  const close = useCallback(() => setOpen(null), []);
-
-  const inicioActive = pathname === "/";
-  const productosActive = pathname === "/products" || pathname.startsWith("/products/");
-  const quienSoyActive = pathname === "/quien-soy";
+  const close = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
     if (!open) return;
-    function onDoc(e: MouseEvent) {
-      if (!wrapRef.current?.contains(e.target as Node)) close();
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
-    }
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-
-  useLayoutEffect(() => {
-    if (open !== "categories") return;
-    const el = categoriesTriggerRef.current;
-    if (!el) return;
-    const syncTop = () => {
-      const r = el.getBoundingClientRect();
-      setCategoriesPanelTop(r.bottom + 8);
-    };
-    syncTop();
-    window.addEventListener("resize", syncTop);
-    window.addEventListener("scroll", syncTop, true);
-    return () => {
-      window.removeEventListener("resize", syncTop);
-      window.removeEventListener("scroll", syncTop, true);
+      document.body.style.overflow = prev;
     };
   }, [open]);
 
-  return (
-    <nav
-      ref={wrapRef}
-      aria-label="Principal"
-      className="relative flex flex-wrap items-center gap-1"
-    >
-      <Link href="/" className={navLinkClass(inicioActive)}>
-        Inicio
-      </Link>
-      <Link href="/products" className={navLinkClass(productosActive)}>
-        Productos
-      </Link>
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
 
-      <div className="relative">
-        <button
-          ref={categoriesTriggerRef}
-          type="button"
-          className={`flex items-center gap-0.5 border-b-2 px-1 pb-1 pt-1.5 text-sm font-medium transition-colors ${
-            open === "categories"
-              ? "border-[#556654] text-stone-900"
-              : "border-transparent text-stone-600 hover:border-stone-300/90 hover:text-stone-900"
-          }`}
-          data-open={open === "categories"}
-          aria-expanded={open === "categories"}
-          aria-controls={`${baseId}-categories-panel`}
-          id={`${baseId}-categories-trigger`}
-          onClick={() => setOpen((v) => (v === "categories" ? null : "categories"))}
-        >
-          Categorías
-          <IconChevronDown className="size-4 text-stone-400" />
-        </button>
-        {open === "categories" ? (
-          <div
-            id={`${baseId}-categories-panel`}
-            role="region"
-            aria-labelledby={`${baseId}-categories-trigger`}
-            style={{ top: categoriesPanelTop }}
-            className="fixed left-1/2 z-50 max-h-[min(85vh,30rem)] w-[min(100vw-2rem,40rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xl shadow-stone-200/80 ring-1 ring-stone-100"
+  const shopBtnClass =
+    "group inline-flex items-center gap-2 rounded-none py-1 text-[13px] font-medium tracking-wide text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2";
+
+  return (
+    <nav aria-label="Principal" className="relative flex items-center">
+      <button
+        type="button"
+        className={shopBtnClass}
+        aria-expanded={open}
+        aria-controls={`${baseId}-shop-drawer`}
+        id={`${baseId}-shop-trigger`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Menu
+          className={STORE_HEADER_ICON_LG}
+          strokeWidth={STORE_HEADER_ICON_STROKE}
+          aria-hidden
+        />
+        <span className="text-[13px]">Shop</span>
+      </button>
+
+      {/* Overlay */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ease-out ${
+          open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden={!open}
+        onClick={close}
+      />
+
+      {/* Drawer */}
+      <div
+        id={`${baseId}-shop-drawer`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${baseId}-shop-drawer-title`}
+        className={`fixed inset-y-0 left-0 z-[70] flex w-[min(100vw-2rem,22rem)] flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out sm:w-[min(100vw-3rem,24rem)] ${
+          open ? "translate-x-0" : "-translate-x-full pointer-events-none"
+        }`}
+      >
+        <div className="flex shrink-0 justify-end px-4 pb-2 pt-4">
+          <button
+            type="button"
+            onClick={close}
+            className="inline-flex size-10 items-center justify-center border border-dashed border-stone-400 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
+            aria-label="Cerrar menú"
           >
-            <h2 className="text-base font-semibold text-stone-900">
-              Categorías populares
-            </h2>
-            <p className="mt-0.5 text-xs text-stone-500">
-              Explorá el catálogo de María Paz Importaciones
+            <X className="size-5" strokeWidth={1.25} aria-hidden />
+          </button>
+        </div>
+
+        <h2 id={`${baseId}-shop-drawer-title`} className="sr-only">
+          Categorías y tienda
+        </h2>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2">
+          {menuCategories.length === 0 ? (
+            <p className="py-6 text-sm text-stone-500">
+              Todavía no hay categorías. Creálas en Administración → Catálogo.
             </p>
-            {menuCategories.length === 0 ? (
-              <p className="mt-4 text-sm text-stone-500">
-                Todavía no hay categorías. Creálas en Administración → Catálogo.
-              </p>
-            ) : (
-              <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {menuCategories.map((c) => {
-                  const Icon = getCategoryIconComponent(c.iconKey);
-                  return (
-                    <li key={c.id}>
-                      <Link
-                        href={`/products?category=${c.id}`}
-                        onClick={close}
-                        className="flex items-center gap-2.5 rounded-xl border border-stone-100 bg-[#faf8f5] p-2.5 transition hover:border-[#c7d4c2] hover:bg-white hover:shadow-sm"
-                      >
-                        <div
-                          className={`flex size-11 shrink-0 items-center justify-center rounded-lg ${c.tint}`}
-                          aria-hidden
-                        >
-                          <Icon className="size-5 text-zinc-700" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[15px] font-semibold leading-tight text-stone-900">
-                            {c.name}
-                          </p>
-                          <p className="mt-0.5 text-xs leading-tight text-stone-500">
-                            {c.sub}
-                          </p>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+          ) : (
+            <ul className="border-t border-stone-200">
+              {menuCategories.map((c) => (
+                <li key={c.id} className="border-b border-stone-200">
+                  <Link
+                    href={`/products?category=${c.id}`}
+                    onClick={close}
+                    className="flex items-center justify-between gap-4 py-4 text-left transition hover:bg-stone-50"
+                  >
+                    <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+                      {c.name}
+                    </span>
+                    <ChevronRight
+                      className="size-4 shrink-0 text-stone-400"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <Link
+            href="/products"
+            onClick={close}
+            className="mt-2 flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
+          >
+            <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+              Todo el catálogo
+            </span>
+            <ChevronRight
+              className="size-4 shrink-0 text-stone-400"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </Link>
+        </div>
+
+        <div className="shrink-0 border-t border-stone-200 px-4 py-5">
+          <Link
+            href={accountHref}
+            onClick={close}
+            className="flex items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
+          >
+            <span className="flex items-center gap-3">
+              <UserRound
+                className="size-5 shrink-0 text-stone-900"
+                strokeWidth={STORE_HEADER_ICON_STROKE}
+                aria-hidden
+              />
+              <span className="text-sm font-normal text-stone-900">
+                {accountLabel}
+              </span>
+            </span>
+            <ChevronRight
+              className="size-4 shrink-0 text-stone-400"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </Link>
+
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-100 pt-5 text-[13px] text-stone-600">
             <Link
-              href="/products"
+              href="/"
               onClick={close}
-              className="mt-4 block text-center text-sm font-semibold text-[#6b7f6a] hover:underline"
+              className={
+                pathname === "/"
+                  ? "font-semibold text-stone-900"
+                  : "transition hover:text-stone-900"
+              }
             >
-              Ver todo el catálogo →
+              Inicio
+            </Link>
+            <Link
+              href="/quien-soy"
+              onClick={close}
+              className={
+                pathname === "/quien-soy"
+                  ? "font-semibold text-stone-900"
+                  : "transition hover:text-stone-900"
+              }
+            >
+              Quién soy
             </Link>
           </div>
-        ) : null}
+        </div>
       </div>
-
-      <Link href="/quien-soy" className={navLinkClass(quienSoyActive)}>
-        Quién Soy
-      </Link>
     </nav>
   );
 }

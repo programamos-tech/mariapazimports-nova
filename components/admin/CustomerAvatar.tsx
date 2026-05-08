@@ -8,17 +8,27 @@ type Props = {
   size?: number;
   className?: string;
   label: string;
+  /** Fondo circular (hex sin `#`). Por defecto cromado admin/tienda. */
+  backgroundHex?: string;
 };
 
 /**
  * Personajes ilustrados estilo [Notionists](https://www.dicebear.com/styles/notionists/) (DiceBear).
  */
-export function CustomerAvatar({ seed, size = 40, className = "", label }: Props) {
+export function CustomerAvatar({
+  seed,
+  size = 40,
+  className = "",
+  label,
+  backgroundHex,
+}: Props) {
   const safe = seed.trim() || "default";
+  const bg =
+    (backgroundHex ?? ADMIN_SIDEBAR_BG).replace(/^#/, "") || "ffffff";
   const svg = createAvatar(notionists, {
     seed: safe,
     size,
-    backgroundColor: [ADMIN_SIDEBAR_BG.replace(/^#/, "")],
+    backgroundColor: [bg],
     radius: 50,
   }).toString();
 

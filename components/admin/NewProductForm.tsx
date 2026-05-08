@@ -350,7 +350,7 @@ export function NewProductForm({
                 bodega es tu inventario central.
               </p>
               <p>
-                Podés ajustar cantidades después desde la lista de productos. La asignación
+                Puedes ajustar cantidades después desde la lista de productos. La asignación
                 a estantes se habilita cuando hay stock en bodega.
               </p>
             </div>
@@ -489,7 +489,7 @@ export function NewProductHeader() {
           Nuevo producto
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-          Registrá un nuevo producto en el catálogo: datos, precio y stock en un solo lugar.
+          Registra un nuevo producto en el catálogo: datos, precio y stock en un solo lugar.
         </p>
       </div>
       <Link

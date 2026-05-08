@@ -158,7 +158,7 @@ export function AdminTransferStockForm({
             </div>
           ) : (
             <p className="mt-5 text-sm leading-relaxed text-zinc-500">
-              Escribí una cantidad válida para ver cómo quedará el stock en local y en bodega.
+              Escribe una cantidad válida para ver cómo quedará el stock en local y en bodega.
             </p>
           )}
         </div>

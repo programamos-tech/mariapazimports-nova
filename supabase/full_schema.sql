@@ -1,11 +1,11 @@
 -- =============================================================================
 -- TIENDAS — esquema completo (plantilla)
 --
--- Usá este archivo en Supabase → SQL Editor si empezás un proyecto NUEVO y no
--- tenés aún las tablas public.products, public.orders, etc.
+-- Usa este archivo en Supabase → SQL Editor si empiezas un proyecto NUEVO y no
+-- tienes aún las tablas public.products, public.orders, etc.
 --
 -- Si el proyecto YA tiene parte del esquema, NO ejecutes todo: en su lugar
--- aplicá en orden los archivos en supabase/migrations/ (o supabase db push).
+-- aplica en orden los archivos en supabase/migrations/ (o supabase db push).
 -- =============================================================================
 
 -- --- 20260505190000_init.sql ---
@@ -242,6 +242,11 @@ on public.categories
 for delete
 to authenticated
 using (exists (select 1 from public.profiles p where p.id = auth.uid()));
+
+-- --- 20260608120000_category_listing_hero.sql ---
+alter table public.categories
+  add column if not exists listing_hero_image_path text,
+  add column if not exists listing_hero_alt_text text;
 
 -- --- 20260508130000_product_stock_split.sql ---
 -- Inventario: bodega + local. Total = stock_warehouse + stock_local (columna generada stock_quantity).

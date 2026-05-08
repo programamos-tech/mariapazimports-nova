@@ -18,19 +18,19 @@ function errorText(code: string | undefined): string | null {
   if (!code) return null;
   switch (code) {
     case "file":
-      return "Seleccioná un archivo de imagen.";
+      return "Selecciona un archivo de imagen.";
     case "size":
       return "El archivo supera 5 MB.";
     case "type":
       return "Solo se permiten imágenes JPEG, PNG, WebP o GIF.";
     case "upload":
-      return "Error al subir a Storage. Revisá el bucket store-banners y permisos.";
+      return "Error al subir a Storage. Revisa el bucket store-banners y permisos.";
     case "db":
-      return "Error en la base de datos. Ejecutá la migración store_banners.";
+      return "Error en la base de datos. Ejecuta la migración store_banners.";
     case "placement":
       return "Ubicación de banner no válida.";
     default:
-      return "Algo salió mal. Intentá de nuevo.";
+      return "Algo salió mal. Intenta de nuevo.";
   }
 }
 
@@ -178,7 +178,7 @@ function Section({
       <p className="mt-2 text-sm text-zinc-500">{description}</p>
 
       {list.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500">Todavía no hay banners. Subí la primera imagen.</p>
+        <p className="mt-4 text-sm text-zinc-500">Todavía no hay banners. Sube la primera imagen.</p>
       ) : (
         <ul className="mt-6 space-y-4">
           {list.map((row) => (
@@ -194,7 +194,7 @@ function Section({
           hint={
             placement === "hero"
               ? "Se muestran a la derecha del título en el inicio, con flechas y puntos si hay varias."
-              : "Se muestra arriba del listado de productos; podés subir varias para carrusel."
+              : "Se muestra arriba del listado de productos; puedes subir varias para carrusel."
           }
         />
       </div>
@@ -229,7 +229,7 @@ export function BannersAdminPanel({
       <Section
         placement="products"
         label="Sección productos"
-        description="Banners encima de los filtros en /products. Podés usar una sola imagen o varias en carrusel."
+        description="Banners encima de los filtros en /products. Puedes usar una sola imagen o varias en carrusel."
         rows={banners}
       />
     </div>

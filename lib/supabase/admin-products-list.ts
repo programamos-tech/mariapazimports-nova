@@ -131,6 +131,8 @@ export type AdminCategoryManageRow = {
   id: string;
   name: string;
   icon_key: string | null;
+  listing_hero_image_path: string | null;
+  listing_hero_alt_text: string | null;
 };
 
 /** Listado completo para la vista/modal de gestión de categorías (orden en BD por sort_order + nombre). */
@@ -140,7 +142,7 @@ export async function fetchAdminCategoriesManageList(supabase: SupabaseClient): 
 }> {
   const { data, error } = await supabase
     .from("categories")
-    .select("id,name,icon_key")
+    .select("id,name,icon_key,listing_hero_image_path,listing_hero_alt_text")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 

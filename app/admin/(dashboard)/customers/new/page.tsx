@@ -22,8 +22,8 @@ export default async function NewCustomerPage({
             : error === "duplicate_email"
               ? "Ya existe un cliente con ese correo electrónico."
               : error === "addresses_invalid"
-                ? "Los datos de dirección no son válidos. Recargá la página e intentá de nuevo."
-                : "No se pudo guardar en la base de datos. Ejecutá en Supabase la migración de direcciones (20260513120000_customer_addresses.sql) si falta la tabla."}
+                ? "Los datos de dirección no son válidos. Recarga la página e intenta de nuevo."
+                : "No se pudo guardar en la base de datos. Ejecuta en Supabase la migración de direcciones (20260513120000_customer_addresses.sql) si falta la tabla."}
         </p>
       ) : null}
 

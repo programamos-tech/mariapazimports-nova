@@ -47,7 +47,7 @@ export function NewExpenseHeader() {
           Nuevo egreso
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-          Registrá un gasto operativo con el mismo patrón visual de los demás módulos.
+          Registra un gasto operativo con el mismo patrón visual de los demás módulos.
         </p>
       </div>
       <Link
@@ -66,7 +66,7 @@ export function NewExpenseHeader() {
 function errorMessage(code: string | undefined) {
   switch (code) {
     case "concept":
-      return "Ingresá un concepto para el egreso.";
+      return "Ingresa un concepto para el egreso.";
     case "amount":
       return "Monto inválido en el egreso.";
     case "db":
@@ -129,7 +129,7 @@ export function NewExpenseForm({ initialError }: { initialError?: string }) {
               <input
                 value={conceptOther}
                 onChange={(e) => setConceptOther(e.target.value)}
-                placeholder="Escribí el concepto"
+                placeholder="Escribe el concepto"
                 className={`${inputClass} mt-3`}
               />
             ) : null}

@@ -23,7 +23,7 @@ function errorMessage(code: string | undefined): string | null {
   if (!code) return null;
   switch (code) {
     case "validation":
-      return "Revisá los datos del formulario.";
+      return "Revisa los datos del formulario.";
     case "duplicate_username":
       return "Ese usuario corto ya está en uso.";
     case "no_service":

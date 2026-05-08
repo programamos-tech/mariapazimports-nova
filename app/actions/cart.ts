@@ -7,7 +7,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeStorefrontCartLines } from "@/lib/storefront-cart";
 
 function revalidateStoreCart() {
-  revalidatePath("/cart");
   revalidatePath("/products");
   revalidatePath("/checkout");
   revalidatePath("/", "layout");
@@ -92,7 +91,7 @@ export async function addToCartFromForm(formData: FormData) {
   await addToCart(productId, Number.isFinite(qty) ? qty : 1);
 }
 
-/** Deja solo este ítem en el carrito y va al checkout (flujo “Comprar ahora”). */
+/** Deja solo este ítem en la bolsa y va al checkout (flujo “Comprar ahora”). */
 export async function buyNowFromDetail(formData: FormData) {
   const productId = String(formData.get("productId") ?? "");
   if (!productId) redirect("/products");

@@ -31,8 +31,8 @@ export function StoreCookiesBanner() {
     >
       <p className="text-sm font-semibold text-stone-900">Cookies en la tienda</p>
       <p className="mt-1 text-xs leading-relaxed text-stone-600">
-        Usamos cookies para guardar tu carrito y preferencias de navegación. Podés
-        aceptar o continuar solo con las esenciales.
+        Usamos cookies para guardar tu bolsa de compras y preferencias de navegación.
+        Puedes aceptar o continuar solo con las esenciales.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button

@@ -14,7 +14,7 @@ function errorMessage(code: string | undefined): string | null {
   if (!code) return null;
   switch (code) {
     case "validation":
-      return "Revisá nombre, usuario, correo y contraseña (mín. 6).";
+      return "Revisa nombre, usuario, correo y contraseña (mín. 6).";
     case "duplicate_email":
       return "Ese correo ya está registrado en Auth.";
     case "duplicate_username":
@@ -22,7 +22,7 @@ function errorMessage(code: string | undefined): string | null {
     case "no_service":
       return "Falta SUPABASE_SERVICE_ROLE_KEY en el servidor para crear usuarios (solo entorno seguro).";
     case "db":
-      return "No se pudo guardar. Revisá logs y permisos.";
+      return "No se pudo guardar. Revisa logs y permisos.";
     default:
       return "No se pudo crear el colaborador.";
   }

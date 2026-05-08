@@ -4,13 +4,13 @@ const blocks = [
   {
     href: "/admin/products",
     title: "Productos",
-    body: "Creá y editá ítems, precios en pesos, stock y publicación.",
+    body: "Crea y edita ítems, precios en pesos, stock y publicación.",
     tone: "bg-[#d8e5d4]",
   },
   {
     href: "/admin/products?categories=1",
     title: "Categorías",
-    body: "Creá grupos y asignalos a cada producto desde su ficha.",
+    body: "Crea grupos y asígnalos a cada producto desde su ficha.",
     tone: "bg-[#e8e4d4]",
   },
   {

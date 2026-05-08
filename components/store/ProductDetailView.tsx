@@ -1,33 +1,21 @@
 "use client";
 
-import type { SVGProps } from "react";
 import Image from "next/image";
+import { Heart, Star } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
+import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
+import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { formatCop } from "@/lib/money";
+import {
+  storefrontPriceAfterCouponCents,
+} from "@/lib/store-coupons";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
-
-function IconTruck(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
-      <path d="M14 18V6H4v12h2M14 18h4l3-5V9h-5M14 18h-4M6 18v-3M18 18v-3" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="7" cy="18" r="2" />
-      <circle cx="17" cy="18" r="2" />
-    </svg>
-  );
-}
-
-function IconBox(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
-      <path d="M21 16V8l-9-5-9 5v8l9 5 9-5z" strokeLinejoin="round" />
-      <path d="M3.3 8L12 13l8.7-5M12 22V13" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 type Props = {
   productId: string;
@@ -43,7 +31,41 @@ type Props = {
   colors: string[];
   hasVat: boolean | null;
   vatPercent: number | null;
+  couponDiscountPercent?: number;
 };
+
+function AccordionSection({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border-b border-stone-200">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-4 py-4 text-left transition hover:opacity-90"
+        aria-expanded={open}
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
+          {title}
+        </span>
+        <span className="text-lg font-light leading-none text-stone-400 tabular-nums">
+          {open ? "−" : "+"}
+        </span>
+      </button>
+      {open ? (
+        <div className="pb-5 text-sm leading-relaxed text-stone-600">{children}</div>
+      ) : null}
+    </div>
+  );
+}
 
 export function ProductDetailView({
   productId,
@@ -59,268 +81,291 @@ export function ProductDetailView({
   colors,
   hasVat,
   vatPercent,
+  couponDiscountPercent = 0,
 }: Props) {
   const router = useRouter();
-  const [thumbIdx, setThumbIdx] = useState(0);
+  const { openCart } = useStoreCartDrawer();
+  const { has, toggle, ready } = useStoreFavorites();
+  const favorite = ready && has(productId);
   const [colorIdx, setColorIdx] = useState(0);
   const [qty, setQty] = useState(1);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const reviews = pseudoReviewCount(productId);
   const outOfStock = stockQuantity <= 0;
-  const maxQty = stockQuantity;
-
+  const maxQty = Math.max(0, Math.floor(stockQuantity));
   const safeQty =
-    outOfStock || maxQty < 1
-      ? 1
-      : Math.min(Math.max(1, qty), maxQty);
+    outOfStock || maxQty < 1 ? 1 : Math.min(Math.max(1, qty), maxQty);
 
-  const installment = Math.max(1, Math.ceil(priceCents / 6));
+  const pct = Math.max(
+    0,
+    Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
+  );
+  const hasCouponPrice = pct > 0;
+  const displayPriceCents = hasCouponPrice
+    ? storefrontPriceAfterCouponCents(priceCents, pct)
+    : priceCents;
+
   const sizeLabel =
     sizeValue && sizeValue > 0
       ? `${String(sizeValue).replace(/\.0+$/, "")} ${sizeUnit ?? "unidad"}`
       : null;
-  const colorOptions = colors.filter((c) => c.trim().length > 0);
-  const blurb =
-    description?.trim() ||
-    "Producto seleccionado para calidad y diseño. Consultá políticas de cambio antes de comprar.";
 
-  const thumbs = [0, 1, 2, 3] as const;
-  const showImage = imageUrl;
+  const colorOptions = colors.filter((c) => c.trim().length > 0);
+  const selectedColorLabel =
+    colorOptions.length > 0 ? colorOptions[colorIdx] ?? colorOptions[0] : null;
+
+  const descriptionText = description?.trim() ?? "";
+  const descPreviewLimit = 280;
+  const showDescToggle = descriptionText.length > descPreviewLimit;
+  const descriptionDisplayed =
+    descriptionText &&
+    showDescToggle &&
+    !descExpanded
+      ? `${descriptionText.slice(0, descPreviewLimit).trim()}…`
+      : descriptionText;
+
   const unopt = shouldUnoptimizeStorageImageUrl(imageUrl);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:gap-12 lg:items-start">
-      {/* Galería */}
-      <div className="space-y-4">
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f0eeeb] ring-1 ring-stone-200/80">
-          {showImage ? (
-            <Image
-              src={imageUrl!}
-              alt={name}
-              fill
-              className="object-contain p-6 sm:p-10"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-              unoptimized={unopt}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-6xl text-stone-300">
-              ◆
-            </div>
-          )}
-        </div>
-        <div className="grid grid-cols-4 gap-3 sm:gap-4">
-          {thumbs.map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setThumbIdx(i)}
-              className={`relative aspect-square overflow-hidden rounded-xl bg-[#f5f3f0] ring-2 transition ${
-                thumbIdx === i
-                  ? "ring-[#3d5240]"
-                  : "ring-transparent hover:ring-stone-300"
-              }`}
-            >
-              {showImage ? (
-                <Image
-                  src={imageUrl!}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="120px"
-                  unoptimized={unopt}
-                />
-              ) : (
-                <span className="flex h-full items-center justify-center text-stone-400">
-                  {i + 1}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+    <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
+      {/* Imagen */}
+      <div className="relative aspect-square w-full bg-[#f5f5f4]">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-contain p-8 sm:p-12"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+            unoptimized={unopt}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-6xl text-stone-300">
+            ◆
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => toggle(productId)}
+          className={
+            favorite
+              ? "absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/95 text-rose-500 shadow-sm ring-1 ring-stone-200/80 transition hover:bg-white"
+              : "absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm ring-1 ring-stone-200/80 transition hover:bg-white hover:text-stone-900"
+          }
+          aria-pressed={favorite}
+          aria-label={favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+        >
+          <Heart
+            className="size-[18px]"
+            strokeWidth={1.35}
+            fill={favorite ? "currentColor" : "none"}
+          />
+        </button>
       </div>
 
-      {/* Info y compra */}
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-stone-900 sm:text-4xl">
+      {/* Datos */}
+      <div className="flex min-w-0 flex-col lg:max-w-xl lg:pt-2">
+        <h1 className="text-xl font-semibold uppercase leading-snug tracking-[0.06em] text-stone-900 sm:text-2xl">
           {name}
         </h1>
-        <p className="text-sm leading-relaxed text-stone-500 sm:text-base">{blurb}</p>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm tracking-tight text-[#6b7f6a]" aria-hidden>
-            ★★★★★
-          </span>
-          <span className="text-sm text-stone-400">({reviews})</span>
+        <div className="mt-4">
+          {hasCouponPrice ? (
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-stone-500">
+              −{pct}% con cupón al pagar
+            </p>
+          ) : null}
+          <p className="text-lg font-normal tabular-nums text-stone-900 sm:text-xl">
+            {hasCouponPrice ? (
+              <>
+                <span className="mr-2 text-base text-stone-400 line-through decoration-stone-300">
+                  {formatCop(priceCents)}
+                </span>
+                <span>{formatCop(displayPriceCents)}</span>
+              </>
+            ) : (
+              formatCop(priceCents)
+            )}
+          </p>
         </div>
 
-        <div>
-          <p className="text-2xl font-bold text-stone-900 sm:text-3xl">
-            {formatCop(priceCents)}
-            <span className="text-lg font-semibold text-stone-600">
-              {" "}
-              o {formatCop(installment)}/mes
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-stone-500 sm:text-sm">
-            Pagos sugeridos a 6 meses (referencia visual; financiación real según
-            Wompi / tu negocio).
-          </p>
+        <div className="mt-5 flex items-center gap-2">
+          <span className="flex text-stone-900" aria-hidden>
+            {Array.from({ length: 5 }, (_, i) => (
+              <Star
+                key={i}
+                className="size-[15px] fill-current"
+                strokeWidth={0}
+              />
+            ))}
+          </span>
+          <span className="text-sm tabular-nums text-stone-500">({reviews})</span>
         </div>
 
         {colorOptions.length > 0 ? (
-          <div>
-            <p className="mb-2 text-sm font-medium text-stone-800">Color</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-8">
+            <div className="flex flex-wrap gap-2.5">
               {colorOptions.map((color, i) => (
                 <button
                   key={`${color}-${i}`}
                   type="button"
                   onClick={() => setColorIdx(i)}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  className={`flex size-10 items-center justify-center rounded-full border-2 transition ${
                     colorIdx === i
-                      ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240]"
-                      : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
+                      ? "border-stone-900 ring-2 ring-stone-900 ring-offset-2"
+                      : "border-stone-200 hover:border-stone-400"
                   }`}
                   aria-pressed={colorIdx === i}
+                  aria-label={`Color ${color}`}
                 >
-                  <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
-                  {color}
+                  <span
+                    className={`size-6 rounded-full ${productColorSwatchClass(color)}`}
+                  />
                 </button>
               ))}
             </div>
-          </div>
-        ) : null}
-
-        {sizeLabel || hasExpiration ? (
-          <div className="rounded-xl border border-stone-200 bg-[#faf9f7] px-4 py-3 text-sm text-stone-700">
-            {sizeLabel ? (
-              <p>
-                <span className="font-medium text-stone-900">Tamaño:</span> {sizeLabel}
-              </p>
-            ) : null}
-            {hasExpiration ? (
-              <p className={sizeLabel ? "mt-1" : ""}>
-                <span className="font-medium text-stone-900">Vencimiento:</span>{" "}
-                {expirationDate || "Este producto requiere control de fecha."}
+            {selectedColorLabel ? (
+              <p className="mt-3 text-[13px] text-stone-600">
+                <span className="text-stone-500">Color:</span>{" "}
+                {selectedColorLabel}
               </p>
             ) : null}
           </div>
-        ) : null}
-        {hasVat ? (
-          <p className="text-sm text-stone-600">
-            IVA aplicado:{" "}
-            <span className="font-semibold text-stone-900">
-              {String(vatPercent ?? 0).replace(/\.0+$/, "")}%
-            </span>
-          </p>
         ) : null}
 
         {outOfStock ? (
-          <p className="font-medium text-red-600">Sin stock por ahora.</p>
+          <p className="mt-10 text-sm font-medium uppercase tracking-wide text-stone-500">
+            Agotado
+          </p>
         ) : (
-          <form className="space-y-5">
+          <form className="mt-10 space-y-4">
             <input type="hidden" name="productId" value={productId} />
-            <input type="hidden" name="quantity" value={safeQty} />
+            <input type="hidden" name="quantity" value={String(safeQty)} />
 
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center rounded-full border border-stone-200 bg-[#f7f6f4] p-1 shadow-sm">
+            <div className="flex max-w-xs items-center justify-between gap-4 border-b border-stone-200 pb-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-600">
+                Cantidad
+              </span>
+              <div className="flex items-center gap-4">
                 <button
                   type="button"
-                  className="flex size-10 items-center justify-center rounded-full text-lg text-stone-600 hover:bg-white"
+                  className="text-lg text-stone-500 transition hover:text-stone-900"
                   onClick={() =>
-                    setQty((q) =>
-                      Math.max(1, Math.min(q, maxQty) - 1),
-                    )
+                    setQty((q) => Math.max(1, Math.min(q, maxQty) - 1))
                   }
                   aria-label="Menos"
                 >
                   −
                 </button>
-                <span className="min-w-[2.5rem] text-center text-sm font-semibold text-stone-900">
+                <span className="min-w-[2ch] text-center text-sm font-semibold tabular-nums text-stone-900">
                   {safeQty}
                 </span>
                 <button
                   type="button"
-                  className="flex size-10 items-center justify-center rounded-full text-lg text-stone-600 hover:bg-white"
+                  className="text-lg text-stone-500 transition hover:text-stone-900"
                   onClick={() =>
-                    setQty((q) =>
-                      Math.min(maxQty, Math.max(1, q) + 1),
-                    )
+                    setQty((q) => Math.min(maxQty, Math.max(1, q) + 1))
                   }
                   aria-label="Más"
                 >
                   +
                 </button>
               </div>
-              <p className="text-sm text-stone-600">
-                ¡Solo quedan{" "}
-                <span className="font-semibold text-amber-600">
-                  {stockQuantity} {stockQuantity === 1 ? "unidad" : "unidades"}
-                </span>
-                ! No te lo pierdas.
-              </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="submit"
-                formAction={buyNowFromDetail}
-                className="flex-1 rounded-full bg-[#3d5240] px-6 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#556654]"
-              >
-                Comprar ahora
-              </button>
-              <button
-                type="submit"
-                formAction={async (formData) => {
-                  await addToCartFromForm(formData);
-                  router.refresh();
-                }}
-                className="flex-1 rounded-full border-2 border-[#3d5240] bg-white px-6 py-3.5 text-center text-sm font-semibold text-[#3d5240] shadow-sm transition hover:bg-[#f4f7f3]"
-              >
-                Agregar al carrito
-              </button>
-            </div>
+            <button
+              type="submit"
+              formAction={async (formData) => {
+                await addToCartFromForm(formData);
+                router.refresh();
+                openCart();
+              }}
+              className="w-full bg-stone-900 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800"
+            >
+              Añadir a la bolsa
+            </button>
+
+            <button
+              type="submit"
+              formAction={buyNowFromDetail}
+              className="w-full bg-transparent py-2 text-center text-sm text-stone-600 underline decoration-stone-300 underline-offset-[6px] transition hover:text-stone-900"
+            >
+              Comprar ahora
+            </button>
           </form>
         )}
 
-        <div className="space-y-3 rounded-2xl border border-stone-200 bg-[#faf9f7] p-4 sm:p-5">
-          <div className="flex gap-3 border-b border-stone-200/80 pb-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-              <IconTruck className="size-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-stone-900">Envío gratis</p>
-              <p className="mt-0.5 text-sm text-stone-500">
-                Ingresá tu código postal para disponibilidad (texto de ejemplo en
-                la plantilla).
+        <div className="mt-12">
+          <AccordionSection title="Descripción" defaultOpen>
+            {descriptionText ? (
+              <div className="space-y-2">
+                <p className="whitespace-pre-wrap">{descriptionDisplayed}</p>
+                {showDescToggle ? (
+                  <button
+                    type="button"
+                    onClick={() => setDescExpanded((v) => !v)}
+                    className="text-sm font-medium text-stone-900 underline decoration-stone-400 underline-offset-4"
+                  >
+                    {descExpanded ? "Ver menos" : "Leer más"}
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <p>
+                Aún no hay descripción. Puedes sumar detalles desde el panel de
+                administración.
               </p>
-              <button
-                type="button"
-                className="mt-1 text-sm font-medium text-[#6b7f6a] hover:underline"
-              >
-                Ver cobertura
-              </button>
-            </div>
-          </div>
-          <div className="flex gap-3 pt-1">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-              <IconBox className="size-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-stone-900">Devoluciones</p>
-              <p className="mt-0.5 text-sm text-stone-500">
-                Cambios según política del vendedor.{" "}
-                <button
-                  type="button"
-                  className="font-medium text-[#6b7f6a] hover:underline"
-                >
-                  Detalles
-                </button>
-              </p>
-            </div>
-          </div>
+            )}
+          </AccordionSection>
+
+          <AccordionSection title="Detalles">
+            <ul className="list-inside list-disc space-y-2 text-stone-600">
+              {sizeLabel ? (
+                <li>
+                  <span className="text-stone-800">Contenido / tamaño:</span>{" "}
+                  {sizeLabel}
+                </li>
+              ) : null}
+              {hasExpiration ? (
+                <li>
+                  <span className="text-stone-800">Vencimiento:</span>{" "}
+                  {expirationDate ?? "—"}
+                </li>
+              ) : null}
+              {hasVat ? (
+                <li>
+                  <span className="text-stone-800">IVA:</span>{" "}
+                  {String(vatPercent ?? 0).replace(/\.0+$/, "")}%
+                </li>
+              ) : null}
+              {!sizeLabel && !hasExpiration && !hasVat ? (
+                <li>Información adicional disponible al confirmar tu compra.</li>
+              ) : null}
+            </ul>
+          </AccordionSection>
+
+          <AccordionSection title="Envíos y devoluciones">
+            <p>
+              Envíos a todo el país según disponibilidad. Cambios y devoluciones
+              según políticas del comercio; consultá por WhatsApp antes de
+              comprar si tienes dudas sobre talla o compatibilidad.
+            </p>
+          </AccordionSection>
         </div>
+
+        <p className="mt-10 text-[13px] text-stone-500">
+          <Link href="/products" className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950">
+            Ver más
+          </Link>
+          <span className="mx-2 text-stone-300" aria-hidden>
+            |
+          </span>
+          <Link href="/products" className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950">
+            Productos
+          </Link>
+        </p>
       </div>
     </div>
   );

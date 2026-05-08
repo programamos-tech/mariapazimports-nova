@@ -150,7 +150,7 @@ function errorMessage(code: string | undefined): string | null {
   if (!code) return null;
   switch (code) {
     case "validation":
-      return "Revisá cliente, productos y cantidades.";
+      return "Revisa cliente, productos y cantidades.";
     case "customer":
       return "No se encontró el cliente.";
     case "products":
@@ -158,7 +158,7 @@ function errorMessage(code: string | undefined): string | null {
     case "stock":
       return "Stock insuficiente en tienda para uno o más productos.";
     case "db":
-      return "No se pudo guardar. Aplicá la migración de permisos POS en Supabase (20260515120000_admin_orders_write_pos.sql) e intentá de nuevo.";
+      return "No se pudo guardar. Aplica la migración de permisos POS en Supabase (20260515120000_admin_orders_write_pos.sql) e intenta de nuevo.";
     default:
       return "Ocurrió un error al confirmar la factura.";
   }
@@ -272,11 +272,11 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     setQuickPending(false);
     if (!res.ok) {
       if (res.code === "auth") {
-        setQuickError("Sesión expirada. Recargá la página e iniciá sesión de nuevo.");
+        setQuickError("Sesión expirada. Recarga la página e inicia sesión de nuevo.");
       } else if (res.code === "name") {
         setQuickError("El nombre es obligatorio.");
       } else {
-        setQuickError("No se pudo crear el cliente. Intentá de nuevo.");
+        setQuickError("No se pudo crear el cliente. Intenta de nuevo.");
       }
       return;
     }
@@ -800,7 +800,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                 </p>
               </div>
               <p className="mt-5 text-xs leading-relaxed text-zinc-500">
-                Verificá cliente, productos y pago antes de confirmar. La factura quedará
+                Verifica cliente, productos y pago antes de confirmar. La factura quedará
                 registrada como venta en mostrador.
               </p>
               <ConfirmInvoiceButton disabled={!canSubmit} />

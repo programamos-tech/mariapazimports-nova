@@ -236,11 +236,11 @@ export default async function AdminProductsPage({
       <div className="space-y-4 py-6">
         {queryError ? (
           <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950 ring-1 ring-amber-100">
-            No se pudo cargar productos desde Supabase. Revisá{" "}
+            No se pudo cargar productos desde Supabase. Revisa{" "}
             <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> y la clave
             anónima, que exista la tabla <code className="text-xs">products</code>{" "}
             y tu usuario admin en <code className="text-xs">public.profiles</code>.
-            En Supabase → SQL, podés ejecutar el archivo{" "}
+            En Supabase → SQL, puedes ejecutar el archivo{" "}
             <code className="text-xs">supabase/full_schema.sql</code> (todas las
             migraciones en orden).
           </p>
@@ -249,7 +249,7 @@ export default async function AdminProductsPage({
         {!queryError && usedFallbackSelect ? (
           <p className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-sm text-amber-950">
             La base está parcialmente migrada: se listan productos con un esquema
-            compatible. Ejecutá{" "}
+            compatible. Ejecuta{" "}
             <code className="text-xs">supabase/full_schema.sql</code> en el SQL
             editor para alinear categorías, stock bodega/local y referencia/costo.
           </p>
@@ -260,7 +260,7 @@ export default async function AdminProductsPage({
             className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-900 ring-1 ring-red-100"
             role="alert"
           >
-            No se pudo actualizar el stock. Intentá de nuevo.
+            No se pudo actualizar el stock. Intenta de nuevo.
           </p>
         ) : null}
 

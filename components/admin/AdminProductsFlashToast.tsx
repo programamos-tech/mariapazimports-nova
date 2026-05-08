@@ -39,7 +39,7 @@ export function AdminProductsFlashToast({
         role="status"
         className="fixed bottom-5 right-5 z-[100] max-w-[min(20rem,calc(100vw-2.5rem))] rounded-lg border border-amber-200/90 bg-amber-50 px-3.5 py-2.5 text-xs font-medium text-amber-950 shadow-lg shadow-zinc-900/10"
       >
-        Guardado · la imagen no se subió. Editá el producto y volvé a intentar.
+        Guardado · la imagen no se subió. Edita el producto y vuelve a intentar.
       </div>
     );
   }

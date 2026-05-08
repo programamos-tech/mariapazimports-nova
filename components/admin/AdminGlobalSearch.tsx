@@ -244,7 +244,7 @@ export function AdminGlobalSearch() {
 
           {showEmpty ? (
             <p className="px-4 py-8 text-center text-sm text-zinc-700">
-              No hay coincidencias. Probá con otro término o n.º de factura.
+              No hay coincidencias. Prueba con otro término o n.º de factura.
             </p>
           ) : null}
 

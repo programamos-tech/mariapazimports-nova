@@ -22,7 +22,7 @@ export default function QuienSoyPage() {
         actualizado.
       </p>
       <p className="mt-4 text-sm leading-relaxed text-stone-600 sm:text-base">
-        Si tenés dudas sobre tallas, marcas o tiempos de envío, escribime: estoy para
+        Si tienes dudas sobre tallas, marcas o tiempos de envío, escríbeme: estoy para
         ayudarte a comprar con confianza.
       </p>
       <Link

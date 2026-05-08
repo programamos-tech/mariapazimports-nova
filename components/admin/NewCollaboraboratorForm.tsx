@@ -206,7 +206,7 @@ export function NewCollaboraboratorForm({ mode, storeLabel, initial }: Props) {
                       ))}
                     </select>
                     <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-                      Personaje generado (DiceBear). Elegí una variante; se guarda con la cuenta.
+                      Personaje generado (DiceBear). Elige una variante; se guarda con la cuenta.
                     </p>
                   </div>
                 </div>

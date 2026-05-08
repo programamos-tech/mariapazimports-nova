@@ -42,7 +42,7 @@ export function NewCustomerHeader() {
           Nuevo cliente
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-          Registrá un nuevo cliente. Podés añadir varias direcciones (casa, oficina, etc.).
+          Registra un nuevo cliente. Puedes añadir varias direcciones (casa, oficina, etc.).
         </p>
       </div>
       <Link
@@ -280,7 +280,7 @@ export function NewCustomerForm() {
                 </div>
               </dl>
               <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-                Completá al menos el nombre. Las direcciones son opcionales.
+                Completa al menos el nombre. Las direcciones son opcionales.
               </p>
             </div>
 

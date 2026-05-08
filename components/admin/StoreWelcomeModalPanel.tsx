@@ -18,7 +18,7 @@ function errorText(code: string | undefined): string | null {
     case "id":
       return "No se encontró el modal para actualizar.";
     case "db":
-      return "No se pudo guardar en base de datos. Revisá migraciones/permisos.";
+      return "No se pudo guardar en base de datos. Revisa migraciones/permisos.";
     case "size":
       return "La imagen supera 5 MB.";
     case "type":
@@ -176,7 +176,7 @@ export function StoreWelcomeModalPanel({
       <div>
         <h2 className="text-lg font-semibold text-stone-900">Modal de bienvenida</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Creá promos dinámicas tipo “Registrate y obtené descuento”.
+          Crea promos dinámicas tipo “Regístrate y obtén descuento”.
         </p>
       </div>
 
@@ -201,7 +201,7 @@ export function StoreWelcomeModalPanel({
           <input
             name="title"
             required
-            placeholder="Registrate y obtené 10% OFF"
+            placeholder="Regístrate y obtén 10% OFF"
             className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm sm:col-span-2"
           />
           <textarea

@@ -88,14 +88,14 @@ export default async function AdminCustomersPage({
             <p className="font-medium">No se pudo cargar la lista de clientes.</p>
             {missingCustomersTable ? (
               <p className="mt-2 text-amber-900/90">
-                Falta la tabla <code className="text-xs">customers</code>. En Supabase ejecutá la
+                Falta la tabla <code className="text-xs">customers</code>. En Supabase ejecuta la
                 migración{" "}
                 <code className="text-xs">20260512120000_customers_entity.sql</code> (o{" "}
                 <code className="text-xs">supabase db push</code>).
               </p>
             ) : (
               <p className="mt-1 text-amber-900/90">
-                Revisá{" "}
+                Revisa{" "}
                 <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs">
                   NEXT_PUBLIC_SUPABASE_URL
                 </code>{" "}
@@ -111,7 +111,7 @@ export default async function AdminCustomersPage({
 
         {!error && withoutShippingFields ? (
           <p className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-sm text-amber-950">
-            En la base todavía no están los campos de envío en pedidos. Podés aplicar la
+            En la base todavía no están los campos de envío en pedidos. Puedes aplicar la
             migración{" "}
             <code className="text-xs">20260506120000_orders_shipping.sql</code> para
             completarlos.
@@ -139,7 +139,7 @@ export default async function AdminCustomersPage({
           <div className="border-t border-zinc-100 py-12 text-center">
             <p className="text-sm text-zinc-500">
               {allRows.length === 0
-                ? "Todavía no hay clientes. Creá uno para la tienda física o esperá la primera venta online."
+                ? "Todavía no hay clientes. Crea uno para la tienda física o espera la primera venta online."
                 : "No hay resultados para esta búsqueda."}
             </p>
             {allRows.length === 0 ? (

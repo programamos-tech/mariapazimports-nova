@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const cuentaPublicPaths = new Set(["/cuenta/entrar", "/cuenta/registro"]);
+
+function isCuentaPath(path: string) {
+  return path === "/cuenta" || path.startsWith("/cuenta/");
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -30,6 +36,32 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  if (isCuentaPath(path)) {
+    const { data: profile } = user
+      ? await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle()
+      : { data: null };
+
+    // Staff usa el enlace "Backoffice" del footer; aquí no redirigimos a /admin.
+    // Las páginas de registro/login de la tienda no aplican si ya hay sesión de admin.
+    if (user && profile && cuentaPublicPaths.has(path)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
+    if (!cuentaPublicPaths.has(path) && !user) {
+      const next = new URL("/cuenta/entrar", request.url);
+      next.searchParams.set("next", path + request.nextUrl.search);
+      return NextResponse.redirect(next);
+    }
+
+    if (cuentaPublicPaths.has(path) && user && !profile) {
+      return NextResponse.redirect(new URL("/cuenta", request.url));
+    }
+  }
 
   if (path.startsWith("/admin/login")) {
     if (user) {
@@ -80,5 +112,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/cuenta", "/cuenta/:path*"],
 };

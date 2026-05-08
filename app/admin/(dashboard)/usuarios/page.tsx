@@ -68,11 +68,11 @@ export default async function AdminUsuariosRolesPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        No se pudieron cargar los perfiles. Aplicá la migración{" "}
+        No se pudieron cargar los perfiles. Aplica la migración{" "}
         <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs">
           20260516120000_profiles_team_roles.sql
         </code>{" "}
-        y revisá políticas RLS.
+        y revisa políticas RLS.
       </div>
     );
   }

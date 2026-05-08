@@ -35,7 +35,7 @@ export function TeamRolesInfoCollapse({ storeLabel }: { storeLabel: string }) {
             permisos en cada ficha.
           </p>
           <p className="mt-3">
-            Los permisos se guardan por colaborador; podés ajustarlos y usar{" "}
+            Los permisos se guardan por colaborador; puedes ajustarlos y usar{" "}
             <strong className="text-zinc-800">Restaurar por rol</strong> para volver al paquete
             sugerido del rol elegido.
           </p>

@@ -9,10 +9,14 @@ import { storeBrand } from "@/lib/brand";
 type Product = {
   id: string;
   name: string;
+  brand?: string | null;
   description: string | null;
   price_cents: number;
   image_path: string | null;
   stock_quantity: number;
+  size_value?: number | null;
+  size_unit?: string | null;
+  coupon_discount_percent?: number;
 };
 
 export function FavoritosView() {
@@ -84,8 +88,8 @@ export function FavoritosView() {
           Favoritos
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-stone-600 sm:text-base">
-          Todavía no guardaste productos. Tocá el corazón en las tarjetas del
-          catálogo y los vas a ver acá.
+          Todavía no guardaste productos. Toca el corazón en las tarjetas del
+          catálogo y los vas a ver aquí.
         </p>
         <Link
           href="/products"
@@ -103,7 +107,7 @@ export function FavoritosView() {
         Favoritos
       </h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600 sm:text-base">
-        Productos que marcaste en {storeBrand}. Podés quitarlos tocando de nuevo
+        Productos que marcaste en {storeBrand}. Puedes quitarlos tocando de nuevo
         el corazón.
       </p>
 
@@ -120,11 +124,13 @@ export function FavoritosView() {
           </Link>
         </p>
       ) : (
-        <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((p) => (
+        <ul className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
+          {products.map((p, index) => (
             <li key={p.id}>
               <ProductListingCard
+                accentImageBg={index % 4 === 3}
                 cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                couponDiscountPercent={p.coupon_discount_percent ?? 0}
                 product={p}
                 onCartChange={reloadCartQuantities}
               />

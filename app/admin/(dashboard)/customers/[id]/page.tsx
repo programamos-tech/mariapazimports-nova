@@ -47,7 +47,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
   if (error && error.message?.toLowerCase().includes("customers")) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        No se pudo cargar el cliente. Revisá migraciones y permisos.
+        No se pudo cargar el cliente. Revisa migraciones y permisos.
       </div>
     );
   }
@@ -92,7 +92,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
     <div className="mx-auto max-w-7xl space-y-6">
       {sp.error === "delete" ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-          No se pudo eliminar el cliente. Intentá de nuevo.
+          No se pudo eliminar el cliente. Intenta de nuevo.
         </div>
       ) : null}
 

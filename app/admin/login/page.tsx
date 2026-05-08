@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
                 Iniciar sesión
               </h1>
               <p className="mt-2 text-sm text-zinc-600">
-                Entrá con tu cuenta para continuar al panel.
+                Entra con tu cuenta para continuar al panel.
               </p>
 
               <div className="mt-8">

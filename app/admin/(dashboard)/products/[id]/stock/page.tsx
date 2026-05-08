@@ -63,7 +63,7 @@ export default async function AdminProductStockPage({ params }: Props) {
             Actualizar stock
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-            Registrá entradas de stock (comprás / te llegó mercadería) o ajustes por conteo (corrección
+            Registra entradas de stock (compras / te llegó mercancía) o ajustes por conteo (corrección
             después de contar).
           </p>
         </div>

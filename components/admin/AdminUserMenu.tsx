@@ -75,7 +75,7 @@ export function AdminUserMenu({ displayName, email, avatar }: Props) {
             Cerrar sesión
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-700/90">
-            ¿Seguro que querés salir? Vas a tener que volver a iniciar sesión.
+            ¿Seguro que quieres salir? Vas a tener que volver a iniciar sesión.
           </p>
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button

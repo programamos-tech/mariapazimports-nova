@@ -88,7 +88,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
             Editar producto
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-            Modificá los datos del producto. El stock se ajusta desde{" "}
+            Modifica los datos del producto. El stock se ajusta desde{" "}
             <Link
               href="/admin/products"
               className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900"
@@ -112,12 +112,12 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       {error ? (
         <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
           {error === "rls"
-            ? "No tenés permiso para actualizar. Verificá que exista tu fila en public.profiles con rol admin."
+            ? "No tienes permiso para actualizar. Verifica que exista tu fila en public.profiles con rol admin."
             : error === "reference"
               ? "La referencia es obligatoria."
               : error === "name"
                 ? "El nombre es obligatorio."
-                : "Error al guardar. Aplicá la migración de productos si falta, o revisá los logs del servidor."}
+                : "Error al guardar. Aplica la migración de productos si falta, o revisa los logs del servidor."}
         </p>
       ) : null}
 
@@ -152,7 +152,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
         className="mt-8 rounded-xl border border-zinc-200/90 bg-white p-6"
       >
         <p className="text-sm text-zinc-600">
-          Eliminá el producto solo si no debe volver a figurar en el catálogo.
+          Elimina el producto solo si no debe volver a figurar en el catálogo.
         </p>
       </ProductDeleteConfirmForm>
     </div>

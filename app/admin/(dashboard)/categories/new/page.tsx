@@ -30,7 +30,7 @@ export default async function NewCategoryPage({
       </div>
       {error === "name" ? (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-900 ring-1 ring-red-100">
-          Ingresá un nombre.
+          Ingresa un nombre.
         </p>
       ) : null}
       {error === "db" ? (

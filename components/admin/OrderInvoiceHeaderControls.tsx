@@ -121,7 +121,7 @@ function CancelInvoiceModal({
           Anular factura #{invoiceRef}
         </h2>
         <p className="mt-2 text-sm text-zinc-600">
-          Contanos el motivo de la anulación. Este dato queda registrado para
+          Cuéntanos el motivo de la anulación. Este dato queda registrado para
           auditoría.
         </p>
         <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -157,7 +157,7 @@ function CancelInvoiceModal({
               const t = reason.trim();
               if (t.length < minLen) {
                 setLocalError(
-                  `Escribí al menos ${minLen} caracteres explicando el motivo.`,
+                  `Escribe al menos ${minLen} caracteres explicando el motivo.`,
                 );
                 return;
               }
@@ -171,9 +171,9 @@ function CancelInvoiceModal({
                     `El motivo debe tener al menos ${minLen} caracteres.`,
                   );
                 } else if (res.error === "auth") {
-                  setLocalError("Sesión expirada. Volvé a iniciar sesión.");
+                  setLocalError("Sesión expirada. Vuelve a iniciar sesión.");
                 } else {
-                  setLocalError("No se pudo guardar. Intentá de nuevo.");
+                  setLocalError("No se pudo guardar. Intenta de nuevo.");
                 }
                 return;
               }

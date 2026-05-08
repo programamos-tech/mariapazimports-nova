@@ -3,6 +3,11 @@ export const storeBrand =
   process.env.NEXT_PUBLIC_STORE_NAME ?? "María Paz Importaciones";
 
 /**
+ * Logo en `/public`. El nombre incluye un espacio → la URL se codifica para el navegador.
+ */
+export const storeLogoPath = encodeURI("/logobackoficce (1).png");
+
+/**
  * Nombre en el pie © (independiente del nombre corto de marca si usás env de plantilla).
  * Ej.: NEXT_PUBLIC_STORE_COPYRIGHT_NAME
  */
@@ -24,7 +29,7 @@ export const storeSupportPhone =
   process.env.NEXT_PUBLIC_STORE_PHONE ?? "+57 300 555 0100";
 
 /**
- * Solo dígitos para wa.me (sin +). Podés fijar NEXT_PUBLIC_WHATSAPP_NUMBER si difiere del teléfono visible.
+ * Solo dígitos para wa.me (sin +). Puedes fijar NEXT_PUBLIC_WHATSAPP_NUMBER si difiere del teléfono visible.
  */
 const whatsappDigits =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ??

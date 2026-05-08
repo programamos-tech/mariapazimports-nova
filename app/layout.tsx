@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Geist_Mono, Montserrat } from "next/font/google";
 import { storeBrand, storeShortDescription } from "@/lib/brand";
 import { ADMIN_SIDEBAR_BG, STORE_CHROME_BG } from "@/lib/admin-theme";
+import { STORE_ACCENT, STORE_ACCENT_HOVER } from "@/lib/store-theme";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -45,6 +46,8 @@ export default function RootLayout({
           {
             "--admin-sidebar-bg": ADMIN_SIDEBAR_BG,
             "--store-chrome-bg": STORE_CHROME_BG,
+            "--store-accent": STORE_ACCENT,
+            "--store-accent-hover": STORE_ACCENT_HOVER,
           } as CSSProperties
         }
       >

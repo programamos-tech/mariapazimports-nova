@@ -37,7 +37,7 @@ export default async function AdminActividadesPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-3xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        No se pudo cargar el registro de actividades. Aplicá la migración{" "}
+        No se pudo cargar el registro de actividades. Aplica la migración{" "}
         <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs">
           20260523120000_admin_activity_log.sql
         </code>{" "}

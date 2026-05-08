@@ -100,8 +100,8 @@ export function AdminUpdateStockForm({
               </button>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-              Reemplazar: el valor que ingresás es el nuevo stock total en la ubicación elegida.
-              Entrada: sumás esa cantidad al stock actual en esa ubicación.
+              Reemplazar: el valor que ingresas es el nuevo stock total en la ubicación elegida.
+              Entrada: sumas esa cantidad al stock actual en esa ubicación.
             </p>
           </div>
 

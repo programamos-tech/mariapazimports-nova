@@ -2,16 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Minus, Plus, Star } from "lucide-react";
+import { Heart, Minus, Plus } from "lucide-react";
+import {
+  STORE_HEADER_ICON_STROKE,
+} from "@/lib/store-header-icons";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
   addToCartFromForm,
   setLineQuantity,
 } from "@/app/actions/cart";
+import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
+import { storeBrand } from "@/lib/brand";
 import { formatCop } from "@/lib/money";
-import { pseudoReviewCount } from "@/lib/pseudo-review";
+import {
+  storefrontPriceAfterCouponCents,
+} from "@/lib/store-coupons";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
@@ -24,43 +31,135 @@ type Product = {
   price_cents: number;
   image_path: string | null;
   stock_quantity: number;
+  /** Columna opcional en DB; si falta se infiere para la línea de marca. */
+  brand?: string | null;
+  size_value?: number | null;
+  size_unit?: string | null;
 };
 
-function RatingStars() {
+function showcaseBrandLabel(product: Product): string {
+  const b = product.brand?.trim();
+  if (b) return b.toUpperCase();
+  const beforeSep = product.name.split(/[•·|–—]/)[0]?.trim();
+  if (beforeSep && beforeSep.length <= 32) return beforeSep.toUpperCase();
+  return storeBrand.split(/\s+/)[0]?.toUpperCase() ?? "MARCA";
+}
+
+function catalogSizeLine(product: Product): string | null {
+  const v = product.size_value;
+  if (v == null || Number(v) <= 0) return null;
+  const unit = (product.size_unit ?? "").trim() || "unidad";
+  const num = String(v).replace(/\.0+$/, "");
+  return `${num} ${unit}`.toUpperCase();
+}
+
+/** Tarjeta solo lectura: imagen + marca + nombre + precio (sin bordes ni CTAs en superficie). */
+function ShowcaseProductCard({
+  product,
+  couponDiscountPercent = 0,
+  accentImageBg = false,
+}: {
+  product: Product;
+  couponDiscountPercent?: number;
+  /** Fondo suave tipo bloque de color en algunas columnas (look editorial). */
+  accentImageBg?: boolean;
+}) {
+  const img = storagePublicObjectUrl(product.image_path);
+  const outOfStock = product.stock_quantity <= 0;
+  const pct = Math.max(
+    0,
+    Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
+  );
+  const hasCouponPrice = pct > 0;
+  const priceAfterCoupon = hasCouponPrice
+    ? storefrontPriceAfterCouponCents(product.price_cents, pct)
+    : product.price_cents;
+
+  const imageBgClass = accentImageBg
+    ? "bg-[#fceff3]"
+    : "bg-white";
+
   return (
-    <span className="flex items-center gap-0.5 text-stone-300" aria-hidden>
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star
-          key={i}
-          className="size-3 shrink-0 fill-current"
-          strokeWidth={0}
-        />
-      ))}
-    </span>
+    <article className="h-full">
+      <Link
+        href={`/products/${product.id}`}
+        className="group block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
+      >
+        <div
+          className={`relative aspect-[4/5] w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${
+            outOfStock ? "opacity-[0.78]" : ""
+          }`}
+        >
+          {img ? (
+            <Image
+              src={img}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
+              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+            />
+          ) : (
+            <span className="flex size-full items-center justify-center text-3xl text-stone-200">
+              ◆
+            </span>
+          )}
+        </div>
+        <div className="space-y-1.5 pt-4 text-left">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+            {showcaseBrandLabel(product)}
+          </p>
+          <p className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 line-clamp-3">
+            {product.name}
+          </p>
+          <div className="space-y-0.5 pt-0.5">
+            {hasCouponPrice ? (
+              <>
+                <p className="text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300">
+                  {formatCop(product.price_cents)}
+                </p>
+                <p className="text-[13px] font-medium tabular-nums text-stone-900">
+                  {formatCop(priceAfterCoupon)}
+                </p>
+              </>
+            ) : (
+              <p className="text-[13px] font-medium tabular-nums text-stone-900">
+                {formatCop(product.price_cents)}
+              </p>
+            )}
+          </div>
+          {outOfStock ? (
+            <p className="pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400">
+              Agotado
+            </p>
+          ) : null}
+        </div>
+      </Link>
+    </article>
   );
 }
 
-export function ProductListingCard({
+function CatalogProductCard({
   product,
   cartQuantity = 0,
   onCartChange,
+  couponDiscountPercent = 0,
+  accentImageBg = false,
 }: {
   product: Product;
-  /** Unidades en el carrito (tienda efectiva). */
   cartQuantity?: number;
-  /** Solo cliente: p. ej. favoritos, para refrescar cantidades sin RSC. */
   onCartChange?: () => void;
+  couponDiscountPercent?: number;
+  accentImageBg?: boolean;
 }) {
   const router = useRouter();
+  const { openCart } = useStoreCartDrawer();
   const [cartPending, startCartTransition] = useTransition();
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(product.id);
   const img = storagePublicObjectUrl(product.image_path);
-  const reviews = pseudoReviewCount(product.id);
   const outOfStock = product.stock_quantity <= 0;
-  const blurb =
-    product.description?.trim() ||
-    "Selección curada · calidad para tu día a día.";
+  const sizeLine = catalogSizeLine(product);
 
   const afterCartMutation = () => {
     router.refresh();
@@ -69,20 +168,34 @@ export function ProductListingCard({
 
   const inCart = cartQuantity > 0;
   const maxQty = Math.max(0, Math.floor(product.stock_quantity));
+  const pct = Math.max(
+    0,
+    Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
+  );
+  const hasCouponPrice = pct > 0;
+  const priceAfterCoupon = hasCouponPrice
+    ? storefrontPriceAfterCouponCents(product.price_cents, pct)
+    : product.price_cents;
+
+  const titleWithSize = sizeLine ? `${product.name} · ${sizeLine}` : product.name;
+
+  const imageBgClass = accentImageBg ? "bg-[#fceff3]" : "bg-white";
 
   return (
-    <article className="group/card flex h-full flex-col overflow-hidden rounded-xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[box-shadow,border-color] duration-200 hover:border-stone-300 hover:shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]">
-      <div className="relative aspect-square w-full shrink-0 bg-[#faf8f5]">
+    <article className="flex h-full flex-col">
+      <div
+        className={`relative aspect-[4/5] w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${outOfStock ? "opacity-[0.78]" : ""}`}
+      >
         <Link
           href={`/products/${product.id}`}
-          className="absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6b7f6a]/80"
+          className="group/image absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
         >
           {img ? (
             <Image
               src={img}
               alt={product.name}
               fill
-              className="object-cover transition duration-300 group-hover/card:scale-[1.02]"
+              className="object-cover object-center transition duration-300 group-hover/image:scale-[1.02]"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
             />
@@ -100,53 +213,64 @@ export function ProductListingCard({
           }}
           className={
             favorite
-              ? "absolute right-2.5 top-2.5 z-10 flex size-9 items-center justify-center rounded-full bg-white text-rose-500 shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-rose-200/60 transition hover:bg-white hover:text-rose-600"
-              : "absolute right-2.5 top-2.5 z-10 flex size-9 items-center justify-center rounded-full bg-white text-stone-500 shadow-[0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-stone-200/90 transition hover:bg-white hover:text-stone-700"
+              ? "absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/95 text-rose-500 shadow-none ring-1 ring-stone-200/80 transition hover:bg-white"
+              : "absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/95 text-stone-600 shadow-none ring-1 ring-stone-200/80 transition hover:bg-white hover:text-stone-900"
           }
           aria-pressed={favorite}
           aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
         >
           <Heart
-            className="size-4"
-            strokeWidth={2}
+            className="size-3.5"
+            strokeWidth={STORE_HEADER_ICON_STROKE}
             fill={favorite ? "currentColor" : "none"}
           />
         </button>
+        {hasCouponPrice ? (
+          <span className="pointer-events-none absolute left-3 top-3 z-10 border border-stone-900 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-900">
+            −{pct}%
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2.5 px-4 pb-5 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <Link
-            href={`/products/${product.id}`}
-            className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-tight text-stone-900 transition group-hover/card:text-[#556654] sm:text-[15px]"
-          >
-            <span className="line-clamp-2">{product.name}</span>
-          </Link>
-          <span className="shrink-0 pt-0.5 text-sm font-medium tabular-nums text-[#4a5c49] sm:text-[15px]">
-            {formatCop(product.price_cents)}
-          </span>
+      <div className="flex min-h-0 flex-1 flex-col space-y-1.5 pt-4">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+          {showcaseBrandLabel(product)}
+        </p>
+        <Link
+          href={`/products/${product.id}`}
+          className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"
+        >
+          <span className="line-clamp-3">{titleWithSize}</span>
+        </Link>
+        <div className="space-y-0.5 pt-0.5">
+          {hasCouponPrice ? (
+            <>
+              <p className="text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300">
+                {formatCop(product.price_cents)}
+              </p>
+              <p className="text-[13px] font-medium tabular-nums text-stone-900">
+                {formatCop(priceAfterCoupon)}
+              </p>
+              <p className="text-[9px] font-medium uppercase leading-tight tracking-[0.08em] text-stone-500">
+                Con cupón en el pago
+              </p>
+            </>
+          ) : (
+            <p className="text-[13px] font-medium tabular-nums text-stone-900">
+              {formatCop(product.price_cents)}
+            </p>
+          )}
         </div>
 
-        <p className="line-clamp-2 text-xs leading-relaxed text-stone-500 sm:text-[13px]">
-          {blurb}
-        </p>
-
-        <p className="flex items-center gap-2">
-          <RatingStars />
-          <span className="text-[11px] tabular-nums text-stone-400 sm:text-xs">
-            ({reviews})
-          </span>
-        </p>
-
         {outOfStock ? (
-          <p className="mt-2 text-center text-xs font-medium text-red-600/90">
-            Sin stock
+          <p className="mt-4 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400">
+            Agotado
           </p>
         ) : inCart ? (
           <div
-            className="mt-auto flex w-full items-center gap-0.5 rounded-full border-2 border-[#6b7f6a] bg-white p-0.5 shadow-sm"
+            className="mt-auto flex w-full items-center gap-0.5 border border-stone-900 bg-white p-0.5"
             role="group"
-            aria-label="Cantidad en el carrito"
+            aria-label="Cantidad en la bolsa"
           >
             <button
               type="button"
@@ -158,16 +282,14 @@ export function ProductListingCard({
                   );
                 })
               }
-              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#556654] transition hover:bg-[#fffbf6] disabled:opacity-40"
+              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition hover:bg-stone-100 disabled:opacity-40"
               aria-label={
-                cartQuantity <= 1
-                  ? "Quitar del carrito"
-                  : "Restar una unidad"
+                cartQuantity <= 1 ? "Quitar de la bolsa" : "Restar una unidad"
               }
             >
-              <Minus className="size-4" strokeWidth={2} aria-hidden />
+              <Minus className="size-4" strokeWidth={1.5} aria-hidden />
             </button>
-            <span className="min-w-0 flex-1 text-center text-sm font-semibold tabular-nums text-[#3d5240]">
+            <span className="min-w-0 flex-1 text-center text-xs font-semibold tabular-nums text-stone-900">
               {cartQuantity}
             </span>
             <button
@@ -180,31 +302,68 @@ export function ProductListingCard({
                   );
                 })
               }
-              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#556654] transition hover:bg-[#fffbf6] disabled:opacity-40"
+              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition hover:bg-stone-100 disabled:opacity-40"
               aria-label="Sumar una unidad"
             >
-              <Plus className="size-4" strokeWidth={2} aria-hidden />
+              <Plus className="size-4" strokeWidth={1.5} aria-hidden />
             </button>
           </div>
         ) : (
           <form
-            className="mt-auto pt-2"
+            className="mt-auto pt-4"
             action={async (formData) => {
               await addToCartFromForm(formData);
               afterCartMutation();
+              openCart();
             }}
           >
             <input type="hidden" name="productId" value={product.id} />
             <input type="hidden" name="quantity" value="1" />
             <button
               type="submit"
-              className="w-full rounded-full border-2 border-[#6b7f6a] bg-white py-2.5 text-sm font-semibold text-[#556654] shadow-sm transition hover:bg-[#fffbf6] hover:border-[#5a6e59]"
+              className="w-full border border-stone-900 bg-white py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
             >
-              Agregar al carrito
+              Añadir a la bolsa
             </button>
           </form>
         )}
       </div>
     </article>
+  );
+}
+
+export function ProductListingCard({
+  product,
+  cartQuantity = 0,
+  onCartChange,
+  couponDiscountPercent = 0,
+  presentation = "default",
+  accentImageBg = false,
+}: {
+  product: Product;
+  cartQuantity?: number;
+  onCartChange?: () => void;
+  couponDiscountPercent?: number;
+  presentation?: "default" | "editorial";
+  accentImageBg?: boolean;
+}) {
+  if (presentation === "editorial") {
+    return (
+      <ShowcaseProductCard
+        product={product}
+        couponDiscountPercent={couponDiscountPercent}
+        accentImageBg={accentImageBg}
+      />
+    );
+  }
+
+  return (
+    <CatalogProductCard
+      product={product}
+      cartQuantity={cartQuantity}
+      onCartChange={onCartChange}
+      couponDiscountPercent={couponDiscountPercent}
+      accentImageBg={accentImageBg}
+    />
   );
 }
