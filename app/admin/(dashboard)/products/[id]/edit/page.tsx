@@ -31,6 +31,8 @@ type ProductRow = {
   has_expiration?: boolean | null;
   expiration_date?: string | null;
   colors?: string[] | null;
+  fragrance_options?: string[] | null;
+  fragrance_option_images?: Record<string, unknown> | null;
   has_vat?: boolean | null;
   vat_percent?: number | null;
 };
@@ -143,6 +145,18 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           hasVat: p.has_vat === true,
           vatPercent: p.vat_percent ?? null,
           colors: Array.isArray(p.colors) ? p.colors : [],
+          fragranceOptionsCsv: Array.isArray(p.fragrance_options)
+            ? p.fragrance_options.join("\n")
+            : "",
+          fragranceOptionImagesJson: JSON.stringify(
+            p.fragrance_option_images &&
+              typeof p.fragrance_option_images === "object" &&
+              !Array.isArray(p.fragrance_option_images)
+              ? p.fragrance_option_images
+              : {},
+            null,
+            2,
+          ),
         }}
       />
 

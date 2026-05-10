@@ -125,11 +125,12 @@ export async function startCheckout(formData: FormData) {
     }
     const sub = p.price_cents * line.quantity;
     total += sub;
+    const frag = line.fragrance?.trim();
     lines.push({
       product_id: p.id,
       quantity: line.quantity,
       unit_price_cents: p.price_cents,
-      product_name_snapshot: p.name,
+      product_name_snapshot: frag ? `${p.name} (${frag})` : p.name,
     });
   }
 

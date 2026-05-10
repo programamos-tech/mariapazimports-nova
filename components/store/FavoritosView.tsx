@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
+import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { storeBrand } from "@/lib/brand";
 
@@ -16,6 +17,7 @@ type Product = {
   stock_quantity: number;
   size_value?: number | null;
   size_unit?: string | null;
+  fragrance_options?: string[] | null;
   coupon_discount_percent?: number;
 };
 
@@ -36,7 +38,7 @@ export function FavoritosView() {
         }) => {
           const next: Record<string, number> = {};
           for (const l of body.lines ?? []) {
-            next[l.productId] = l.quantity;
+            next[l.productId] = (next[l.productId] ?? 0) + l.quantity;
           }
           setCartQtyByProductId(next);
         },
@@ -127,13 +129,18 @@ export function FavoritosView() {
         <ul className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
           {products.map((p, index) => (
             <li key={p.id}>
-              <ProductListingCard
-                accentImageBg={index % 4 === 3}
-                cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                couponDiscountPercent={p.coupon_discount_percent ?? 0}
-                product={p}
-                onCartChange={reloadCartQuantities}
-              />
+              <RevealOnScroll
+                className="h-full"
+                delayMs={Math.min(index * 65, 400)}
+              >
+                <ProductListingCard
+                  accentImageBg={index % 4 === 3}
+                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                  couponDiscountPercent={p.coupon_discount_percent ?? 0}
+                  product={p}
+                  onCartChange={reloadCartQuantities}
+                />
+              </RevealOnScroll>
             </li>
           ))}
         </ul>

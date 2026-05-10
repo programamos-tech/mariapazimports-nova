@@ -1,6 +1,21 @@
 import { cookies } from "next/headers";
 
-export type CartLine = { productId: string; quantity: number };
+export type CartLine = {
+  productId: string;
+  quantity: number;
+  /** Etiqueta de fragancia elegida en PDP (debe coincidir con `fragrance_options`). */
+  fragrance?: string;
+};
+
+export function cartLinesMatchFragrance(
+  a: Pick<CartLine, "productId" | "fragrance">,
+  b: Pick<CartLine, "productId" | "fragrance">,
+): boolean {
+  return (
+    a.productId === b.productId &&
+    (a.fragrance ?? "").trim() === (b.fragrance ?? "").trim()
+  );
+}
 
 const CART_COOKIE = "tiendas_cart";
 
@@ -11,12 +26,21 @@ export async function getCart(): Promise<CartLine[]> {
   try {
     const parsed = JSON.parse(raw) as CartLine[];
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (l) =>
-        typeof l.productId === "string" &&
-        typeof l.quantity === "number" &&
-        l.quantity > 0,
-    );
+    return parsed
+      .filter(
+        (l) =>
+          typeof l.productId === "string" &&
+          typeof l.quantity === "number" &&
+          l.quantity > 0,
+      )
+      .map((l) => ({
+        productId: l.productId,
+        quantity: l.quantity,
+        fragrance:
+          typeof l.fragrance === "string" && l.fragrance.trim()
+            ? l.fragrance.trim()
+            : undefined,
+      }));
   } catch {
     return [];
   }

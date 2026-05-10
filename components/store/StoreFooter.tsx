@@ -19,6 +19,10 @@ const footerLink =
 
 const telHref = `tel:${storeSupportPhone.replace(/[^\d+]/g, "")}`;
 
+const bereaSignatureSrc = encodeURI(
+  "/ChatGPT Image 9 may 2026, 07_52_54 p.m..png",
+);
+
 export function StoreFooter() {
   const year = new Date().getFullYear();
 
@@ -141,29 +145,38 @@ export function StoreFooter() {
 
       {/* 2 · Legal */}
       <div className="border-t border-stone-200/90 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] text-stone-500 sm:text-xs">
-              © {year} {storeCopyrightHolder}. Todos los derechos reservados.
-            </p>
-            <p className="font-berea-nova berea-signature text-[10px] font-semibold text-stone-400 sm:text-[11px]">
-              By Berea Studio
-            </p>
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <p className="text-[11px] text-stone-500 sm:text-xs">
+            © {year} {storeCopyrightHolder}. Todos los derechos reservados.
+          </p>
+          <div className="flex w-full flex-col items-end gap-4 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-8">
+            <nav
+              aria-label="Legal y equipo"
+              className="flex flex-wrap justify-end gap-x-6 gap-y-2 text-[11px] text-stone-500 sm:text-xs"
+            >
+              <Link href="/privacidad" className={`${footerLink} text-stone-500`}>
+                Privacidad
+              </Link>
+              <Link href="/terminos" className={`${footerLink} text-stone-500`}>
+                Términos de uso
+              </Link>
+              <Link href="/cookies" className={`${footerLink} text-stone-500`}>
+                Cookies
+              </Link>
+              <Link href="/admin" className={`${footerLink} font-medium text-stone-600`}>
+                Backoffice
+              </Link>
+            </nav>
+            <div className="group shrink-0 sm:pl-1">
+              <Image
+                src={bereaSignatureSrc}
+                alt="Berea — diseño y desarrollo de software a la medida"
+                width={320}
+                height={82}
+                className="h-9 w-auto max-w-[14rem] origin-right object-contain object-right opacity-[0.82] transition-[transform,opacity] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.05] group-hover:opacity-100 sm:h-11 sm:max-w-[17rem]"
+              />
+            </div>
           </div>
-          <nav
-            aria-label="Legal y equipo"
-            className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-stone-500 sm:text-xs"
-          >
-            <Link href="#" className={`${footerLink} text-stone-500`}>
-              Privacidad
-            </Link>
-            <Link href="#" className={`${footerLink} text-stone-500`}>
-              Términos de uso
-            </Link>
-            <Link href="/admin" className={`${footerLink} font-medium text-stone-600`}>
-              Backoffice
-            </Link>
-          </nav>
         </div>
       </div>
     </footer>

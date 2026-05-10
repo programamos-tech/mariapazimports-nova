@@ -6,6 +6,7 @@ import { getCart, normalizeCartForCheckout } from "@/lib/cart";
 import { formatCop } from "@/lib/money";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { imagePathForProductLine } from "@/lib/product-line-image";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
@@ -320,7 +321,7 @@ export default async function CheckoutPage({
   const { data: products } = await supabase
     .from("products")
     .select(
-      "id,name,price_cents,image_path,is_published,stock_quantity,colors",
+      "id,name,price_cents,image_path,fragrance_option_images,is_published,stock_quantity,colors",
     )
     .in("id", ids);
 
@@ -382,8 +383,17 @@ export default async function CheckoutPage({
               <section>
                 <ul className="divide-y divide-stone-200">
                   {rows.map(({ line, p, sub }) => {
-                    const row = p as typeof p & { colors?: unknown };
-                    const img = storagePublicObjectUrl(p.image_path);
+                    const row = p as typeof p & {
+                      colors?: unknown;
+                      fragrance_option_images?: unknown;
+                    };
+                    const frag = line.fragrance?.trim() || null;
+                    const linePath = imagePathForProductLine(
+                      p.image_path,
+                      row.fragrance_option_images,
+                      frag ?? undefined,
+                    );
+                    const img = storagePublicObjectUrl(linePath);
                     const maxStock = Math.max(
                       0,
                       Math.floor(Number(p.stock_quantity ?? 0)),
@@ -392,7 +402,7 @@ export default async function CheckoutPage({
 
                     return (
                       <li
-                        key={p.id}
+                        key={`${p.id}-${frag ?? ""}`}
                         className="flex flex-col gap-6 py-10 first:pt-0 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
                       >
                         <div className="flex min-w-0 flex-1 gap-5 sm:gap-8">
@@ -423,6 +433,14 @@ export default async function CheckoutPage({
                               {p.name}
                             </Link>
                             <ul className="mt-3 space-y-1 text-[13px] text-stone-600">
+                              {frag ? (
+                                <li>
+                                  <span className="text-stone-500">
+                                    Fragancia / tono:
+                                  </span>{" "}
+                                  {frag}
+                                </li>
+                              ) : null}
                               {color ? (
                                 <li>
                                   <span className="text-stone-500">Color:</span>{" "}
@@ -440,6 +458,7 @@ export default async function CheckoutPage({
                               productId={p.id}
                               quantity={line.quantity}
                               maxStock={maxStock}
+                              fragrance={frag}
                             />
                           </div>
                         </div>

@@ -37,6 +37,8 @@ type Initial = {
   hasVat: boolean;
   vatPercent: number | null;
   colors: string[];
+  fragranceOptionsCsv: string;
+  fragranceOptionImagesJson: string;
 };
 
 type Props = {
@@ -71,6 +73,7 @@ export function EditProductForm({
     initial.vatPercent == null ? "" : String(initial.vatPercent),
   );
   const [selectedColors, setSelectedColors] = useState(initial.colors);
+  const [fragranceCsv, setFragranceCsv] = useState(initial.fragranceOptionsCsv);
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const categoryLabel =
@@ -294,6 +297,37 @@ export function EditProductForm({
                     })}
                   </div>
                 </div>
+              </div>
+              <div>
+                <label htmlFor="ep-fragrances" className={labelClass}>
+                  Fragancias / tonos (opcional)
+                </label>
+                <textarea
+                  id="ep-fragrances"
+                  name="fragrance_options_csv"
+                  rows={3}
+                  value={fragranceCsv}
+                  onChange={(e) => setFragranceCsv(e.target.value)}
+                  placeholder="Una por línea o separadas por coma (ej. Vanilla Cashmere, Fresh & Cozy)"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="ep-frag-img-json" className={labelClass}>
+                  Imágenes por fragancia (JSON opcional)
+                </label>
+                <textarea
+                  id="ep-frag-img-json"
+                  name="fragrance_option_images_json"
+                  rows={5}
+                  defaultValue={initial.fragranceOptionImagesJson}
+                  placeholder={`{\n  "Fresh & Cozy": "product-images/…/archivo.jpg"\n}`}
+                  className={`${inputClass} font-mono text-xs`}
+                />
+                <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
+                  Misma clave de texto que cada fragancia; valor = ruta pública (igual que la imagen
+                  principal del producto).
+                </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800">

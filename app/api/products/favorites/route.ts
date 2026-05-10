@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,stock_quantity,size_value,size_unit",
+      "id,name,brand,description,price_cents,image_path,stock_quantity,size_value,size_unit,fragrance_options",
     )
     .eq("is_published", true)
     .in("id", ids);

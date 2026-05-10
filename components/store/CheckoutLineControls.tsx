@@ -10,9 +10,15 @@ type Props = {
   productId: string;
   quantity: number;
   maxStock: number;
+  fragrance?: string | null;
 };
 
-export function CheckoutLineControls({ productId, quantity, maxStock }: Props) {
+export function CheckoutLineControls({
+  productId,
+  quantity,
+  maxStock,
+  fragrance,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -28,9 +34,11 @@ export function CheckoutLineControls({ productId, quantity, maxStock }: Props) {
           disabled={pending}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(productId, quantity - 1).then(() =>
-                router.refresh(),
-              );
+              void setLineQuantity(
+                productId,
+                quantity - 1,
+                fragrance ?? undefined,
+              ).then(() => router.refresh());
             })
           }
           className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
@@ -46,9 +54,11 @@ export function CheckoutLineControls({ productId, quantity, maxStock }: Props) {
           disabled={pending || quantity >= maxStock}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(productId, quantity + 1).then(() =>
-                router.refresh(),
-              );
+              void setLineQuantity(
+                productId,
+                quantity + 1,
+                fragrance ?? undefined,
+              ).then(() => router.refresh());
             })
           }
           className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
@@ -69,7 +79,11 @@ export function CheckoutLineControls({ productId, quantity, maxStock }: Props) {
           disabled={pending}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(productId, 0).then(() => router.refresh());
+              void setLineQuantity(
+                productId,
+                0,
+                fragrance ?? undefined,
+              ).then(() => router.refresh());
             })
           }
           className="text-stone-700 underline decoration-stone-400 underline-offset-4 transition hover:text-red-700 disabled:opacity-40"

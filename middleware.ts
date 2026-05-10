@@ -10,6 +10,9 @@ function isCuentaPath(path: string) {
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Refresca la sesión en cookies antes de Server Components (tienda, productos, etc.).
+  // Si solo corre en /cuenta y /admin, las rutas como /products pueden ir con JWT
+  // desincronizado y Supabase devuelve errores en consultas pese a que el cliente muestre sesión.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -112,5 +115,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/cuenta", "/cuenta/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

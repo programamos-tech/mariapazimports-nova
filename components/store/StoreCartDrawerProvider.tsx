@@ -25,6 +25,7 @@ import {
 export type StoreCartDrawerItem = {
   productId: string;
   quantity: number;
+  fragrance: string | null;
   name: string;
   priceCents: number;
   imagePath: string | null;
@@ -250,6 +251,12 @@ function DrawerLine({
               {item.name}
             </Link>
             <div className="mt-3 space-y-1 text-[12px] text-stone-600">
+              {item.fragrance ? (
+                <p>
+                  <span className="text-stone-500">Fragancia / tono:</span>{" "}
+                  {item.fragrance}
+                </p>
+              ) : null}
               {item.firstColor ? (
                 <p>
                   <span className="text-stone-500">Color:</span>{" "}
@@ -375,10 +382,14 @@ export function StoreCartDrawerProvider({
   const [linePending, startLineTransition] = useTransition();
 
   const adjustQty = useCallback(
-    (productId: string, nextQty: number) => {
+    (productId: string, fragrance: string | null, nextQty: number) => {
       startLineTransition(() => {
         void (async () => {
-          await setLineQuantity(productId, nextQty);
+          await setLineQuantity(
+            productId,
+            nextQty,
+            fragrance ?? undefined,
+          );
           await reloadCart("quiet");
           router.refresh();
         })();
@@ -451,11 +462,11 @@ export function StoreCartDrawerProvider({
                   <ul className="pb-2">
                     {items.map((item) => (
                       <DrawerLine
-                        key={item.productId}
+                        key={`${item.productId}-${item.fragrance ?? ""}`}
                         item={item}
                         pending={linePending}
                         onAdjustQty={(next) =>
-                          adjustQty(item.productId, next)
+                          adjustQty(item.productId, item.fragrance, next)
                         }
                       />
                     ))}

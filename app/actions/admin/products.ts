@@ -118,6 +118,38 @@ function parseColorsFromFormData(formData: FormData): string[] {
   return out;
 }
 
+function parseFragranceOptionsFromFormData(formData: FormData): string[] {
+  const raw = String(formData.get("fragrance_options_csv") ?? "").trim();
+  if (!raw) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(/[\n,;]+/)) {
+    const f = part.trim().slice(0, 160);
+    if (!f) continue;
+    const key = f.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(f);
+  }
+  return out;
+}
+
+function parseFragranceOptionImagesJson(formData: FormData): Record<string, string> {
+  const raw = String(formData.get("fragrance_option_images_json") ?? "").trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof v === "string" && v.trim()) out[k] = v.trim();
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (err?.code === "42703") return true;
   const m = err?.message ?? "";
@@ -125,7 +157,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|has_expiration|expiration_date|colors|has_vat|vat_percent/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|has_vat|vat_percent/i.test(m)
   ) {
     return true;
   }
@@ -216,6 +248,8 @@ export async function createProduct(formData: FormData) {
   const has_vat = formData.get("has_vat") === "on";
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
+  const fragrance_options = parseFragranceOptionsFromFormData(formData);
+  const fragrance_option_images = parseFragranceOptionImagesJson(formData);
 
   if (!name) {
     redirect("/admin/products/new?error=name");
@@ -239,6 +273,8 @@ export async function createProduct(formData: FormData) {
     has_vat,
     vat_percent,
     colors,
+    fragrance_options,
+    fragrance_option_images,
   };
 
   const extendedRow = {
@@ -354,6 +390,8 @@ export async function updateProduct(productId: string, formData: FormData) {
   const has_vat = formData.get("has_vat") === "on";
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
+  const fragrance_options = parseFragranceOptionsFromFormData(formData);
+  const fragrance_option_images = parseFragranceOptionImagesJson(formData);
 
   if (!name) {
     redirect(`/admin/products/${productId}/edit?error=name`);
@@ -377,6 +415,8 @@ export async function updateProduct(productId: string, formData: FormData) {
     has_vat,
     vat_percent,
     colors,
+    fragrance_options,
+    fragrance_option_images,
   };
 
   const extendedUpdate = {

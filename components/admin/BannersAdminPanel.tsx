@@ -229,7 +229,7 @@ export function BannersAdminPanel({
       <Section
         placement="products"
         label="Sección productos"
-        description="Banners encima de los filtros en /products. Puedes usar una sola imagen o varias en carrusel."
+        description="En el catálogo completo, la primera imagen publicada (menor orden) es el hero ancho con título; el resto se usa en carrusel cuando apliqués filtros u orden. Sin ningún banner aquí, /products no muestra hero, solo el listado."
         rows={banners}
       />
     </div>

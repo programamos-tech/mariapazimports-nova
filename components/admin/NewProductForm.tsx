@@ -42,6 +42,7 @@ export function NewProductForm({
   const [hasVat, setHasVat] = useState(false);
   const [vatPercent, setVatPercent] = useState("");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [fragranceCsv, setFragranceCsv] = useState("");
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const totalStock = stockLocal + stockWarehouse;
@@ -245,6 +246,32 @@ export function NewProductForm({
                     })}
                   </div>
                 </div>
+              </div>
+              <div>
+                <label htmlFor="np-fragrances" className={labelClass}>
+                  Fragancias / tonos (opcional)
+                </label>
+                <textarea
+                  id="np-fragrances"
+                  name="fragrance_options_csv"
+                  rows={3}
+                  value={fragranceCsv}
+                  onChange={(e) => setFragranceCsv(e.target.value)}
+                  placeholder="Una por línea o separadas por coma"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="np-frag-img-json" className={labelClass}>
+                  Imágenes por fragancia (JSON opcional)
+                </label>
+                <textarea
+                  id="np-frag-img-json"
+                  name="fragrance_option_images_json"
+                  rows={5}
+                  placeholder={`{\n  "Nombre exacto de la fragancia": "product-images/…/archivo.jpg"\n}`}
+                  className={`${inputClass} font-mono text-xs`}
+                />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800">

@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Heart, Star } from "lucide-react";
+import { ChevronDown, Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
@@ -24,11 +24,14 @@ type Props = {
   priceCents: number;
   stockQuantity: number;
   imageUrl: string | null;
+  /** URLs públicas por etiqueta (misma clave que `fragrance_options`). */
+  fragranceImageUrls: Record<string, string | null>;
   sizeValue: number | null;
   sizeUnit: string | null;
   hasExpiration: boolean | null;
   expirationDate: string | null;
   colors: string[];
+  fragranceOptions: string[];
   hasVat: boolean | null;
   vatPercent: number | null;
   couponDiscountPercent?: number;
@@ -74,11 +77,13 @@ export function ProductDetailView({
   priceCents,
   stockQuantity,
   imageUrl,
+  fragranceImageUrls,
   sizeValue,
   sizeUnit,
   hasExpiration,
   expirationDate,
   colors,
+  fragranceOptions,
   hasVat,
   vatPercent,
   couponDiscountPercent = 0,
@@ -88,6 +93,7 @@ export function ProductDetailView({
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(productId);
   const [colorIdx, setColorIdx] = useState(0);
+  const [fragranceIdx, setFragranceIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -112,8 +118,23 @@ export function ProductDetailView({
       : null;
 
   const colorOptions = colors.filter((c) => c.trim().length > 0);
+  const fragranceLabels = fragranceOptions.filter((c) => c.trim().length > 0);
   const selectedColorLabel =
     colorOptions.length > 0 ? colorOptions[colorIdx] ?? colorOptions[0] : null;
+
+  const heroImageUrl = useMemo(() => {
+    if (fragranceLabels.length === 0) return imageUrl;
+    const label =
+      fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? null;
+    if (!label) return imageUrl;
+    const mapped = fragranceImageUrls[label];
+    return mapped ?? imageUrl;
+  }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrl]);
+
+  const selectedFragranceForCart =
+    fragranceLabels.length > 0
+      ? fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? ""
+      : "";
 
   const descriptionText = description?.trim() ?? "";
   const descPreviewLimit = 280;
@@ -125,15 +146,15 @@ export function ProductDetailView({
       ? `${descriptionText.slice(0, descPreviewLimit).trim()}…`
       : descriptionText;
 
-  const unopt = shouldUnoptimizeStorageImageUrl(imageUrl);
+  const unopt = shouldUnoptimizeStorageImageUrl(heroImageUrl);
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
       {/* Imagen */}
       <div className="relative aspect-square w-full bg-[#f5f5f4]">
-        {imageUrl ? (
+        {heroImageUrl ? (
           <Image
-            src={imageUrl}
+            src={heroImageUrl}
             alt={name}
             fill
             className="object-contain p-8 sm:p-12"
@@ -204,6 +225,12 @@ export function ProductDetailView({
           <span className="text-sm tabular-nums text-stone-500">({reviews})</span>
         </div>
 
+        {outOfStock ? (
+          <p className="mt-6 border-t border-stone-200/80 pt-6 text-sm font-medium uppercase tracking-wide text-stone-500">
+            Agotado
+          </p>
+        ) : null}
+
         {colorOptions.length > 0 ? (
           <div className="mt-8">
             <div className="flex flex-wrap gap-2.5">
@@ -235,14 +262,43 @@ export function ProductDetailView({
           </div>
         ) : null}
 
-        {outOfStock ? (
-          <p className="mt-10 text-sm font-medium uppercase tracking-wide text-stone-500">
-            Agotado
-          </p>
-        ) : (
+        {fragranceLabels.length > 1 ? (
+          <fieldset className="mt-8 min-w-0 border-0 p-0">
+            <legend className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
+              Fragancia / tono
+            </legend>
+            <div className="relative mt-3">
+              <select
+                id={`fragrance-${productId}`}
+                value={fragranceIdx}
+                onChange={(e) => setFragranceIdx(Number(e.target.value))}
+                className="w-full cursor-pointer appearance-none rounded-2xl border border-stone-300 bg-white py-3 pl-4 pr-11 text-left text-[13px] text-stone-900 shadow-sm outline-none transition hover:border-stone-400 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/15"
+                aria-label="Fragancia o tono"
+              >
+                {fragranceLabels.map((label, i) => (
+                  <option key={`${i}-${label}`} value={i}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 size-[18px] -translate-y-1/2 text-stone-500"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            </div>
+          </fieldset>
+        ) : null}
+
+        {!outOfStock ? (
           <form className="mt-10 space-y-4">
             <input type="hidden" name="productId" value={productId} />
             <input type="hidden" name="quantity" value={String(safeQty)} />
+            <input
+              type="hidden"
+              name="fragrance"
+              value={selectedFragranceForCart}
+            />
 
             <div className="flex max-w-xs items-center justify-between gap-4 border-b border-stone-200 pb-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-600">
@@ -295,7 +351,7 @@ export function ProductDetailView({
               Comprar ahora
             </button>
           </form>
-        )}
+        ) : null}
 
         <div className="mt-12">
           <AccordionSection title="Descripción" defaultOpen>
@@ -322,10 +378,21 @@ export function ProductDetailView({
 
           <AccordionSection title="Detalles">
             <ul className="list-inside list-disc space-y-2 text-stone-600">
+              {outOfStock ? (
+                <li>
+                  <span className="text-stone-800">Estado:</span> Agotado
+                </li>
+              ) : null}
               {sizeLabel ? (
                 <li>
                   <span className="text-stone-800">Contenido / tamaño:</span>{" "}
                   {sizeLabel}
+                </li>
+              ) : null}
+              {colorOptions.length > 0 ? (
+                <li>
+                  <span className="text-stone-800">Colores:</span>{" "}
+                  {colorOptions.join(", ")}
                 </li>
               ) : null}
               {hasExpiration ? (
@@ -340,8 +407,11 @@ export function ProductDetailView({
                   {String(vatPercent ?? 0).replace(/\.0+$/, "")}%
                 </li>
               ) : null}
-              {!sizeLabel && !hasExpiration && !hasVat ? (
-                <li>Información adicional disponible al confirmar tu compra.</li>
+              {fragranceLabels.length > 0 ? (
+                <li>
+                  <span className="text-stone-800">Fragancias / tonos:</span>{" "}
+                  {fragranceLabels.join(", ")}
+                </li>
               ) : null}
             </ul>
           </AccordionSection>

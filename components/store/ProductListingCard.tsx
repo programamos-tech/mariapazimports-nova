@@ -19,6 +19,7 @@ import { formatCop } from "@/lib/money";
 import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
+import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
@@ -35,7 +36,17 @@ type Product = {
   brand?: string | null;
   size_value?: number | null;
   size_unit?: string | null;
+  fragrance_options?: string[] | null;
 };
+
+function productRequiresFragranceChoice(product: Product): boolean {
+  const raw = Array.isArray(product.fragrance_options)
+    ? product.fragrance_options.filter(
+        (x): x is string => typeof x === "string" && x.trim().length > 0,
+      )
+    : [];
+  return expandFragranceLabels(raw).length > 1;
+}
 
 function showcaseBrandLabel(product: Product): string {
   const b = product.brand?.trim();
@@ -178,6 +189,7 @@ function CatalogProductCard({
     : product.price_cents;
 
   const titleWithSize = sizeLine ? `${product.name} · ${sizeLine}` : product.name;
+  const needsFragranceOnPdp = productRequiresFragranceChoice(product);
 
   const imageBgClass = accentImageBg ? "bg-[#fceff3]" : "bg-white";
 
@@ -266,6 +278,13 @@ function CatalogProductCard({
           <p className="mt-4 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400">
             Agotado
           </p>
+        ) : needsFragranceOnPdp ? (
+          <Link
+            href={`/products/${product.id}`}
+            className="mt-auto block border border-stone-900 bg-white py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
+          >
+            Elegir fragancia
+          </Link>
         ) : inCart ? (
           <div
             className="mt-auto flex w-full items-center gap-0.5 border border-stone-900 bg-white p-0.5"

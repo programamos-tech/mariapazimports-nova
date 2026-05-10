@@ -32,10 +32,10 @@ export function CategoryListingHero({ imagePath, title, alt }: Props) {
           unoptimized={shouldUnoptimizeStorageImageUrl(src)}
         />
       </div>
-      <div className="border-b border-stone-200 bg-white px-4 py-4 text-center sm:py-5">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-stone-900 sm:text-base">
+      <div className="border-b border-stone-200 bg-white px-4 py-5 text-center sm:py-6">
+        <h1 className="text-base font-semibold uppercase tracking-[0.22em] text-stone-900 sm:text-lg md:text-xl">
           {title}
-        </p>
+        </h1>
       </div>
     </section>
   );

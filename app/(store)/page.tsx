@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
+import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeBrand } from "@/lib/brand";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { fetchPublishedBanners } from "@/lib/store-banners";
@@ -31,7 +32,7 @@ export default async function HomePage() {
   const { data: homeProducts } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,stock_quantity,created_at",
+      "id,name,brand,description,price_cents,image_path,stock_quantity,fragrance_options,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
@@ -75,20 +76,25 @@ export default async function HomePage() {
       <section className="border-t border-stone-200/60 bg-white py-14 sm:py-16">
         <div className="mx-auto max-w-7xl px-4">
           <ul className="grid gap-8 border-y border-stone-200/70 py-8 sm:py-10 md:grid-cols-3 md:gap-6">
-            {STORE_HIGHLIGHTS.map(({ title, Icon }) => (
-              <li key={title} className="flex flex-col items-center text-center">
-                <span className="inline-flex size-8 items-center justify-center text-zinc-900">
-                  <Icon className="size-5" strokeWidth={2.2} />
-                </span>
-                <p className="mt-3 max-w-[19rem] text-sm leading-tight text-stone-800 sm:text-[15px]">
-                  {title}
-                </p>
+            {STORE_HIGHLIGHTS.map(({ title, Icon }, i) => (
+              <li key={title}>
+                <RevealOnScroll
+                  delayMs={Math.min(i * 100, 240)}
+                  className="flex flex-col items-center text-center"
+                >
+                  <span className="inline-flex size-8 items-center justify-center text-zinc-900">
+                    <Icon className="size-5" strokeWidth={2.2} />
+                  </span>
+                  <p className="mt-3 max-w-[19rem] text-sm leading-tight text-stone-800 sm:text-[15px]">
+                    {title}
+                  </p>
+                </RevealOnScroll>
               </li>
             ))}
           </ul>
 
           <div className="mt-16 pt-14 sm:mt-20 sm:pt-16">
-            <div className="mx-auto max-w-3xl text-center">
+            <RevealOnScroll className="mx-auto max-w-3xl text-center">
               <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-stone-400 sm:text-xs">
                 Destacado en {storeBrand.split(/\s+/)[0]}
               </p>
@@ -99,7 +105,7 @@ export default async function HomePage() {
                 Versatilidad y estilo; abrí cada producto para ver detalle y
                 comprar.
               </p>
-            </div>
+            </RevealOnScroll>
 
             {featuredProducts.length === 0 ? (
               <p className="mt-10 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-10 text-center text-sm text-stone-600">
@@ -111,33 +117,42 @@ export default async function HomePage() {
                 <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-10">
                   {featuredProducts.map((p, index) => (
                     <li key={p.id}>
-                      <ProductListingCard
-                        presentation="editorial"
-                        accentImageBg={index % 4 === 3}
-                        couponDiscountPercent={
-                          couponPctByProductId[p.id] ?? 0
-                        }
-                        product={{
-                          id: p.id,
-                          name: p.name,
-                          brand: p.brand,
-                          description: p.description,
-                          price_cents: p.price_cents,
-                          image_path: p.image_path,
-                          stock_quantity: p.stock_quantity,
-                        }}
-                      />
+                      <RevealOnScroll
+                        className="h-full"
+                        delayMs={Math.min(index * 70, 420)}
+                      >
+                        <ProductListingCard
+                          presentation="editorial"
+                          accentImageBg={index % 4 === 3}
+                          couponDiscountPercent={
+                            couponPctByProductId[p.id] ?? 0
+                          }
+                          product={{
+                            id: p.id,
+                            name: p.name,
+                            brand: p.brand,
+                            description: p.description,
+                            price_cents: p.price_cents,
+                            image_path: p.image_path,
+                            stock_quantity: p.stock_quantity,
+                            fragrance_options: p.fragrance_options,
+                          }}
+                        />
+                      </RevealOnScroll>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-12 flex justify-center sm:mt-14">
+                <RevealOnScroll
+                  delayMs={160}
+                  className="mt-12 flex justify-center sm:mt-14"
+                >
                   <Link
                     href="/products"
                     className="inline-flex border border-stone-900 bg-white px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
                   >
                     Ver catálogo completo
                   </Link>
-                </div>
+                </RevealOnScroll>
               </>
             )}
           </div>

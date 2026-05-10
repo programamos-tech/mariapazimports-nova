@@ -44,6 +44,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     has_expiration?: boolean | null;
     expiration_date?: string | null;
     colors?: string[] | null;
+    fragrance_options?: string[] | null;
     has_vat?: boolean | null;
     vat_percent?: number | null;
   };
@@ -75,6 +76,10 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const colorsLabel = Array.isArray(raw.colors) && raw.colors.length > 0
     ? raw.colors.join(", ")
     : "—";
+  const fragranceLabel =
+    Array.isArray(raw.fragrance_options) && raw.fragrance_options.length > 0
+      ? raw.fragrance_options.join(", ")
+      : "—";
   const vatLabel = raw.has_vat
     ? `${String(raw.vat_percent ?? 0).replace(/\.0+$/, "")}%`
     : "No aplica";
@@ -235,6 +240,10 @@ export default async function AdminProductDetailPage({ params }: Props) {
             <div>
               <dt className="text-zinc-500">Colores</dt>
               <dd className="mt-0.5 text-zinc-900">{colorsLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Fragancias / tonos</dt>
+              <dd className="mt-0.5 text-zinc-900">{fragranceLabel}</dd>
             </div>
             <div>
               <dt className="text-zinc-500">IVA</dt>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { imagePathForProductLine } from "@/lib/product-line-image";
 import { getStorefrontCartLines } from "@/lib/storefront-cart";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 export type CartDrawerItem = {
   productId: string;
   quantity: number;
+  fragrance: string | null;
   name: string;
   priceCents: number;
   imagePath: string | null;
@@ -80,7 +82,9 @@ export async function GET() {
   const ids = [...new Set(lines.map((l) => l.productId))];
   const { data: products } = await supabase
     .from("products")
-    .select("id,name,price_cents,image_path,colors,stock_quantity")
+    .select(
+      "id,name,price_cents,image_path,fragrance_option_images,colors,stock_quantity",
+    )
     .in("id", ids)
     .eq("is_published", true);
 
@@ -92,6 +96,7 @@ export async function GET() {
         name: string;
         price_cents: number;
         image_path: string | null;
+        fragrance_option_images: unknown;
         colors: unknown;
         stock_quantity: number | null;
       },
@@ -106,12 +111,18 @@ export async function GET() {
     if (!p) continue;
     const lineTotalCents = p.price_cents * line.quantity;
     subtotalCents += lineTotalCents;
+    const frag = line.fragrance?.trim() || null;
     items.push({
       productId: line.productId,
       quantity: line.quantity,
+      fragrance: frag,
       name: p.name,
       priceCents: p.price_cents,
-      imagePath: p.image_path,
+      imagePath: imagePathForProductLine(
+        p.image_path,
+        p.fragrance_option_images,
+        frag ?? undefined,
+      ),
       firstColor: firstColorLabel(p.colors),
       lineTotalCents,
       maxStock: Math.max(

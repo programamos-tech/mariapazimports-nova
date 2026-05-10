@@ -94,4 +94,38 @@ body {
   .store-cart-drawer-backdrop {
     opacity: 1;
   }
+
+  .store-reveal {
+    transition: none !important;
+  }
+
+  .store-reveal-out-below,
+  .store-reveal-out-above {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Scroll reveal en vitrina (productos, bloques de home) */
+.store-reveal {
+  transition-property: opacity, transform;
+  transition-duration: 0.72s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.32, 1);
+  will-change: opacity, transform;
+}
+
+.store-reveal-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: auto;
+}
+
+.store-reveal-out-below {
+  opacity: 0;
+  transform: translate3d(0, 2.25rem, 0) scale(0.96);
+}
+
+.store-reveal-out-above {
+  opacity: 0;
+  transform: translate3d(0, -2.25rem, 0) scale(0.96);
 }
