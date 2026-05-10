@@ -13,6 +13,7 @@ export type AdminCustomerOrderRow = {
   total_cents: number;
   created_at: string | null;
   status: string;
+  wompi_reference?: string | null;
 };
 
 export type TopProductRow = {
@@ -36,6 +37,8 @@ export type AdminCustomerDetail = {
   };
   addresses: CustomerAddressRow[];
   ordersPaid: AdminCustomerOrderRow[];
+  /** Todos los pedidos enlazados al cliente (cualquier estado), más recientes primero. */
+  customerOrders: AdminCustomerOrderRow[];
   topProducts: TopProductRow[];
   /** Sin columna `customer_id` en pedidos: matcheamos por email. */
   matchedOrdersByEmailFallback: boolean;
@@ -47,8 +50,9 @@ function looksLikeMissingCustomerIdColumn(message: string): boolean {
 }
 
 const ORDER_SEL_WITH_CID =
-  "id,total_cents,created_at,status,customer_id,customer_email";
-const ORDER_SEL_NO_CID = "id,total_cents,created_at,status,customer_email";
+  "id,total_cents,created_at,status,customer_id,customer_email,wompi_reference";
+const ORDER_SEL_NO_CID =
+  "id,total_cents,created_at,status,customer_email,wompi_reference";
 
 /**
  * Pedidos del cliente: por `customer_id` y/o por email (misma lógica que el listado).
@@ -100,6 +104,10 @@ async function fetchOrdersForCustomer(
           total_cents: r.total_cents,
           created_at: r.created_at,
           status: r.status,
+          wompi_reference:
+            "wompi_reference" in r
+              ? (r as { wompi_reference?: string | null }).wompi_reference ?? null
+              : null,
         });
       }
     }
@@ -179,6 +187,7 @@ export async function fetchAdminCustomerDetail(
       customer,
       addresses,
       ordersPaid,
+      customerOrders: allOrders,
       topProducts,
       matchedOrdersByEmailFallback: byEmailFallback,
     },

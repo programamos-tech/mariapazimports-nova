@@ -33,6 +33,15 @@ import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 
 export const dynamic = "force-dynamic";
 
+/** Legacy (`size_value`/`size_unit`) o cualquier entrada en `size_options`. */
+function productMatchesSizeFilterClause(s: {
+  value: number;
+  unit: string;
+}): string {
+  const blob = JSON.stringify([{ value: s.value, unit: s.unit }]);
+  return `and(size_value.eq.${s.value},size_unit.eq.${s.unit}),size_options.cs.${blob}`;
+}
+
 function firstSearchParam(v: string | string[] | undefined): string {
   if (typeof v === "string") return v;
   if (Array.isArray(v) && typeof v[0] === "string") return v[0];
@@ -190,6 +199,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     price_cents: number;
     image_path: string | null;
     stock_quantity: number;
+    size_options?: unknown;
     size_value: number | null;
     size_unit: string | null;
     fragrance_options: string[] | null;
@@ -205,7 +215,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     let query = supabase
       .from("products")
       .select(
-        "id,name,brand,description,price_cents,image_path,stock_quantity,size_value,size_unit,fragrance_options,created_at",
+        "id,name,brand,description,price_cents,image_path,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at",
       )
       .eq("is_published", true);
 
@@ -235,17 +245,10 @@ export default async function ProductsPage({ searchParams }: Props) {
       query = query.overlaps("colors", activeColors);
     }
 
-    if (activeSizes.length === 1) {
-      const s = activeSizes[0]!;
-      query = query.eq("size_value", s.value).eq("size_unit", s.unit);
-    } else if (activeSizes.length > 1) {
-      const ors = activeSizes
-        .map(
-          (s) =>
-            `and(size_value.eq.${s.value},size_unit.eq.${s.unit})`,
-        )
-        .join(",");
-      query = query.or(ors);
+    if (activeSizes.length >= 1) {
+      query = query.or(
+        activeSizes.map(productMatchesSizeFilterClause).join(","),
+      );
     }
 
     if (priceMin != null) {
@@ -430,6 +433,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                       price_cents: p.price_cents,
                       image_path: p.image_path,
                       stock_quantity: p.stock_quantity,
+                      size_options: p.size_options,
                       size_value: p.size_value,
                       size_unit: p.size_unit,
                       fragrance_options: p.fragrance_options,

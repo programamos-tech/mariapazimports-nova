@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  bereaSignaturePath,
   storeBrand,
   storeCopyrightHolder,
   storeInstagramUrl,
@@ -18,10 +19,6 @@ const footerLink =
   "block text-sm leading-relaxed text-stone-700 transition hover:text-stone-900 hover:underline underline-offset-4";
 
 const telHref = `tel:${storeSupportPhone.replace(/[^\d+]/g, "")}`;
-
-const bereaSignatureSrc = encodeURI(
-  "/ChatGPT Image 9 may 2026, 07_52_54 p.m..png",
-);
 
 export function StoreFooter() {
   const year = new Date().getFullYear();
@@ -169,11 +166,11 @@ export function StoreFooter() {
             </nav>
             <div className="group shrink-0 sm:pl-1">
               <Image
-                src={bereaSignatureSrc}
+                src={bereaSignaturePath}
                 alt="Berea — diseño y desarrollo de software a la medida"
                 width={320}
                 height={82}
-                className="h-9 w-auto max-w-[14rem] origin-right object-contain object-right opacity-[0.82] transition-[transform,opacity] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.05] group-hover:opacity-100 sm:h-11 sm:max-w-[17rem]"
+                className="h-10 w-auto max-w-[15rem] origin-right object-contain object-right opacity-[0.82] transition-[opacity,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100 group-hover:[filter:brightness(1.06)_contrast(1.03)_drop-shadow(0_12px_28px_rgba(61,82,64,0.14))] sm:h-12 sm:max-w-[18rem]"
               />
             </div>
           </div>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeSizeOptionsFromRow } from "@/lib/product-size-options";
 import {
   categoryGroupKey,
   pickCanonicalCategoryId,
@@ -55,7 +56,7 @@ export async function fetchListingFacets(
 ): Promise<ListingFacets> {
   let q = supabase
     .from("products")
-    .select("brand, colors, size_value, size_unit, price_cents")
+    .select("brand, colors, size_options, size_value, size_unit, price_cents")
     .eq("is_published", true);
   if (options.categoryIds?.length) {
     q = q.in("category_id", options.categoryIds);
@@ -107,26 +108,26 @@ export async function fetchListingFacets(
       colors.push(t);
     }
 
-    const sv = row.size_value;
-    const su = typeof row.size_unit === "string" ? row.size_unit.trim() : "";
-    if (
-      sv != null &&
-      Number(sv) > 0 &&
-      su &&
-      ["ml", "l", "g", "kg", "oz", "unidad"].includes(su)
-    ) {
-      const v = Number(Number(sv).toFixed(2));
+    const optRows = normalizeSizeOptionsFromRow({
+      size_options: row.size_options,
+      size_value: row.size_value,
+      size_unit: row.size_unit,
+    });
+    for (const opt of optRows) {
+      const su = opt.unit.trim().toLowerCase();
+      if (!["ml", "l", "g", "kg", "oz", "unidad"].includes(su)) continue;
+      const v = Number(Number(opt.value).toFixed(2));
+      if (v <= 0) continue;
       const key = `${v}:${su}`;
-      if (!sizeSeen.has(key)) {
-        sizeSeen.add(key);
-        const numLabel = String(v).replace(/\.0+$/, "");
-        sizes.push({
-          key,
-          label: `${numLabel} ${su}`,
-          value: v,
-          unit: su,
-        });
-      }
+      if (sizeSeen.has(key)) continue;
+      sizeSeen.add(key);
+      const numLabel = String(v).replace(/\.0+$/, "");
+      sizes.push({
+        key,
+        label: `${numLabel} ${su}`,
+        value: v,
+        unit: su,
+      });
     }
   }
 

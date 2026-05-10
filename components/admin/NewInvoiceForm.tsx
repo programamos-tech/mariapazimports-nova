@@ -17,6 +17,7 @@ import {
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
 import { formatCop, parseCopInputDigitsToInt } from "@/lib/money";
+import { unitPriceGrossCents } from "@/lib/product-vat-price";
 
 const cardSectionClass =
   "rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6";
@@ -55,10 +56,11 @@ function lineBaseCents(line: CartLine): number {
 }
 
 function unitFinalCents(product: ProductHit): number {
-  const base = Math.max(0, Number(product.price_cents ?? 0));
-  if (!product.has_vat) return base;
-  const percent = Math.max(0, Number(product.vat_percent ?? 0));
-  return Math.round(base * (1 + percent / 100));
+  return unitPriceGrossCents(
+    product.price_cents,
+    product.has_vat,
+    product.vat_percent,
+  );
 }
 
 function lineVatCents(line: CartLine): number {

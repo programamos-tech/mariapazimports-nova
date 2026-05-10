@@ -20,6 +20,7 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
+import { catalogSizeSummaryLine } from "@/lib/product-size-options";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
@@ -34,6 +35,7 @@ type Product = {
   stock_quantity: number;
   /** Columna opcional en DB; si falta se infiere para la línea de marca. */
   brand?: string | null;
+  size_options?: unknown;
   size_value?: number | null;
   size_unit?: string | null;
   fragrance_options?: string[] | null;
@@ -54,14 +56,6 @@ function showcaseBrandLabel(product: Product): string {
   const beforeSep = product.name.split(/[•·|–—]/)[0]?.trim();
   if (beforeSep && beforeSep.length <= 32) return beforeSep.toUpperCase();
   return storeBrand.split(/\s+/)[0]?.toUpperCase() ?? "MARCA";
-}
-
-function catalogSizeLine(product: Product): string | null {
-  const v = product.size_value;
-  if (v == null || Number(v) <= 0) return null;
-  const unit = (product.size_unit ?? "").trim() || "unidad";
-  const num = String(v).replace(/\.0+$/, "");
-  return `${num} ${unit}`.toUpperCase();
 }
 
 /** Tarjeta solo lectura: imagen + marca + nombre + precio (sin bordes ni CTAs en superficie). */
@@ -170,7 +164,7 @@ function CatalogProductCard({
   const favorite = ready && has(product.id);
   const img = storagePublicObjectUrl(product.image_path);
   const outOfStock = product.stock_quantity <= 0;
-  const sizeLine = catalogSizeLine(product);
+  const sizeLine = catalogSizeSummaryLine(product);
 
   const afterCartMutation = () => {
     router.refresh();

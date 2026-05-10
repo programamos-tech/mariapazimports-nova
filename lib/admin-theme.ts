@@ -1,8 +1,8 @@
 /**
- * Fondo del sidebar del admin y círculo de avatares (DiceBear).
- * `app/layout.tsx` define `--admin-sidebar-bg` y `--store-chrome-bg` en `<body>` (mismo hex).
+ * Alineado a la vitrina de la tienda: blanco limpio + piedra en contenidos.
+ * `app/layout.tsx` define `--admin-sidebar-bg` y `--store-chrome-bg` en `<body>`.
  */
-export const ADMIN_SIDEBAR_BG = "#fffbf6" as const;
+export const ADMIN_SIDEBAR_BG = "#ffffff" as const;
 
-/** Navbar (fila logo/buscador) + footer de la tienda + pantalla de carga. Mismo hex que el sidebar. */
-export const STORE_CHROME_BG = ADMIN_SIDEBAR_BG;
+/** Paneles suaves (cuenta, direcciones) — mismo tono que columna principal del admin. */
+export const STORE_CHROME_BG = "#fafaf9" as const;

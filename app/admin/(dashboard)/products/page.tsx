@@ -25,8 +25,12 @@ export const dynamic = "force-dynamic";
 
 const LOW_STOCK_MAX = 4;
 
-const thLabel =
-  "px-4 py-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600";
+/** Mismo padding horizontal en todas las columnas (sin rayas verticales). */
+const colGap = "px-4";
+
+const thCell = `bg-white py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600 ${colGap}`;
+
+const tdCell = `py-3.5 align-middle ${colGap}`;
 
 type Search = {
   q?: string;
@@ -290,7 +294,7 @@ export default async function AdminProductsPage({
         {/* Con sidebar, por debajo de xl el área útil suele ser estrecha: rejilla 1/2 cols (como Ventas). Tabla desde xl. */}
         <ul
           role="list"
-          className="grid grid-cols-1 gap-4 border-t border-zinc-100 px-4 pb-2 pt-4 sm:grid-cols-2 sm:gap-4 sm:px-5 xl:hidden"
+          className="grid grid-cols-1 gap-4 border-t border-zinc-100 pb-2 pt-4 sm:grid-cols-2 sm:gap-4 xl:hidden"
         >
           {productRows.map((p) => (
             <li key={p.id} className="min-w-0">
@@ -303,7 +307,10 @@ export default async function AdminProductsPage({
                     >
                       {p.name}
                     </Link>
-                    <p className="mt-1 font-mono text-xs text-zinc-500">
+                    <p
+                      className="mt-1 line-clamp-1 font-mono text-xs text-zinc-500"
+                      title={p.code}
+                    >
                       {p.code}
                     </p>
                   </div>
@@ -342,66 +349,99 @@ export default async function AdminProductsPage({
         </ul>
 
         <div className="hidden overflow-x-auto border-t border-zinc-100 xl:block">
-          <table className="w-full min-w-0 text-left text-sm xl:min-w-[920px]">
-            <thead>
-              <tr className="border-b border-zinc-100 bg-white">
-                <th className={thLabel}>Producto</th>
-                <th className={thLabel}>Código</th>
-                <th className={thLabel}>Categoría</th>
-                <th className={`${thLabel} text-right`}>Local</th>
-                <th className={`${thLabel} text-right`}>Bodega</th>
-                <th className={thLabel}>Estado</th>
-                <th className={`${thLabel} text-right`}>Precio</th>
-                <th className={`${thLabel} text-right`}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productRows.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-zinc-100 bg-white transition hover:bg-zinc-50/80"
-                >
-                  <td className="px-4 py-3.5">
-                    <div className="min-w-0">
-                      <p className="font-medium text-zinc-900">
-                        <Link
-                          href={`/admin/products/${p.id}`}
-                          className="hover:underline"
-                        >
-                          {p.name}
-                        </Link>
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono text-xs text-zinc-600">
-                    {p.code}
-                  </td>
-                  <td className="px-4 py-3.5 text-zinc-600">
-                    {p.categoryLabel}
-                  </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-800">
-                    {p.stock_local}
-                  </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums text-zinc-800">
-                    {p.stock_warehouse}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${p.stockBadgeInfo.className}`}
-                    >
-                      {p.stockBadgeInfo.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-right text-sm font-semibold tabular-nums text-zinc-900">
-                    {formatCop(p.price_cents)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <ProductTableActions productId={p.id} />
-                  </td>
+          <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_0_rgb(24_24_27/0.06)]">
+            <table className="w-full min-w-0 table-fixed border-collapse text-left text-sm xl:min-w-[1120px]">
+              <colgroup>
+                <col style={{ width: "25%" }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "5%" }} />
+                <col style={{ width: "5%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "16%" }} />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-zinc-200 bg-white">
+                  <th className={thCell}>Producto</th>
+                  <th className={thCell}>Código</th>
+                  <th className={thCell}>Categoría</th>
+                  <th className={`${thCell} whitespace-nowrap text-right`}>
+                    Local
+                  </th>
+                  <th className={`${thCell} whitespace-nowrap text-right`}>
+                    Bodega
+                  </th>
+                  <th className={`${thCell} whitespace-nowrap`}>Estado</th>
+                  <th className={`${thCell} whitespace-nowrap text-right`}>
+                    Precio
+                  </th>
+                  <th className={`${thCell} whitespace-nowrap text-right`}>
+                    Acciones
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 bg-white">
+                {productRows.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="bg-white transition-colors hover:bg-zinc-50/80"
+                  >
+                    <td className={tdCell}>
+                      <div className="min-w-0">
+                        <p className="font-medium text-zinc-900">
+                          <Link
+                            href={`/admin/products/${p.id}`}
+                            className="hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                        </p>
+                      </div>
+                    </td>
+                    <td className={`${tdCell} align-top`}>
+                      <div
+                        className="min-w-0 truncate font-mono text-xs leading-snug text-zinc-600"
+                        title={p.code}
+                      >
+                        {p.code}
+                      </div>
+                    </td>
+                    <td className={`${tdCell} min-w-0 text-zinc-600`}>
+                      {p.categoryLabel}
+                    </td>
+                    <td
+                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800`}
+                    >
+                      {p.stock_local}
+                    </td>
+                    <td
+                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800`}
+                    >
+                      {p.stock_warehouse}
+                    </td>
+                    <td className={`${tdCell} whitespace-nowrap`}>
+                      <span
+                        className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1 ${p.stockBadgeInfo.className}`}
+                      >
+                        {p.stockBadgeInfo.label}
+                      </span>
+                    </td>
+                    <td className={`${tdCell} text-right`}>
+                      <span className="inline-block whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-900">
+                        {formatCop(p.price_cents)}
+                      </span>
+                    </td>
+                    <td className={tdCell}>
+                      <div className="flex justify-end">
+                        <ProductTableActions productId={p.id} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <AdminProductsPagination
           page={currentPage}

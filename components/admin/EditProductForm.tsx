@@ -9,6 +9,7 @@ import {
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
+import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
 import type { ProductCategoryOption } from "@/components/admin/NewProductForm";
 import { formatCop } from "@/lib/money";
 import {
@@ -17,6 +18,11 @@ import {
   MAX_PRODUCT_IMAGE_BYTES,
 } from "@/lib/product-image-upload";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
+import {
+  ProductSizeRows,
+  type SizeRowState,
+} from "@/components/admin/ProductSizeRows";
 import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
 
 type Initial = {
@@ -30,15 +36,13 @@ type Initial = {
   stockLocal: number;
   stockWarehouse: number;
   isPublished: boolean;
-  sizeValue: number | null;
-  sizeUnit: string;
+  sizeRows: SizeRowState[];
   hasExpiration: boolean;
   expirationDate: string;
   hasVat: boolean;
   vatPercent: number | null;
   colors: string[];
-  fragranceOptionsCsv: string;
-  fragranceOptionImagesJson: string;
+  fragranceRows: FragranceRowInitial[];
 };
 
 type Props = {
@@ -62,10 +66,6 @@ export function EditProductForm({
   const [costCents, setCostCents] = useState(initial.costCents);
   const [priceCents, setPriceCents] = useState(initial.priceCents);
   const [isPublished, setIsPublished] = useState(initial.isPublished);
-  const [sizeValue, setSizeValue] = useState(
-    initial.sizeValue == null ? "" : String(initial.sizeValue),
-  );
-  const [sizeUnit, setSizeUnit] = useState(initial.sizeUnit || "ml");
   const [hasExpiration, setHasExpiration] = useState(initial.hasExpiration);
   const [expirationDate, setExpirationDate] = useState(initial.expirationDate);
   const [hasVat, setHasVat] = useState(initial.hasVat);
@@ -73,7 +73,6 @@ export function EditProductForm({
     initial.vatPercent == null ? "" : String(initial.vatPercent),
   );
   const [selectedColors, setSelectedColors] = useState(initial.colors);
-  const [fragranceCsv, setFragranceCsv] = useState(initial.fragranceOptionsCsv);
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const categoryLabel =
@@ -229,38 +228,10 @@ export function EditProductForm({
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="ep-size-value" className={labelClass}>
-                    Tamaño / contenido (opcional)
-                  </label>
-                  <div className="grid grid-cols-[1fr_auto] gap-2">
-                    <input
-                      id="ep-size-value"
-                      name="size_value"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      value={sizeValue}
-                      onChange={(e) => setSizeValue(e.target.value)}
-                      className={inputClass}
-                    />
-                    <select
-                      name="size_unit"
-                      value={sizeUnit}
-                      onChange={(e) => setSizeUnit(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="ml">ml</option>
-                      <option value="l">L</option>
-                      <option value="g">g</option>
-                      <option value="kg">kg</option>
-                      <option value="oz">oz</option>
-                      <option value="unidad">unidad</option>
-                    </select>
-                  </div>
+                <div className="sm:col-span-2">
+                  <ProductSizeRows initialRows={initial.sizeRows} />
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label className={labelClass}>
                     Colores (opcional)
                   </label>
@@ -298,37 +269,7 @@ export function EditProductForm({
                   </div>
                 </div>
               </div>
-              <div>
-                <label htmlFor="ep-fragrances" className={labelClass}>
-                  Fragancias / tonos (opcional)
-                </label>
-                <textarea
-                  id="ep-fragrances"
-                  name="fragrance_options_csv"
-                  rows={3}
-                  value={fragranceCsv}
-                  onChange={(e) => setFragranceCsv(e.target.value)}
-                  placeholder="Una por línea o separadas por coma (ej. Vanilla Cashmere, Fresh & Cozy)"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="ep-frag-img-json" className={labelClass}>
-                  Imágenes por fragancia (JSON opcional)
-                </label>
-                <textarea
-                  id="ep-frag-img-json"
-                  name="fragrance_option_images_json"
-                  rows={5}
-                  defaultValue={initial.fragranceOptionImagesJson}
-                  placeholder={`{\n  "Fresh & Cozy": "product-images/…/archivo.jpg"\n}`}
-                  className={`${inputClass} font-mono text-xs`}
-                />
-                <p className="mt-1.5 text-[11px] leading-snug text-zinc-500">
-                  Misma clave de texto que cada fragancia; valor = ruta pública (igual que la imagen
-                  principal del producto).
-                </p>
-              </div>
+              <ProductFragranceRows initialRows={initial.fragranceRows} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800">
                   <input

@@ -55,6 +55,27 @@ body {
   animation: store-cart-drawer-panel 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+@keyframes store-cookies-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.store-cookies-banner-panel {
+  animation: store-cookies-banner-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-cookies-banner-panel {
+    animation: none;
+  }
+}
+
 /* Bolsa: cuerpo con scroll vertical sin barra horizontal por hijos anchos */
 .store-cart-drawer-body-scroll {
   overflow-x: hidden;

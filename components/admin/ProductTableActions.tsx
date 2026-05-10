@@ -42,7 +42,7 @@ type Props = {
 
 export function ProductTableActions({ productId }: Props) {
   return (
-    <div className="flex items-center justify-end gap-0.5 sm:gap-1">
+    <div className="flex shrink-0 flex-nowrap items-center justify-end gap-0.5 sm:gap-1">
       <Link
         href={`/admin/products/${productId}`}
         className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"

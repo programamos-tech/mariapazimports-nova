@@ -1,6 +1,10 @@
 "use server";
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
+import {
+  legacySizeFromOptions,
+  parseSizeOptionsFromFormData,
+} from "@/lib/product-size-options";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -17,6 +21,39 @@ type ImageUploadResult =
   | { status: "ok"; imagePath: string }
   | { status: "error"; message: string };
 
+async function uploadProductImageBlob(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  productId: string,
+  blob: Blob,
+  filenameHint?: string,
+): Promise<ImageUploadResult> {
+  if (!(blob instanceof Blob) || blob.size <= 0) {
+    return { status: "none" };
+  }
+
+  const ext =
+    typeof File !== "undefined" && blob instanceof File
+      ? extFromFilename(blob.name)
+      : filenameHint
+        ? extFromFilename(filenameHint)
+        : "jpg";
+  const buf = Buffer.from(await blob.arrayBuffer());
+  const objectPath = `${productId}/${randomUUID()}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from("product-images")
+    .upload(objectPath, buf, {
+      contentType: blob.type || undefined,
+      upsert: true,
+    });
+
+  if (upErr) {
+    console.error("product-images upload", upErr.message, upErr);
+    return { status: "error", message: upErr.message };
+  }
+
+  return { status: "ok", imagePath: `product-images/${objectPath}` };
+}
+
 async function uploadProductImageFromForm(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   productId: string,
@@ -29,26 +66,60 @@ async function uploadProductImageFromForm(
   if (!(raw instanceof Blob) || raw.size <= 0) {
     return { status: "none" };
   }
+  return uploadProductImageBlob(
+    supabase,
+    productId,
+    raw,
+    typeof File !== "undefined" && raw instanceof File ? raw.name : undefined,
+  );
+}
 
-  const ext =
-    typeof File !== "undefined" && raw instanceof File
-      ? extFromFilename(raw.name)
-      : "jpg";
-  const buf = Buffer.from(await raw.arrayBuffer());
-  const objectPath = `${productId}/${randomUUID()}.${ext}`;
-  const { error: upErr } = await supabase.storage
-    .from("product-images")
-    .upload(objectPath, buf, {
-      contentType: raw.type || undefined,
-      upsert: true,
-    });
+/** Imagen por fila de fragancia: sube archivos y arma el JSON por etiqueta canónica. */
+async function buildFragranceOptionImagesFromForm(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  productId: string,
+  formData: FormData,
+  fragrance_options: string[],
+): Promise<Record<string, string>> {
+  const rawLabels = formData.getAll("fragrance_option").map((v) => String(v));
+  const existing = formData
+    .getAll("fragrance_image_existing")
+    .map((v) => String(v).trim());
+  const files = formData.getAll("fragrance_option_image");
+  const n = Math.max(rawLabels.length, existing.length, files.length);
+  const rowPaths: (string | null)[] = [];
 
-  if (upErr) {
-    console.error("product-images upload", upErr.message, upErr);
-    return { status: "error", message: upErr.message };
+  for (let i = 0; i < n; i++) {
+    const file = files[i];
+    let path: string | null = null;
+    if (file instanceof Blob && file.size > 0) {
+      const up = await uploadProductImageBlob(
+        supabase,
+        productId,
+        file,
+        typeof File !== "undefined" && file instanceof File ? file.name : undefined,
+      );
+      if (up.status === "ok") path = up.imagePath;
+      else if (up.status === "error") {
+        console.error("fragrance image upload", up.message);
+      }
+    }
+    if (!path && existing[i]) path = existing[i];
+    rowPaths.push(path);
   }
 
-  return { status: "ok", imagePath: `product-images/${objectPath}` };
+  const out: Record<string, string> = {};
+  for (const canon of fragrance_options) {
+    const k = canon.toLowerCase();
+    for (let j = 0; j < rawLabels.length; j++) {
+      const t = rawLabels[j]?.trim().slice(0, 160) ?? "";
+      if (!t || t.toLowerCase() !== k) continue;
+      const p = rowPaths[j];
+      if (p) out[canon] = p;
+      break;
+    }
+  }
+  return out;
 }
 
 function parseNonNegInt(v: FormDataEntryValue | null) {
@@ -59,14 +130,6 @@ function parseMoneyCents(v: FormDataEntryValue | null) {
   const n = Number(v ?? 0);
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.round(n));
-}
-
-function parseSizeValue(v: FormDataEntryValue | null): number | null {
-  const raw = String(v ?? "").trim().replace(",", ".");
-  if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Number(n.toFixed(2));
 }
 
 function parseExpirationDate(v: FormDataEntryValue | null): string | null {
@@ -119,6 +182,22 @@ function parseColorsFromFormData(formData: FormData): string[] {
 }
 
 function parseFragranceOptionsFromFormData(formData: FormData): string[] {
+  const multi = formData
+    .getAll("fragrance_option")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  if (multi.length > 0) {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const f of multi) {
+      const t = f.slice(0, 160);
+      const k = t.toLowerCase();
+      if (!t || seen.has(k)) continue;
+      seen.add(k);
+      out.push(t);
+    }
+    return out;
+  }
   const raw = String(formData.get("fragrance_options_csv") ?? "").trim();
   if (!raw) return [];
   const seen = new Set<string>();
@@ -134,22 +213,6 @@ function parseFragranceOptionsFromFormData(formData: FormData): string[] {
   return out;
 }
 
-function parseFragranceOptionImagesJson(formData: FormData): Record<string, string> {
-  const raw = String(formData.get("fragrance_option_images_json") ?? "").trim();
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v === "string" && v.trim()) out[k] = v.trim();
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (err?.code === "42703") return true;
   const m = err?.message ?? "";
@@ -157,7 +220,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|has_vat|vat_percent/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|has_vat|vat_percent/i.test(m)
   ) {
     return true;
   }
@@ -234,13 +297,8 @@ export async function createProduct(formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
-  const size_value = parseSizeValue(formData.get("size_value"));
-  const size_unit_raw = String(formData.get("size_unit") ?? "").trim().toLowerCase();
-  const size_unit = size_value
-    ? ["ml", "l", "g", "kg", "oz", "unidad"].includes(size_unit_raw)
-      ? size_unit_raw
-      : "unidad"
-    : null;
+  const size_options = parseSizeOptionsFromFormData(formData);
+  const { size_value, size_unit } = legacySizeFromOptions(size_options);
   const has_expiration = formData.get("has_expiration") === "on";
   const expiration_date = has_expiration
     ? parseExpirationDate(formData.get("expiration_date"))
@@ -249,7 +307,6 @@ export async function createProduct(formData: FormData) {
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
   const fragrance_options = parseFragranceOptionsFromFormData(formData);
-  const fragrance_option_images = parseFragranceOptionImagesJson(formData);
 
   if (!name) {
     redirect("/admin/products/new?error=name");
@@ -268,13 +325,14 @@ export async function createProduct(formData: FormData) {
     category_id,
     size_value,
     size_unit,
+    size_options,
     has_expiration,
     expiration_date,
     has_vat,
     vat_percent,
     colors,
     fragrance_options,
-    fragrance_option_images,
+    fragrance_option_images: {} as Record<string, string>,
   };
 
   const extendedRow = {
@@ -283,6 +341,13 @@ export async function createProduct(formData: FormData) {
     brand,
     cost_cents,
   };
+
+  const { size_options: _omitSizeExt, ...extendedRowNoSizeOptions } =
+    extendedRow as Record<string, unknown>;
+  const { size_options: _omitSizeBase, ...baseRowNoSizeOptions } = baseRow as Record<
+    string,
+    unknown
+  >;
 
   const legacyStockRow = {
     name,
@@ -303,7 +368,9 @@ export async function createProduct(formData: FormData) {
 
   const payloads: Record<string, unknown>[] = [
     extendedRow,
+    extendedRowNoSizeOptions,
     baseRow,
+    baseRowNoSizeOptions,
     legacyStockRow,
     legacyStockRowNoCategory,
   ];
@@ -341,6 +408,19 @@ export async function createProduct(formData: FormData) {
     metadata: { price_cents, stock_warehouse: stockWarehouse, stock_local: stockLocal },
   });
   revalidatePath("/admin/actividades");
+  const fragranceImagesMap = await buildFragranceOptionImagesFromForm(
+    supabase,
+    id,
+    formData,
+    fragrance_options,
+  );
+  if (Object.keys(fragranceImagesMap).length > 0) {
+    await supabase
+      .from("products")
+      .update({ fragrance_option_images: fragranceImagesMap })
+      .eq("id", id);
+  }
+
   const uploaded = await uploadProductImageFromForm(supabase, id, formData);
   if (uploaded.status === "ok") {
     await supabase
@@ -376,13 +456,8 @@ export async function updateProduct(productId: string, formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
-  const size_value = parseSizeValue(formData.get("size_value"));
-  const size_unit_raw = String(formData.get("size_unit") ?? "").trim().toLowerCase();
-  const size_unit = size_value
-    ? ["ml", "l", "g", "kg", "oz", "unidad"].includes(size_unit_raw)
-      ? size_unit_raw
-      : "unidad"
-    : null;
+  const size_options = parseSizeOptionsFromFormData(formData);
+  const { size_value, size_unit } = legacySizeFromOptions(size_options);
   const has_expiration = formData.get("has_expiration") === "on";
   const expiration_date = has_expiration
     ? parseExpirationDate(formData.get("expiration_date"))
@@ -391,7 +466,6 @@ export async function updateProduct(productId: string, formData: FormData) {
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
   const fragrance_options = parseFragranceOptionsFromFormData(formData);
-  const fragrance_option_images = parseFragranceOptionImagesJson(formData);
 
   if (!name) {
     redirect(`/admin/products/${productId}/edit?error=name`);
@@ -399,6 +473,13 @@ export async function updateProduct(productId: string, formData: FormData) {
   if (!reference) {
     redirect(`/admin/products/${productId}/edit?error=reference`);
   }
+
+  const fragrance_option_images = await buildFragranceOptionImagesFromForm(
+    supabase,
+    productId,
+    formData,
+    fragrance_options,
+  );
 
   const baseUpdate = {
     name,
@@ -410,6 +491,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     category_id,
     size_value,
     size_unit,
+    size_options,
     has_expiration,
     expiration_date,
     has_vat,
@@ -435,6 +517,28 @@ export async function updateProduct(productId: string, formData: FormData) {
     ({ error } = await supabase
       .from("products")
       .update(baseUpdate)
+      .eq("id", productId));
+  }
+
+  if (error && isSchemaColumnError(error)) {
+    const { size_options: _x, ...extendedNoSize } = extendedUpdate as Record<
+      string,
+      unknown
+    >;
+    ({ error } = await supabase
+      .from("products")
+      .update(extendedNoSize)
+      .eq("id", productId));
+  }
+
+  if (error && isSchemaColumnError(error)) {
+    const { size_options: _y, ...baseNoSize } = baseUpdate as Record<
+      string,
+      unknown
+    >;
+    ({ error } = await supabase
+      .from("products")
+      .update(baseNoSize)
       .eq("id", productId));
   }
 

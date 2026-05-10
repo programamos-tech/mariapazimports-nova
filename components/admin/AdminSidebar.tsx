@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Suspense, type SVGProps } from "react";
 import { signOutAdmin } from "@/app/actions/admin/auth";
+import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
   const { children, className = "", ...rest } = props;
@@ -170,7 +171,9 @@ function isActive(pathname: string, href: string) {
 }
 
 const PRODUCTS_HREF = "/admin/products";
-const VENTAS_HUB_HREF = "/admin/ventas";
+const VENTAS_HREF = "/admin/ventas";
+/** Pedidos / facturas abren bajo esta ruta; debe seguir resaltando Ventas en el sidebar. */
+const ORDERS_HREF = "/admin/orders";
 const CUSTOMERS_HREF = "/admin/customers";
 const COUPONS_HREF = "/admin/coupons";
 const USUARIOS_HREF = "/admin/usuarios";
@@ -182,10 +185,12 @@ function navItemActive(
   if (href === USUARIOS_HREF) {
     return pathname === USUARIOS_HREF || pathname.startsWith(`${USUARIOS_HREF}/`);
   }
-  if (href === VENTAS_HUB_HREF) {
+  if (href === VENTAS_HREF) {
     return (
-      pathname === VENTAS_HUB_HREF ||
-      pathname.startsWith(`${VENTAS_HUB_HREF}/`)
+      pathname === VENTAS_HREF ||
+      pathname.startsWith(`${VENTAS_HREF}/`) ||
+      pathname === ORDERS_HREF ||
+      pathname.startsWith(`${ORDERS_HREF}/`)
     );
   }
   if (href === PRODUCTS_HREF) {
@@ -202,13 +207,16 @@ function navItemActive(
 
 function SidebarLogo() {
   return (
-    <Link href="/admin" className="inline-block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-zinc-400">
+    <Link
+      href="/admin"
+      className="inline-block rounded-md outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2"
+    >
       <Image
-        src="/logobackoficce.png"
-        alt="María Paz Imports"
+        src={storeLogoPath}
+        alt={storeBrand}
         width={280}
         height={120}
-        className="h-auto w-full max-w-[220px] object-contain"
+        className="h-auto w-full max-w-[92px] object-contain object-center sm:max-w-[100px]"
         priority
       />
     </Link>
@@ -235,10 +243,10 @@ function AdminSidebarInner({
 
   const linkClass = (href: string, active: boolean) =>
     [
-      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200",
       active
-        ? "bg-zinc-900 text-white shadow-sm"
-        : "text-zinc-700 hover:bg-black/[0.04] hover:text-zinc-900",
+        ? "bg-neutral-950 text-white shadow-[0_8px_22px_-12px_rgba(0,0,0,0.35)]"
+        : "text-stone-600 hover:bg-stone-100 hover:text-stone-950",
     ].join(" ");
 
   const drawerTranslate =
@@ -252,12 +260,12 @@ function AdminSidebarInner({
 
   return (
     <aside
-      className={`flex shrink-0 flex-col bg-[var(--admin-sidebar-bg)] print:hidden fixed inset-y-0 left-0 z-[50] w-[min(88vw,288px)] max-w-[288px] border-r border-stone-200/80 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out motion-reduce:transition-none lg:w-64 lg:max-w-none lg:border-b-0 lg:shadow-none ${drawerTranslate} ${drawerHiddenMobile}`}
+      className={`flex shrink-0 flex-col bg-white print:hidden fixed inset-y-0 left-0 z-[50] w-[min(88vw,288px)] max-w-[288px] border-r border-stone-200/90 shadow-[2px_0_32px_-16px_rgba(28,25,23,0.12)] transition-transform duration-300 ease-out motion-reduce:transition-none lg:w-64 lg:max-w-none lg:border-b-0 lg:shadow-[1px_0_0_rgba(231,229,228,0.9)] ${drawerTranslate} ${drawerHiddenMobile}`}
     >
-      <div className="flex flex-col items-center border-b border-stone-200/80 px-4 py-5 text-center">
+      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-6 text-center">
         <SidebarLogo />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
-          BACKOFFICE
+        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500">
+          Backoffice
         </p>
       </div>
       <nav
@@ -266,7 +274,7 @@ function AdminSidebarInner({
       >
         {navSectionsFiltered.map((section) => (
           <div key={section.title}>
-            <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-400">
               {section.title}
             </p>
             <ul className="mt-2.5 space-y-0.5">
@@ -289,14 +297,23 @@ function AdminSidebarInner({
           </div>
         ))}
       </nav>
-      <div className="border-t border-stone-200/80 p-3">
-        <p className="font-berea-nova berea-signature mb-2 px-1 text-[11px] font-semibold">
-          By Berea Studio
-        </p>
+      <div className="border-t border-stone-200/90 p-3">
+        <div className="mb-3 flex flex-col items-center gap-2 px-1 text-center">
+          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-stone-400">
+            Experiencia por
+          </span>
+          <Image
+            src={bereaSignaturePath}
+            alt="Berea Studio"
+            width={400}
+            height={100}
+            className="mx-auto h-16 w-auto max-w-full object-contain object-center opacity-95 sm:h-[4.5rem] sm:max-w-[min(100%,20rem)]"
+          />
+        </div>
         <form action={signOutAdmin}>
           <button
             type="submit"
-            className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-zinc-700 transition hover:bg-black/[0.04] hover:text-red-600"
+            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-red-700"
           >
             Salir
           </button>
@@ -308,19 +325,19 @@ function AdminSidebarInner({
 
 function AdminSidebarFallback() {
   return (
-    <aside className="fixed inset-y-0 left-0 z-[45] hidden w-64 flex-col border-r border-stone-200/80 bg-[var(--admin-sidebar-bg)] print:hidden lg:flex lg:flex-col">
-      <div className="flex flex-col items-center border-b border-stone-200/80 px-4 py-5 text-center">
+    <aside className="fixed inset-y-0 left-0 z-[45] hidden w-64 flex-col border-r border-stone-200/90 bg-white print:hidden lg:flex lg:flex-col">
+      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-6 text-center">
         <SidebarLogo />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
-          BACKOFFICE
+        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500">
+          Backoffice
         </p>
       </div>
       <div className="flex-1 px-3 py-5" aria-busy aria-label="Cargando menú" />
-      <div className="border-t border-stone-200/80 p-3">
-        <p className="font-berea-nova berea-signature mb-2 px-1 text-[11px] font-semibold">
-          By Berea Studio
-        </p>
-        <div className="h-10 rounded-xl bg-stone-200/60" />
+      <div className="border-t border-stone-200/90 p-3">
+        <div className="mb-2 flex flex-col items-center gap-2">
+          <div className="h-16 w-full max-w-[20rem] rounded bg-stone-200/70 sm:h-[4.5rem]" aria-hidden />
+          <div className="h-10 w-full max-w-[20rem] rounded-lg bg-stone-100" />
+        </div>
       </div>
     </aside>
   );

@@ -18,6 +18,9 @@ import {
   MAX_PRODUCT_IMAGE_BYTES,
 } from "@/lib/product-image-upload";
 import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
+import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
+import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
+import { ProductSizeRows } from "@/components/admin/ProductSizeRows";
 
 export type ProductCategoryOption = { id: string; name: string };
 
@@ -35,14 +38,11 @@ export function NewProductForm({
   const [stockWarehouse, setStockWarehouse] = useState(0);
   const [costCents, setCostCents] = useState(0);
   const [priceCents, setPriceCents] = useState(0);
-  const [sizeValue, setSizeValue] = useState("");
-  const [sizeUnit, setSizeUnit] = useState("ml");
   const [hasExpiration, setHasExpiration] = useState(false);
   const [expirationDate, setExpirationDate] = useState("");
   const [hasVat, setHasVat] = useState(false);
   const [vatPercent, setVatPercent] = useState("");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [fragranceCsv, setFragranceCsv] = useState("");
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
 
   const totalStock = stockLocal + stockWarehouse;
@@ -177,39 +177,12 @@ export function NewProductForm({
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="np-size-value" className={labelClass}>
-                    Tamaño / contenido (opcional)
-                  </label>
-                  <div className="grid grid-cols-[1fr_auto] gap-2">
-                    <input
-                      id="np-size-value"
-                      name="size_value"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      value={sizeValue}
-                      onChange={(e) => setSizeValue(e.target.value)}
-                      placeholder="500"
-                      className={inputClass}
-                    />
-                    <select
-                      name="size_unit"
-                      value={sizeUnit}
-                      onChange={(e) => setSizeUnit(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="ml">ml</option>
-                      <option value="l">L</option>
-                      <option value="g">g</option>
-                      <option value="kg">kg</option>
-                      <option value="oz">oz</option>
-                      <option value="unidad">unidad</option>
-                    </select>
-                  </div>
+                <div className="sm:col-span-2">
+                  <ProductSizeRows
+                    initialRows={[{ value: "", unit: "ml" }]}
+                  />
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label className={labelClass}>
                     Colores (opcional)
                   </label>
@@ -247,32 +220,11 @@ export function NewProductForm({
                   </div>
                 </div>
               </div>
-              <div>
-                <label htmlFor="np-fragrances" className={labelClass}>
-                  Fragancias / tonos (opcional)
-                </label>
-                <textarea
-                  id="np-fragrances"
-                  name="fragrance_options_csv"
-                  rows={3}
-                  value={fragranceCsv}
-                  onChange={(e) => setFragranceCsv(e.target.value)}
-                  placeholder="Una por línea o separadas por coma"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="np-frag-img-json" className={labelClass}>
-                  Imágenes por fragancia (JSON opcional)
-                </label>
-                <textarea
-                  id="np-frag-img-json"
-                  name="fragrance_option_images_json"
-                  rows={5}
-                  placeholder={`{\n  "Nombre exacto de la fragancia": "product-images/…/archivo.jpg"\n}`}
-                  className={`${inputClass} font-mono text-xs`}
-                />
-              </div>
+              <ProductFragranceRows
+                initialRows={
+                  [{ label: "", existingImagePath: null, previewUrl: null }] satisfies FragranceRowInitial[]
+                }
+              />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800">
                   <input

@@ -2,72 +2,101 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminLoginForm } from "@/components/admin/LoginForm";
-import { productSectionTitle } from "@/components/admin/product-form-primitives";
+import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
+
+const serif = "[font-family:ui-serif,Georgia,Cambria,'Times_New_Roman',serif]";
+
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen bg-[var(--admin-sidebar-bg)] text-zinc-900 antialiased">
+    <div className="min-h-screen bg-white text-neutral-950 antialiased">
       <div className="flex min-h-screen flex-col lg:flex-row">
-        <aside className="flex flex-col items-center justify-center border-b border-stone-200/80 px-6 py-10 sm:py-12 lg:w-1/2 lg:border-b-0 lg:border-r lg:px-10 lg:py-16">
-          <Link
-            href="/"
-            className="group rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          >
-            <Image
-              src="/logobackoficce.png"
-              alt="Backoffice"
-              width={280}
-              height={120}
-              className="h-auto w-full max-w-[220px] object-contain transition duration-300 group-hover:opacity-90 sm:max-w-[260px] lg:max-w-[280px]"
-              priority
-            />
-          </Link>
-          <p className={`${productSectionTitle} mt-6`}>Backoffice</p>
-          <p className="mt-4 max-w-xs text-center text-sm leading-relaxed text-zinc-600">
-            Gestioná inventario, ventas y clientes desde un solo lugar.
-          </p>
-          <div className="mt-8 flex gap-1.5" aria-hidden>
-            <span className="size-1.5 rounded-full bg-zinc-400/40" />
-            <span className="size-1.5 rounded-full bg-zinc-500/55" />
-            <span className="size-1.5 rounded-full bg-zinc-400/40" />
+        {/* Panel editorial — marca */}
+        <aside className="relative flex flex-col justify-center border-b border-neutral-200 px-8 py-14 sm:px-12 lg:w-[44%] lg:max-w-xl lg:border-b-0 lg:border-r lg:py-20 lg:pl-14 lg:pr-10 xl:pl-20">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_10%,rgba(0,0,0,0.03),transparent_55%)]"
+            aria-hidden
+          />
+          <div className="relative mx-auto w-full max-w-sm lg:mx-0">
+            <Link
+              href="/"
+              className="group inline-block outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-4"
+            >
+              <Image
+                src={storeLogoPath}
+                alt={storeBrand}
+                width={320}
+                height={140}
+                className="h-auto w-full max-w-[260px] object-contain object-left transition-opacity duration-500 group-hover:opacity-85 sm:max-w-[280px]"
+                priority
+              />
+            </Link>
+            <p className="mt-10 text-[10px] font-semibold uppercase tracking-[0.42em] text-neutral-400">
+              Backoffice
+            </p>
+            <p
+              className={`mt-5 max-w-[19rem] text-[17px] leading-[1.55] text-neutral-600 ${serif}`}
+            >
+              Gestioná inventario, ventas y clientes desde un solo lugar.
+            </p>
+            <div className="mt-12 flex items-center gap-3" aria-hidden>
+              <span className="h-px w-10 bg-neutral-950" />
+              <span className="text-[9px] font-medium uppercase tracking-[0.28em] text-neutral-300">
+                MP
+              </span>
+            </div>
           </div>
         </aside>
 
-        <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:w-1/2 lg:py-16">
-          <div className="w-full max-w-md">
-            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+        {/* Formulario */}
+        <main className="relative flex flex-1 flex-col justify-center bg-neutral-50/40 px-6 py-14 sm:px-10 lg:px-16 xl:px-24">
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(250,250,250,0.65)_100%)]" />
+          <div className="relative mx-auto w-full max-w-[420px]">
+            <div className="border border-neutral-200/90 bg-white px-8 py-10 shadow-[0_32px_90px_-40px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.8)_inset] sm:px-10 sm:py-12">
+              <h1 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-neutral-950">
                 Iniciar sesión
               </h1>
-              <p className="mt-2 text-sm text-zinc-600">
+              <p
+                className={`mt-5 text-[15px] leading-relaxed text-neutral-500 ${serif}`}
+              >
                 Entra con tu cuenta para continuar al panel.
               </p>
 
-              <div className="mt-8">
+              <div className="mt-10">
                 <Suspense fallback={null}>
                   <AdminLoginForm />
                 </Suspense>
               </div>
 
-              <p className="mt-8 text-center text-sm text-zinc-600">
+              <p className="mt-10 text-center">
                 <Link
                   href="/"
-                  className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-900"
+                  className="inline-flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.14em] text-neutral-500 transition-colors hover:text-neutral-950"
                 >
-                  ← Volver a la tienda
+                  <span aria-hidden className="text-lg leading-none">
+                    ←
+                  </span>
+                  Volver a la tienda
                 </Link>
               </p>
             </div>
 
-            <p className="mt-5 text-center text-xs font-medium text-zinc-500">
-              Solo personal autorizado
-              <span className="text-zinc-400" aria-hidden>
-                {" "}
-                ·{" "}
-              </span>
-              <span className="font-berea-nova berea-signature font-semibold">
-                By Berea Studio
-              </span>
-            </p>
+            <div className="mt-10 flex flex-col items-center gap-4 border-t border-neutral-200/80 pt-8">
+              <p className="text-center text-[10px] font-medium uppercase tracking-[0.22em] text-neutral-400">
+                Solo personal autorizado
+              </p>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[9px] font-medium uppercase tracking-[0.24em] text-neutral-300">
+                  Experiencia por
+                </span>
+                <Image
+                  src={bereaSignaturePath}
+                  alt="Berea — diseño y desarrollo de software a la medida"
+                  width={320}
+                  height={82}
+                  className="h-12 w-auto max-w-[min(100%,15rem)] object-contain opacity-[0.88] sm:h-14"
+                />
+              </div>
+            </div>
           </div>
         </main>
       </div>

@@ -93,6 +93,7 @@ function CatalogRowProductSlot({
           price_cents: product.price_cents,
           image_path: product.image_path,
           stock_quantity: product.stock_quantity,
+          size_options: product.size_options,
           size_value: product.size_value,
           size_unit: product.size_unit,
           fragrance_options: product.fragrance_options,

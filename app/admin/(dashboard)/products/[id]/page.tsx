@@ -4,6 +4,14 @@ import { notFound } from "next/navigation";
 import { AdminProductDetailToolbar } from "@/components/admin/AdminProductDetailToolbar";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
+import {
+  formatSizeOption,
+  normalizeSizeOptionsFromRow,
+} from "@/lib/product-size-options";
+import {
+  unitPriceGrossCents,
+  unitPriceNetCents,
+} from "@/lib/product-vat-price";
 import { shouldUnoptimizeStorageImageUrl, storagePublicObjectUrl } from "@/lib/storage-public-url";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +47,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     stock_quantity: number;
     image_path: string | null;
     category_id?: string | null;
+    size_options?: unknown;
     size_value?: number | null;
     size_unit?: string | null;
     has_expiration?: boolean | null;
@@ -63,12 +72,23 @@ export default async function AdminProductDetailPage({ params }: Props) {
     (raw.reference && String(raw.reference).trim()) || shortSku(raw.id);
   const cost = Number(raw.cost_cents ?? 0);
   const price = Number(raw.price_cents ?? 0);
+  const priceNet = unitPriceNetCents(price);
+  const priceGross = unitPriceGrossCents(
+    price,
+    raw.has_vat,
+    raw.vat_percent,
+  );
   const stockW = Number(raw.stock_warehouse ?? 0);
   const stockL = Number(raw.stock_local ?? 0);
   const stockTotal = Number(raw.stock_quantity ?? stockW + stockL);
+  const sizeOptions = normalizeSizeOptionsFromRow({
+    size_options: raw.size_options,
+    size_value: raw.size_value,
+    size_unit: raw.size_unit,
+  });
   const sizeLabel =
-    raw.size_value && Number(raw.size_value) > 0
-      ? `${String(raw.size_value).replace(/\.0+$/, "")} ${raw.size_unit ?? "unidad"}`
+    sizeOptions.length > 0
+      ? sizeOptions.map(formatSizeOption).join(", ")
       : "—";
   const expirationLabel = raw.has_expiration
     ? raw.expiration_date || "Requiere fecha de lote"
@@ -149,9 +169,28 @@ export default async function AdminProductDetailPage({ params }: Props) {
           <div className="grid min-w-0 flex-1 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-6">
             <div>
               <p className={labelClass}>Precio de venta</p>
-              <p className="mt-1 text-xl font-medium tabular-nums text-zinc-900 sm:text-2xl">
-                {formatCop(price)}
-              </p>
+              <div className="mt-1 space-y-1">
+                <p className="text-xl font-medium tabular-nums text-zinc-900 sm:text-2xl">
+                  {formatCop(priceNet)}
+                  <span className="ml-2 text-base font-normal text-zinc-500">
+                    sin IVA
+                  </span>
+                </p>
+                {raw.has_vat ? (
+                  <>
+                    <p className="text-lg font-semibold tabular-nums text-zinc-900">
+                      {formatCop(priceGross)}
+                      <span className="ml-2 text-sm font-normal text-zinc-500">
+                        con IVA ({vatLabel})
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-zinc-500">
+                    Sin IVA aplicado al precio de lista (precio final igual al base).
+                  </p>
+                )}
+              </div>
             </div>
             <div>
               <p className={labelClass}>Stock total</p>
@@ -209,7 +248,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8">
           <h2 className={labelClass}>Identificación</h2>
           <dl className="mt-4 space-y-3 text-sm">
@@ -254,14 +293,6 @@ export default async function AdminProductDetailPage({ params }: Props) {
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8">
           <h2 className={labelClass}>Descripción</h2>
           <p className="mt-4 text-sm leading-relaxed text-zinc-700">{desc}</p>
-        </section>
-        <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8">
-          <h2 className={labelClass}>Ubicación en bodega</h2>
-          <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-            {stockW <= 0
-              ? "No hay unidades en bodega. Cuando agregues stock en bodega vas a poder asignar ubicación en estante desde el inventario."
-              : "La asignación a estantes se habilita cuando gestionás el stock en bodega desde el listado de productos."}
-          </p>
         </section>
       </div>
     </div>

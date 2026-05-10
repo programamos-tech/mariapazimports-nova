@@ -34,7 +34,7 @@ export function AdminDashboardShell({
   const closeNav = () => setMobileNavOpen(false);
 
   return (
-    <div className="isolate flex min-h-screen items-stretch bg-white text-zinc-900 antialiased">
+    <div className="isolate flex min-h-screen items-stretch bg-stone-50 text-stone-900 antialiased">
       {mobileNavOpen ? (
         <button
           type="button"
@@ -50,7 +50,7 @@ export function AdminDashboardShell({
         onNavigate={closeNav}
       />
 
-      <div className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col overflow-x-visible overflow-y-visible bg-white lg:ml-64 print:ml-0">
+      <div className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col overflow-x-visible overflow-y-visible bg-stone-50/90 lg:ml-64 print:ml-0 print:bg-white">
         <AdminTopBar
           menuOpen={mobileNavOpen}
           onMenuClick={() => setMobileNavOpen(true)}

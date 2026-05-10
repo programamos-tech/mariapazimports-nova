@@ -233,8 +233,8 @@ export function AdminDateInput({
             </button>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-zinc-500">
-            {weekdayShort.map((w) => (
-              <span key={w}>{w}</span>
+            {weekdayShort.map((w, i) => (
+              <span key={`dow-${i}`}>{w}</span>
             ))}
           </div>
           <div className="mt-1 grid grid-cols-7 gap-1">

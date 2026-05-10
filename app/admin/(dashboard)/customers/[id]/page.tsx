@@ -6,6 +6,9 @@ import { customerAvatarSeed } from "@/lib/customer-avatar-seed";
 import { fetchAdminCustomerDetail } from "@/lib/supabase/admin-customer-detail";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
+import { averageTicketByMonthFromPaidOrders } from "@/lib/customer-ticket-trend";
+import { ventaFormaPagoLabel, ventaNumeroReferencia } from "@/lib/ventas-sales";
+import { CustomerTicketTrendChart } from "@/components/admin/CustomerTicketTrendChart";
 
 export const dynamic = "force-dynamic";
 
@@ -54,13 +57,27 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
 
   if (!detail) notFound();
 
-  const { customer, addresses, ordersPaid, topProducts, matchedOrdersByEmailFallback } =
-    detail;
+  const {
+    customer,
+    addresses,
+    ordersPaid,
+    customerOrders,
+    topProducts,
+    matchedOrdersByEmailFallback,
+  } = detail;
+
+  const orderStatusLabel: Record<string, string> = {
+    pending: "Pendiente",
+    paid: "Pagado",
+    failed: "Fallido",
+    cancelled: "Cancelado",
+  };
 
   const avatarSeed = customerAvatarSeed(customer.id, customer.email);
   const ventas = ordersPaid.length;
   const totalCents = ordersPaid.reduce((s, o) => s + Number(o.total_cents ?? 0), 0);
   const ticketCents = ventas > 0 ? Math.round(totalCents / ventas) : null;
+  const ticketTrendPoints = averageTicketByMonthFromPaidOrders(ordersPaid);
 
   const metaParts = [
     customer.document_id?.trim() ? `CC ${customer.document_id.trim()}` : null,
@@ -132,7 +149,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
         </div>
 
         <div className="border-t border-zinc-100">
-          <div className="grid divide-y divide-zinc-100 sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+          <div className="grid divide-y divide-zinc-100 sm:grid-cols-4 sm:divide-x sm:divide-y-0">
             <StatCol
               label="Ticket promedio"
               sub={`${ventas} ${ventas === 1 ? "venta" : "ventas"}`}
@@ -144,9 +161,6 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
             </StatCol>
             <StatCol label="Garantías" sub="Devoluciones procesadas">
               <span className="text-violet-600">0</span>
-            </StatCol>
-            <StatCol label="Créditos pendientes" sub="Sin créditos">
-              —
             </StatCol>
             <div className="px-4 py-5 sm:px-5">
               <p className={labelClass}>Direcciones</p>
@@ -183,33 +197,104 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
         </div>
       </div>
 
+      {ticketTrendPoints.length > 0 ? (
+        <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+            Evolución del ticket promedio
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Por mes (ventas pagadas): cuánto gasta el cliente de promedio por compra en cada mes.
+            Sirve para ver si el ticket sube, baja o se mantiene.
+          </p>
+          <CustomerTicketTrendChart points={ticketTrendPoints} />
+        </section>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
             Facturas
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Ventas con numeración de factura en esta sucursal (POS / facturación electrónica).
+            Pedidos vinculados a este cliente (POS, tienda en línea y mismos datos de contacto).
           </p>
-          <div className="mt-6 flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-10 text-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="40"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="text-zinc-300"
-              aria-hidden
-            >
-              <path d="M3 3v18h18" />
-              <path d="M7 16v3M11 13v6M15 10v9M19 7v12" />
-            </svg>
-            <p className="mt-3 text-sm font-medium text-zinc-600">
-              Aún no hay ventas registradas.
-            </p>
-          </div>
+          {customerOrders.length === 0 ? (
+            <div className="mt-6 flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-10 text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-zinc-300"
+                aria-hidden
+              >
+                <path d="M3 3v18h18" />
+                <path d="M7 16v3M11 13v6M15 10v9M19 7v12" />
+              </svg>
+              <p className="mt-3 text-sm font-medium text-zinc-600">
+                Aún no hay pedidos vinculados a este cliente.
+              </p>
+              <p className="mt-2 max-w-sm text-xs text-zinc-500">
+                Las ventas deben guardarse con este cliente seleccionado o con el mismo correo que
+                figura en la ficha.
+              </p>
+            </div>
+          ) : (
+            <ul className="mt-6 divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+              {customerOrders.map((o) => {
+                const ref = ventaNumeroReferencia(o.id);
+                const created =
+                  typeof o.created_at === "string"
+                    ? new Date(o.created_at).toLocaleString("es-CO", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "—";
+                const st = orderStatusLabel[o.status] ?? o.status;
+                const pago = ventaFormaPagoLabel(o.wompi_reference);
+                return (
+                  <li key={o.id}>
+                    <Link
+                      href={`/admin/orders/${o.id}`}
+                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-zinc-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-zinc-900">
+                          Factura #{ref}
+                          <span
+                            className={`ml-2 inline-flex rounded-md px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide ${
+                              o.status === "paid"
+                                ? "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80"
+                                : o.status === "pending"
+                                  ? "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80"
+                                  : o.status === "cancelled"
+                                    ? "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200"
+                                    : "bg-zinc-50 text-zinc-700 ring-1 ring-zinc-200/80"
+                            }`}
+                          >
+                            {st}
+                          </span>
+                        </p>
+                        <p className="mt-0.5 text-xs text-zinc-500">{created}</p>
+                        <p className="mt-1 text-[11px] text-zinc-500">{pago}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="font-semibold tabular-nums text-zinc-900">
+                          {formatCop(Number(o.total_cents ?? 0))}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
 
         <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
@@ -243,37 +328,6 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
           )}
         </section>
       </div>
-
-      <section className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-              Créditos
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              Ventas a crédito y abonos. Solo los de esta sucursal.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled
-            className="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-400 opacity-70"
-            title="Próximamente"
-          >
-            Ver cartera de créditos
-          </button>
-        </div>
-        <div className="mt-8 flex min-h-[140px] flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-12 text-center">
-          <p className="text-sm font-medium text-zinc-600">Sin créditos registrados.</p>
-          <button
-            type="button"
-            disabled
-            className="mt-6 inline-flex cursor-not-allowed items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white opacity-50"
-          >
-            Nuevo crédito
-          </button>
-        </div>
-      </section>
     </div>
   );
 }

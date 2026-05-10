@@ -219,5 +219,6 @@ export async function createPosInvoiceAction(formData: FormData) {
   revalidatePath("/admin/actividades");
   revalidatePath("/admin/orders");
   revalidatePath("/admin/ventas");
+  revalidatePath(`/admin/customers/${customerId}`);
   redirect(`/admin/orders/${orderId}`);
 }

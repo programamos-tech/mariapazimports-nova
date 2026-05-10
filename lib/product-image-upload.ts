@@ -11,13 +11,21 @@ export function assertProductImageSize(file: File | null | undefined): string | 
 
 /** Evita enviar el Server Action si el archivo es grande (doble chequeo respecto a onChange). */
 export function blockSubmitIfImageTooLarge(form: HTMLFormElement): boolean {
-  const el = form.elements.namedItem("image");
-  if (!(el instanceof HTMLInputElement) || el.type !== "file") return false;
-  const file = el.files?.[0];
-  const msg = assertProductImageSize(file ?? undefined);
-  if (msg) {
-    alert(msg);
-    return true;
+  const candidates: HTMLInputElement[] = [];
+  const main = form.elements.namedItem("image");
+  if (main instanceof HTMLInputElement && main.type === "file") {
+    candidates.push(main);
+  }
+  form.querySelectorAll<HTMLInputElement>('input[name="fragrance_option_image"]').forEach(
+    (el) => candidates.push(el),
+  );
+  for (const el of candidates) {
+    const file = el.files?.[0];
+    const msg = assertProductImageSize(file ?? undefined);
+    if (msg) {
+      alert(msg);
+      return true;
+    }
   }
   return false;
 }

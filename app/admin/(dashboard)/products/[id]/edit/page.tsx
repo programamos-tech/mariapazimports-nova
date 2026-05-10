@@ -4,6 +4,9 @@ import { EditProductForm } from "@/components/admin/EditProductForm";
 import { ProductDeleteConfirmForm } from "@/components/admin/ProductDeleteConfirmForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateProduct } from "@/app/actions/admin/products";
+import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
+import type { SizeRowState } from "@/components/admin/ProductSizeRows";
+import { normalizeSizeOptionsFromRow, SIZE_UNITS } from "@/lib/product-size-options";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +29,7 @@ type ProductRow = {
   image_path: string | null;
   is_published: boolean;
   category_id?: string | null;
+  size_options?: unknown;
   size_value?: number | null;
   size_unit?: string | null;
   has_expiration?: boolean | null;
@@ -36,6 +40,47 @@ type ProductRow = {
   has_vat?: boolean | null;
   vat_percent?: number | null;
 };
+
+function fragranceRowsForEditForm(p: ProductRow): FragranceRowInitial[] {
+  const imgMap =
+    p.fragrance_option_images &&
+    typeof p.fragrance_option_images === "object" &&
+    !Array.isArray(p.fragrance_option_images)
+      ? (p.fragrance_option_images as Record<string, string>)
+      : {};
+  const lines = Array.isArray(p.fragrance_options)
+    ? p.fragrance_options.filter(
+        (x): x is string => typeof x === "string" && x.trim().length > 0,
+      )
+    : [];
+  if (lines.length === 0) {
+    return [{ label: "", existingImagePath: null, previewUrl: null }];
+  }
+  return lines.map((label) => {
+    const raw = imgMap[label];
+    const path =
+      typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
+    return {
+      label,
+      existingImagePath: path,
+      previewUrl: path ? storagePublicObjectUrl(path) : null,
+    };
+  });
+}
+
+function sizeRowsForEditForm(p: ProductRow): SizeRowState[] {
+  const opts = normalizeSizeOptionsFromRow(p);
+  if (opts.length === 0) return [{ value: "", unit: "ml" }];
+  return opts.map((o) => {
+    const u = o.unit.trim().toLowerCase();
+    const unit = (
+      SIZE_UNITS as readonly string[]
+    ).includes(u)
+      ? (u as SizeRowState["unit"])
+      : "unidad";
+    return { value: String(o.value), unit };
+  });
+}
 
 function breadcrumbSegment(name: string) {
   const t = name.trim();
@@ -138,25 +183,13 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           stockLocal: p.stock_local ?? 0,
           stockWarehouse: p.stock_warehouse ?? 0,
           isPublished: p.is_published === true,
-          sizeValue: p.size_value ?? null,
-          sizeUnit: p.size_unit ?? "ml",
+          sizeRows: sizeRowsForEditForm(p),
           hasExpiration: p.has_expiration === true,
           expirationDate: p.expiration_date ?? "",
           hasVat: p.has_vat === true,
           vatPercent: p.vat_percent ?? null,
           colors: Array.isArray(p.colors) ? p.colors : [],
-          fragranceOptionsCsv: Array.isArray(p.fragrance_options)
-            ? p.fragrance_options.join("\n")
-            : "",
-          fragranceOptionImagesJson: JSON.stringify(
-            p.fragrance_option_images &&
-              typeof p.fragrance_option_images === "object" &&
-              !Array.isArray(p.fragrance_option_images)
-              ? p.fragrance_option_images
-              : {},
-            null,
-            2,
-          ),
+          fragranceRows: fragranceRowsForEditForm(p),
         }}
       />
 
