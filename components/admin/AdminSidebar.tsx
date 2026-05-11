@@ -64,6 +64,17 @@ const navSections: {
         ),
       },
       {
+        href: "/admin/proveedores",
+        label: "Proveedores",
+        icon: (
+          <Icon>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <path d="M12 18h-1M16 18h-1M8 18H7" />
+          </Icon>
+        ),
+      },
+      {
         href: "/admin/products",
         label: "Productos",
         icon: (
@@ -177,6 +188,7 @@ const ORDERS_HREF = "/admin/orders";
 const CUSTOMERS_HREF = "/admin/customers";
 const COUPONS_HREF = "/admin/coupons";
 const USUARIOS_HREF = "/admin/usuarios";
+const PROVEEDORES_HREF = "/admin/proveedores";
 
 function navItemActive(
   pathname: string,
@@ -201,6 +213,9 @@ function navItemActive(
   }
   if (href === COUPONS_HREF) {
     return pathname === COUPONS_HREF || pathname.startsWith(`${COUPONS_HREF}/`);
+  }
+  if (href === PROVEEDORES_HREF) {
+    return pathname === PROVEEDORES_HREF || pathname.startsWith(`${PROVEEDORES_HREF}/`);
   }
   return isActive(pathname, href);
 }
