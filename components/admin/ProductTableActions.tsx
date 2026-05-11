@@ -38,9 +38,17 @@ function IconTransfer() {
 
 type Props = {
   productId: string;
+  canEdit: boolean;
+  canStock: boolean;
+  canTransfer: boolean;
 };
 
-export function ProductTableActions({ productId }: Props) {
+export function ProductTableActions({
+  productId,
+  canEdit,
+  canStock,
+  canTransfer,
+}: Props) {
   return (
     <div className="flex shrink-0 flex-nowrap items-center justify-end gap-0.5 sm:gap-1">
       <Link
@@ -50,27 +58,33 @@ export function ProductTableActions({ productId }: Props) {
       >
         <IconEye />
       </Link>
-      <Link
-        href={`/admin/products/${productId}/edit`}
-        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
-        title="Editar producto"
-      >
-        <IconPencil />
-      </Link>
-      <Link
-        href={`/admin/products/${productId}/stock`}
-        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
-        title="Actualizar stock"
-      >
-        <IconBox />
-      </Link>
-      <Link
-        href={`/admin/products/${productId}/transfer`}
-        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
-        title="Transferir stock"
-      >
-        <IconTransfer />
-      </Link>
+      {canEdit ? (
+        <Link
+          href={`/admin/products/${productId}/edit`}
+          className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+          title="Editar producto"
+        >
+          <IconPencil />
+        </Link>
+      ) : null}
+      {canStock ? (
+        <Link
+          href={`/admin/products/${productId}/stock`}
+          className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+          title="Actualizar stock"
+        >
+          <IconBox />
+        </Link>
+      ) : null}
+      {canTransfer ? (
+        <Link
+          href={`/admin/products/${productId}/transfer`}
+          className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+          title="Transferir stock"
+        >
+          <IconTransfer />
+        </Link>
+      ) : null}
     </div>
   );
 }

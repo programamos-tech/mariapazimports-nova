@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CustomerAvatar } from "@/components/admin/CustomerAvatar";
 import { TeamRolesInfoCollapse } from "@/components/admin/TeamRolesInfoCollapse";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { storeBrand } from "@/lib/brand";
@@ -48,6 +49,11 @@ function jobLabel(jobRole: string | null | undefined): string {
 }
 
 export default async function AdminUsuariosRolesPage() {
+  const authPerm = await loadAdminPermissions();
+  const canManageCollaborators = Boolean(
+    authPerm?.permissions.colaboradores_gestionar,
+  );
+
   const supabase = await createSupabaseServerClient();
   const { data: profiles, error } = await supabase
     .from("profiles")
@@ -90,15 +96,17 @@ export default async function AdminUsuariosRolesPage() {
             Gestioná colaboradores, roles y permisos en {storeBrand}.
           </p>
         </div>
-        <Link
-          href="/admin/usuarios/nuevo"
-          className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
-        >
-          <span className="text-lg leading-none" aria-hidden>
-            +
-          </span>
-          Nuevo colaborador
-        </Link>
+        {canManageCollaborators ? (
+          <Link
+            href="/admin/usuarios/nuevo"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+          >
+            <span className="text-lg leading-none" aria-hidden>
+              +
+            </span>
+            Nuevo colaborador
+          </Link>
+        ) : null}
       </div>
 
       <TeamRolesInfoCollapse storeLabel={storeBrand} />
@@ -152,12 +160,14 @@ export default async function AdminUsuariosRolesPage() {
                   >
                     {jobLabel(jobRole)}
                   </span>
-                  <Link
-                    href={`/admin/usuarios/${row.id}/edit`}
-                    className="ml-auto inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-none dark:hover:bg-zinc-700"
-                  >
-                    Editar
-                  </Link>
+                  {canManageCollaborators ? (
+                    <Link
+                      href={`/admin/usuarios/${row.id}/edit`}
+                      className="ml-auto inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-none dark:hover:bg-zinc-700"
+                    >
+                      Editar
+                    </Link>
+                  ) : null}
                 </div>
               </li>
             );

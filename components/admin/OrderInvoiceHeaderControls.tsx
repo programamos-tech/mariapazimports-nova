@@ -172,6 +172,8 @@ function CancelInvoiceModal({
                   );
                 } else if (res.error === "auth") {
                   setLocalError("Sesión expirada. Vuelve a iniciar sesión.");
+                } else if (res.error === "forbidden") {
+                  setLocalError("No tenés permiso para cambiar el estado de la factura.");
                 } else {
                   setLocalError("No se pudo guardar. Intenta de nuevo.");
                 }

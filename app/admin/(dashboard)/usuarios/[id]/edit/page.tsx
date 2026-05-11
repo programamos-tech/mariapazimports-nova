@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin-permissions";
 import { storeBrand } from "@/lib/brand";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ function errorMessage(code: string | undefined): string | null {
 }
 
 export default async function AdminEditColaboradorPage({ params, searchParams }: Props) {
+  await requireAdminPermission("colaboradores_gestionar");
   const { id } = await params;
   const sp = await searchParams;
   const err = typeof sp.error === "string" ? sp.error : undefined;

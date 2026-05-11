@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function assertProfile(
@@ -113,6 +114,7 @@ async function syncStoreCouponProductLinks(
 export async function createStoreCoupon(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const internalLabel = String(formData.get("internal_label") ?? "").trim() || null;
   const bannerMessage = String(formData.get("banner_message") ?? "").trim();
@@ -189,6 +191,7 @@ export async function createStoreCoupon(formData: FormData) {
 export async function updateStoreCoupon(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/coupons?coupon_error=id");
@@ -275,6 +278,7 @@ export async function updateStoreCoupon(formData: FormData) {
 export async function deleteStoreCoupon(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/coupons?coupon_error=id");

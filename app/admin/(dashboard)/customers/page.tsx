@@ -6,6 +6,7 @@ import {
   fetchAdminCustomersWithStats,
   type AdminCustomerListRow,
 } from "@/lib/supabase/admin-customers-list";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
 
@@ -35,6 +36,9 @@ export default async function AdminCustomersPage({
 }) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+
+  const authPerm = await loadAdminPermissions();
+  const canCreateCustomer = Boolean(authPerm?.permissions.clientes_crear);
 
   const supabase = await createSupabaseServerClient();
   const { rows: allRows, error, withoutShippingFields } =
@@ -73,12 +77,14 @@ export default async function AdminCustomersPage({
           >
             Actualizar
           </Link>
-          <Link
-            href="/admin/customers/new"
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
-          >
-            + Nuevo cliente
-          </Link>
+          {canCreateCustomer ? (
+            <Link
+              href="/admin/customers/new"
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
+            >
+              + Nuevo cliente
+            </Link>
+          ) : null}
         </div>
       </div>
 

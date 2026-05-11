@@ -1,5 +1,6 @@
 "use server";
 
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { StoreBannerPlacement } from "@/lib/store-banners";
 import { parseStoragePublicPath } from "@/lib/storage-bucket-path";
@@ -45,6 +46,7 @@ function revalidateStorefront() {
 export async function uploadStoreBanner(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const placement = String(formData.get("placement") ?? "").trim() as StoreBannerPlacement;
   if (placement !== "hero" && placement !== "products") {
@@ -117,6 +119,7 @@ export async function uploadStoreBanner(formData: FormData) {
 export async function deleteStoreBanner(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/banners?error=id");
@@ -144,6 +147,7 @@ export async function deleteStoreBanner(formData: FormData) {
 export async function updateStoreBanner(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("marketing_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/banners?error=id");

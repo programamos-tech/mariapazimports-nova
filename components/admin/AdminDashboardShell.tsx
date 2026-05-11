@@ -6,10 +6,11 @@ import { AdminTopBar } from "@/components/admin/AdminTopBar";
 
 export function AdminDashboardShell({
   children,
-  canViewActivities,
+  allowedNavHrefs,
 }: {
   children: React.ReactNode;
-  canViewActivities: boolean;
+  /** Hrefs del menú lateral permitidos para esta sesión (incluye `/admin/cuenta` y `/`). */
+  allowedNavHrefs: string[];
 }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -45,7 +46,7 @@ export function AdminDashboardShell({
       ) : null}
 
       <AdminSidebar
-        canViewActivities={canViewActivities}
+        allowedNavHrefs={allowedNavHrefs}
         mobileOpen={mobileNavOpen}
         onNavigate={closeNav}
       />

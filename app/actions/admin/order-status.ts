@@ -2,6 +2,7 @@
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
 import { ORDER_CANCELLATION_REASON_MIN_LENGTH } from "@/lib/orders-constants";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -30,6 +31,11 @@ export async function updateAdminOrderStatus(
     .eq("id", user.id)
     .maybeSingle();
   if (!profile) return { ok: false as const, error: "auth" as const };
+
+  const perm = await loadAdminPermissions();
+  if (!perm?.permissions.ventas_crear) {
+    return { ok: false as const, error: "forbidden" as const };
+  }
 
   let payload: { status: string; cancellation_reason: string | null };
   if (next === "cancelled") {

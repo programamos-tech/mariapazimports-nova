@@ -8,6 +8,7 @@ import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRow
 import type { SizeRowState } from "@/components/admin/ProductSizeRows";
 import { normalizeSizeOptionsFromRow, SIZE_UNITS } from "@/lib/product-size-options";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,7 @@ function breadcrumbSegment(name: string) {
 }
 
 export default async function EditProductPage({ params, searchParams }: Props) {
+  await requireAdminPermission("productos_editar");
   const { id } = await params;
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;

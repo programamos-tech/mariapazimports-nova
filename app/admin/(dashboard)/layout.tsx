@@ -1,5 +1,7 @@
 import { AdminDashboardShell } from "@/components/admin/AdminDashboardShell";
+import { adminNavAllowedHrefList } from "@/lib/admin-nav-allowed";
 import { loadAdminPermissions } from "@/lib/load-admin-permissions";
+import { redirect } from "next/navigation";
 
 export default async function AdminDashboardLayout({
   children,
@@ -7,10 +9,12 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   const perm = await loadAdminPermissions();
-  const canViewActivities = Boolean(perm?.permissions.actividades_ver);
+  if (!perm) redirect("/admin/login");
+
+  const allowedNavHrefs = adminNavAllowedHrefList(perm.permissions);
 
   return (
-    <AdminDashboardShell canViewActivities={canViewActivities}>
+    <AdminDashboardShell allowedNavHrefs={allowedNavHrefs}>
       {children}
     </AdminDashboardShell>
   );

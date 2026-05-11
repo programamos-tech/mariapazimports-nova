@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   DEFAULT_SUPPLIER_VAT_BPS,
@@ -20,6 +21,7 @@ function revalidateSupplierPaths(supplierId: string, invoiceId?: string) {
 }
 
 export async function createSupplierAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) redirect("/admin/proveedores/nuevo?error=name");
@@ -51,6 +53,7 @@ type ParsedSupplierLine = {
 };
 
 export async function createSupplierInvoiceAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const supplierId = String(formData.get("supplier_id") ?? "").trim();
   const issueDateRaw = String(formData.get("issue_date") ?? "").trim().slice(0, 10);
@@ -161,6 +164,7 @@ export async function createSupplierInvoiceAction(formData: FormData) {
 }
 
 export async function registerSupplierInvoicePaymentAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const invoiceId = String(formData.get("invoice_id") ?? "").trim();
   const supplierId = String(formData.get("supplier_id") ?? "").trim();
@@ -207,6 +211,7 @@ export async function registerSupplierInvoicePaymentAction(formData: FormData) {
 }
 
 export async function cancelSupplierInvoiceAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const invoiceId = String(formData.get("invoice_id") ?? "").trim();
   const supplierId = String(formData.get("supplier_id") ?? "").trim();
@@ -224,6 +229,7 @@ export async function cancelSupplierInvoiceAction(formData: FormData) {
 }
 
 export async function uploadSupplierInvoiceAttachmentAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const invoiceId = String(formData.get("invoice_id") ?? "").trim();
   const supplierId = String(formData.get("supplier_id") ?? "").trim();
@@ -281,6 +287,7 @@ export async function uploadSupplierInvoiceAttachmentAction(formData: FormData) 
 }
 
 export async function deleteSupplierInvoiceAttachmentAction(formData: FormData) {
+  await assertActionPermission("proveedores_ver");
   const supabase = await createSupabaseServerClient();
   const attachmentId = String(formData.get("attachment_id") ?? "").trim();
   const invoiceId = String(formData.get("invoice_id") ?? "").trim();

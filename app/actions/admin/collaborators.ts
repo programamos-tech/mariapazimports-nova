@@ -6,6 +6,7 @@ import {
   type PermissionMap,
 } from "@/lib/admin-permissions";
 import { slugUsername } from "@/lib/collaborator-utils";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -27,6 +28,7 @@ export async function inviteCollaboratorAction(formData: FormData) {
     .eq("id", user.id)
     .maybeSingle();
   if (!myProfile) redirect("/admin/login?error=no_profile");
+  await assertActionPermission("colaboradores_gestionar");
 
   let service: ReturnType<typeof createSupabaseServiceClient>;
   try {
@@ -128,6 +130,7 @@ export async function updateCollaboratorAction(formData: FormData) {
     .eq("id", user.id)
     .maybeSingle();
   if (!myProfile) redirect("/admin/login?error=no_profile");
+  await assertActionPermission("colaboradores_gestionar");
 
   const profileId = String(formData.get("profile_id") ?? "").trim();
   if (!profileId) redirect("/admin/usuarios");

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function assertProfile(
@@ -22,6 +23,7 @@ async function assertProfile(
 export async function createStoreExpense(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("egresos_crear");
 
   const concept = String(formData.get("concept") ?? "").trim();
   if (!concept) redirect("/admin/egresos/nuevo?expense_error=concept");

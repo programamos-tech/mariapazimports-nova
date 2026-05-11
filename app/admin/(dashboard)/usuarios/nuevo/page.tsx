@@ -3,6 +3,7 @@ import {
   NewCollaboratorHeader,
 } from "@/components/admin/NewCollaboraboratorForm";
 import { storeBrand } from "@/lib/brand";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ function errorMessage(code: string | undefined): string | null {
 }
 
 export default async function AdminNuevoColaboradorPage({ searchParams }: Props) {
+  await requireAdminPermission("colaboradores_gestionar");
   const sp = await searchParams;
   const err = typeof sp.error === "string" ? sp.error : undefined;
   const banner = errorMessage(err);

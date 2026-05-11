@@ -34,6 +34,7 @@ export default async function AdminCuentaPage({
   const errorMsg =
     typeof sp.error === "string" ? decodeURIComponent(sp.error) : null;
   const ok = sp.ok === "1" || sp.ok === "true";
+  const forbiddenNotice = sp.notice === "forbidden";
 
   const supabase = await createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -114,6 +115,15 @@ export default async function AdminCuentaPage({
           role="alert"
         >
           {errorMsg}
+        </div>
+      ) : null}
+      {forbiddenNotice ? (
+        <div
+          className="rounded-xl border border-amber-200/90 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+          role="status"
+        >
+          No tenés permiso para abrir esa sección del panel. Pedile al dueño que revise tu rol en
+          Equipo.
         </div>
       ) : null}
 

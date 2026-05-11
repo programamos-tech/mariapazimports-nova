@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminUpdateStockForm } from "@/components/admin/AdminUpdateStockForm";
 import { adjustProductStock } from "@/app/actions/admin/products";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ function breadcrumbSegment(name: string) {
 }
 
 export default async function AdminProductStockPage({ params }: Props) {
+  await requireAdminPermission("stock_actualizar");
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
 

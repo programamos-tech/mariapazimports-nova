@@ -21,6 +21,7 @@ export const PERMISSION_KEYS = [
   "clientes_editar",
   "egresos_ver",
   "egresos_crear",
+  "proveedores_ver",
   "inventario_ver",
   "productos_crear",
   "productos_editar",
@@ -32,6 +33,8 @@ export const PERMISSION_KEYS = [
   "sucursales_ver",
   "sucursales_gestionar",
   "actividades_ver",
+  "marketing_ver",
+  "ajustes_tienda_ver",
 ] as const;
 
 export type PermissionMap = Partial<Record<PermissionKey, boolean>>;
@@ -81,6 +84,11 @@ export const PERMISSION_MODULES: PermissionModule[] = [
     ],
   },
   {
+    id: "proveedores",
+    label: "Proveedores",
+    items: [{ key: "proveedores_ver", label: "Proveedores y facturas de compra" }],
+  },
+  {
     id: "inventario",
     label: "Inventario",
     items: [
@@ -102,6 +110,16 @@ export const PERMISSION_MODULES: PermissionModule[] = [
       { key: "sucursales_gestionar", label: "Gestionar sucursales" },
       { key: "actividades_ver", label: "Ver actividades", readOnly: true },
     ],
+  },
+  {
+    id: "marketing",
+    label: "Marketing",
+    items: [{ key: "marketing_ver", label: "Banners y cupones" }],
+  },
+  {
+    id: "tienda",
+    label: "Tienda",
+    items: [{ key: "ajustes_tienda_ver", label: "Ajustes de tienda y bienvenida" }],
   },
 ];
 
@@ -130,8 +148,11 @@ export function defaultPermissionsCashier(): PermissionMap {
   m.clientes_editar = true;
   m.egresos_ver = true;
   m.egresos_crear = true;
+  m.proveedores_ver = true;
   m.inventario_ver = true;
   m.actividades_ver = true;
+  m.marketing_ver = false;
+  m.ajustes_tienda_ver = false;
   return m;
 }
 

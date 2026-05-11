@@ -5,7 +5,10 @@ import {
   parseReportRangeFromSearchParams,
   prettyReportPeriodLabel,
 } from "@/lib/admin-report-range";
+import { adminLandingPath } from "@/lib/admin-landing";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { formatCop, formatCopCompact } from "@/lib/money";
 import {
   revenueNetGrossFromLines,
@@ -39,6 +42,12 @@ type PageProps = {
 };
 
 export default async function AdminHomePage({ searchParams }: PageProps) {
+  const perm = await loadAdminPermissions();
+  if (!perm) redirect("/admin/login");
+  if (!perm.permissions.inicio_reportes) {
+    redirect(adminLandingPath(perm.permissions));
+  }
+
   const sp = await searchParams;
   const todayKey = new Date().toISOString().slice(0, 10);
   const { from: rangeFrom, to: rangeTo } = parseReportRangeFromSearchParams(

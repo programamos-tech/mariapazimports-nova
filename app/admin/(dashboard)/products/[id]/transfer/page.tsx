@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminTransferStockForm } from "@/components/admin/AdminTransferStockForm";
 import { transferProductStock } from "@/app/actions/admin/products";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ function breadcrumbProduct(name: string) {
 }
 
 export default async function AdminTransferStockPage({ params, searchParams }: Props) {
+  await requireAdminPermission("stock_transferir");
   const { id } = await params;
   const sp = await searchParams;
   const err = sp.error === "transfer";

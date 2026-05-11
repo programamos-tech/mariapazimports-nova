@@ -253,22 +253,23 @@ function SidebarLogo() {
 }
 
 function AdminSidebarInner({
-  canViewActivities,
+  allowedNavHrefs,
   mobileOpen,
   onNavigate,
 }: {
-  canViewActivities: boolean;
+  allowedNavHrefs: string[];
   mobileOpen: boolean;
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
+  const allowed = new Set(allowedNavHrefs);
 
-  const navSectionsFiltered = canViewActivities
-    ? navSections
-    : navSections.map((section) => ({
-        ...section,
-        items: section.items.filter((item) => item.href !== "/admin/actividades"),
-      }));
+  const navSectionsFiltered = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => allowed.has(item.href)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const linkClass = (href: string, active: boolean) =>
     [
@@ -373,18 +374,18 @@ function AdminSidebarFallback() {
 }
 
 export function AdminSidebar({
-  canViewActivities = true,
+  allowedNavHrefs,
   mobileOpen,
   onNavigate,
 }: {
-  canViewActivities?: boolean;
+  allowedNavHrefs: string[];
   mobileOpen: boolean;
   onNavigate: () => void;
 }) {
   return (
     <Suspense fallback={<AdminSidebarFallback />}>
       <AdminSidebarInner
-        canViewActivities={canViewActivities}
+        allowedNavHrefs={allowedNavHrefs}
         mobileOpen={mobileOpen}
         onNavigate={onNavigate}
       />

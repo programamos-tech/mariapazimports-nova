@@ -4,6 +4,7 @@ import {
   EditCustomerHeader,
 } from "@/components/admin/EditCustomerForm";
 import { customerAvatarSeed } from "@/lib/customer-avatar-seed";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default async function AdminCustomerEditPage({ params, searchParams }: Props) {
+  await requireAdminPermission("clientes_editar");
   const { id } = await params;
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;

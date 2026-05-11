@@ -17,6 +17,7 @@ import {
   fetchAdminCategoriesManageList,
   fetchAdminProductsList,
 } from "@/lib/supabase/admin-products-list";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { adminProductCardClass, adminTableWrapClass } from "@/lib/admin-ui";
 import { formatCop } from "@/lib/money";
@@ -125,6 +126,13 @@ export default async function AdminProductsPage({
   searchParams: Promise<Search>;
 }) {
   const sp = await searchParams;
+  const authPerm = await loadAdminPermissions();
+  const canCreateProduct = Boolean(authPerm?.permissions.productos_crear);
+  const canEditProduct = Boolean(authPerm?.permissions.productos_editar);
+  const canStockUpdate = Boolean(authPerm?.permissions.stock_actualizar);
+  const canStockTransfer = Boolean(authPerm?.permissions.stock_transferir);
+  const canManageCategories = Boolean(authPerm?.permissions.categorias_gestionar);
+
   const spRecord = sp as Record<string, string | string[] | undefined>;
   const q = (sp.q ?? "").trim();
   const status = (sp.status ?? "all").trim() || "all";
@@ -160,6 +168,10 @@ export default async function AdminProductsPage({
     per_page: pageSize,
     categories: true,
   });
+
+  if (showCategories && !canManageCategories) {
+    redirect(categoriesCloseHref);
+  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -215,13 +227,15 @@ export default async function AdminProductsPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={categoriesOpenHref}
-            scroll={false}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
-          >
-            Categorías
-          </Link>
+          {canManageCategories ? (
+            <Link
+              href={categoriesOpenHref}
+              scroll={false}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+            >
+              Categorías
+            </Link>
+          ) : null}
           <Link
             href="/admin/products"
             className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
@@ -229,12 +243,14 @@ export default async function AdminProductsPage({
           >
             Actualizar
           </Link>
-          <Link
-            href="/admin/products/new"
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800"
-          >
-            + Nuevo producto
-          </Link>
+          {canCreateProduct ? (
+            <Link
+              href="/admin/products/new"
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800"
+            >
+              + Nuevo producto
+            </Link>
+          ) : null}
         </div>
       </div>
 
@@ -283,12 +299,14 @@ export default async function AdminProductsPage({
       {!queryError && totalCount === 0 ? (
         <div className="border-t border-zinc-100 py-12 text-center">
           <p className="text-sm text-zinc-600">No hay productos con estos criterios.</p>
-          <Link
-            href="/admin/products/new"
-            className="mt-4 inline-block text-sm font-semibold text-zinc-900 underline decoration-zinc-300 dark:text-zinc-100 dark:decoration-zinc-600"
-          >
-            Crear el primero
-          </Link>
+          {canCreateProduct ? (
+            <Link
+              href="/admin/products/new"
+              className="mt-4 inline-block text-sm font-semibold text-zinc-900 underline decoration-zinc-300 dark:text-zinc-100 dark:decoration-zinc-600"
+            >
+              Crear el primero
+            </Link>
+          ) : null}
         </div>
       ) : !queryError ? (
         <>
@@ -315,7 +333,12 @@ export default async function AdminProductsPage({
                       {p.code}
                     </p>
                   </div>
-                  <ProductTableActions productId={p.id} />
+                  <ProductTableActions
+                    productId={p.id}
+                    canEdit={canEditProduct}
+                    canStock={canStockUpdate}
+                    canTransfer={canStockTransfer}
+                  />
                 </div>
                 <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
                   {p.categoryLabel}
@@ -435,7 +458,12 @@ export default async function AdminProductsPage({
                     </td>
                     <td className={tdCell}>
                       <div className="flex justify-end">
-                        <ProductTableActions productId={p.id} />
+                        <ProductTableActions
+                    productId={p.id}
+                    canEdit={canEditProduct}
+                    canStock={canStockUpdate}
+                    canTransfer={canStockTransfer}
+                  />
                       </div>
                     </td>
                   </tr>

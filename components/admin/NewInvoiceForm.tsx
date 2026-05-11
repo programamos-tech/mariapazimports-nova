@@ -278,6 +278,8 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     if (!res.ok) {
       if (res.code === "auth") {
         setQuickError("Sesión expirada. Recarga la página e inicia sesión de nuevo.");
+      } else if (res.code === "forbidden") {
+        setQuickError("No tenés permiso para crear clientes.");
       } else if (res.code === "name") {
         setQuickError("El nombre es obligatorio.");
       } else {

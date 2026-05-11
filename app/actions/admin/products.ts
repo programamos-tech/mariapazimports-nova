@@ -5,6 +5,7 @@ import {
   legacySizeFromOptions,
   parseSizeOptionsFromFormData,
 } from "@/lib/product-size-options";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -285,6 +286,7 @@ export async function createProduct(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("productos_crear");
 
   const name = String(formData.get("name") ?? "").trim();
   const reference = String(formData.get("reference") ?? "").trim();
@@ -444,6 +446,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("productos_editar");
 
   const name = String(formData.get("name") ?? "").trim();
   const reference = String(formData.get("reference") ?? "").trim();
@@ -585,6 +588,7 @@ export async function deleteProduct(productId: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("productos_editar");
 
   await supabase.from("products").delete().eq("id", productId);
   revalidatePath("/products");
@@ -599,6 +603,7 @@ export async function adjustProductStock(productId: string, formData: FormData) 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("stock_actualizar");
 
   const location = String(formData.get("location") ?? "local");
   const movementMode = String(formData.get("movement_mode") ?? "replace");
@@ -680,6 +685,7 @@ export async function transferProductStock(productId: string, formData: FormData
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("stock_transferir");
 
   const direction = String(formData.get("direction") ?? "local_to_warehouse");
   const qty = parseNonNegInt(formData.get("quantity"));

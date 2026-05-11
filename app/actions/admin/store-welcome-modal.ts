@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseStoragePublicPath } from "@/lib/storage-bucket-path";
 
@@ -70,6 +71,7 @@ async function uploadModalImage(
 export async function createStoreWelcomeModal(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("ajustes_tienda_ver");
 
   const title = String(formData.get("title") ?? "").trim();
   if (!title) redirect("/admin/settings?welcome_error=title");
@@ -114,6 +116,7 @@ export async function createStoreWelcomeModal(formData: FormData) {
 export async function updateStoreWelcomeModal(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("ajustes_tienda_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/settings?welcome_error=id");
@@ -185,6 +188,7 @@ export async function updateStoreWelcomeModal(formData: FormData) {
 export async function deleteStoreWelcomeModal(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   await assertProfile(supabase);
+  await assertActionPermission("ajustes_tienda_ver");
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) redirect("/admin/settings?welcome_error=id");

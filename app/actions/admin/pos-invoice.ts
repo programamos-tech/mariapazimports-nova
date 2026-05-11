@@ -1,6 +1,7 @@
 "use server";
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -37,6 +38,7 @@ export async function createPosInvoiceAction(formData: FormData) {
     .eq("id", user.id)
     .maybeSingle();
   if (!profile) redirect("/admin/login?error=no_profile");
+  await assertActionPermission("ventas_crear");
 
   let payload: PosInvoicePayload;
   try {

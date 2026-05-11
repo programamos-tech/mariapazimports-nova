@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ActivityLogCard } from "@/components/admin/ActivityLogCard";
 import type { AdminActivityLogRow } from "@/lib/admin-activity-log";
-import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +18,6 @@ function formatWhen(iso: string): string {
 }
 
 export default async function AdminActividadesPage() {
-  const perm = await loadAdminPermissions();
-  if (!perm?.permissions.actividades_ver) {
-    redirect("/admin");
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data: rows, error } = await supabase
     .from("admin_activity_log")

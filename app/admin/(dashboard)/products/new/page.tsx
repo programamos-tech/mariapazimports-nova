@@ -1,4 +1,5 @@
 import { NewProductForm, NewProductHeader } from "@/components/admin/NewProductForm";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function NewProductPage({
@@ -6,6 +7,7 @@ export default async function NewProductPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireAdminPermission("productos_crear");
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
 

@@ -2,12 +2,14 @@ import {
   NewCustomerForm,
   NewCustomerHeader,
 } from "@/components/admin/NewCustomerForm";
+import { requireAdminPermission } from "@/lib/require-admin-permission";
 
 export default async function NewCustomerPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdminPermission("clientes_crear");
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
 

@@ -1,6 +1,8 @@
 "use server";
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
+import { loadAdminPermissions } from "@/lib/load-admin-permissions";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -15,7 +17,7 @@ export type QuickStoreCustomerRow = {
 
 export type CreateQuickStoreCustomerResult =
   | { ok: true; customer: QuickStoreCustomerRow }
-  | { ok: false; code: "auth" | "name" | "db" };
+  | { ok: false; code: "auth" | "forbidden" | "name" | "db" };
 
 /** Alta mínima desde POS (sin redirect); para modal en nueva factura. */
 export async function createQuickStoreCustomer(input: {
@@ -27,6 +29,9 @@ export async function createQuickStoreCustomer(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, code: "auth" };
+
+  const perm = await loadAdminPermissions();
+  if (!perm?.permissions.clientes_crear) return { ok: false, code: "forbidden" };
 
   const name = String(input.name ?? "").trim();
   const documentId = String(input.document_id ?? "").trim();
@@ -85,6 +90,7 @@ export async function createStoreCustomer(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("clientes_crear");
 
   const name = String(formData.get("name") ?? "").trim();
   const emailRaw = String(formData.get("email") ?? "").trim();
@@ -189,6 +195,7 @@ export async function updateStoreCustomer(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("clientes_editar");
 
   const customerId = String(formData.get("customer_id") ?? "").trim();
   if (!customerId) redirect("/admin/customers");
@@ -307,6 +314,7 @@ export async function deleteCustomerById(customerId: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("clientes_editar");
 
   const id = customerId.trim();
   if (!id) redirect("/admin/customers");

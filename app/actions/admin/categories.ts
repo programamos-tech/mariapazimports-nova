@@ -1,6 +1,7 @@
 "use server";
 
 import { isCategoryIconKey, resolveCategoryIconKey } from "@/lib/category-icons";
+import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -11,6 +12,7 @@ export async function createCategory(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("categorias_gestionar");
 
   const fromModal = String(formData.get("from") ?? "") === "modal";
   const name = String(formData.get("name") ?? "").trim();
@@ -44,6 +46,7 @@ export async function deleteCategory(categoryId: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("categorias_gestionar");
 
   await supabase.from("categories").delete().eq("id", categoryId);
   revalidatePath("/admin/categories");
@@ -57,6 +60,7 @@ export async function updateCategoryListingHero(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  await assertActionPermission("categorias_gestionar");
 
   const categoryId = String(formData.get("category_id") ?? "").trim();
   if (!categoryId) redirect("/admin/products?categories=1");
