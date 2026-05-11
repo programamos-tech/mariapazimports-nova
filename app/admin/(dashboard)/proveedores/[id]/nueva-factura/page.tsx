@@ -1,23 +1,11 @@
+import {
+  SupplierNewInvoiceForm,
+  SupplierNewInvoiceHeader,
+} from "@/components/admin/SupplierNewInvoiceForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import nextDynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
-
-const SupplierNewInvoiceIsland = nextDynamic(
-  () =>
-    import("@/components/admin/SupplierNewInvoiceClientIsland").then((m) => ({
-      default: m.SupplierNewInvoiceIsland,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="rounded-xl border border-zinc-200/90 bg-white p-8 text-center text-sm text-zinc-500">
-        Cargando formulario…
-      </div>
-    ),
-  },
-);
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -35,6 +23,8 @@ export default async function AdminProveedorNuevaFacturaPage({ params, searchPar
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl">
+      <SupplierNewInvoiceHeader fixedSupplierId={id} supplierName={s.name} />
+
       {error ? (
         <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
           {error === "validation"
@@ -45,7 +35,7 @@ export default async function AdminProveedorNuevaFacturaPage({ params, searchPar
         </p>
       ) : null}
 
-      <SupplierNewInvoiceIsland
+      <SupplierNewInvoiceForm
         issueDateDefault={issueDateDefault}
         suppliers={[]}
         fixedSupplierId={id}
