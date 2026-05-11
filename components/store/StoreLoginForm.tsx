@@ -5,12 +5,19 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { friendlyStoreAuthError } from "@/components/store/store-auth-shared";
+import {
+  storeAuthFormErrorClass,
+  storeAuthFormInputClass,
+  storeAuthFormLabelClass,
+  storeAuthFormPrimaryBtnClass,
+} from "@/components/store/store-auth-form-primitives";
 
-const labelClass = "mb-2 block text-sm font-medium text-stone-800";
-const inputClass =
-  "w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-[var(--store-accent)]/20";
-
-export function StoreLoginForm() {
+export function StoreLoginForm({
+  onLoggedIn,
+}: {
+  /** Tras login correcto (p. ej. cerrar panel lateral). */
+  onLoggedIn?: () => void;
+} = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next");
@@ -37,8 +44,15 @@ export function StoreLoginForm() {
       return;
     }
 
-    await syncStoreCustomerFromSession();
-    setLoading(false);
+    try {
+      await syncStoreCustomerFromSession();
+    } catch {
+      /* layout / checkout reintentan */
+    } finally {
+      setLoading(false);
+    }
+
+    onLoggedIn?.();
 
     const safeNext =
       nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
@@ -49,38 +63,34 @@ export function StoreLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error ? (
-        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-900">
-          {error}
-        </p>
-      ) : null}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error ? <p className={storeAuthFormErrorClass}>{error}</p> : null}
       <label className="block">
-        <span className={labelClass}>Correo electrónico</span>
+        <span className={storeAuthFormLabelClass}>Correo electrónico</span>
         <input
           name="email"
           type="email"
           required
           autoComplete="email"
           placeholder="tu@email.com"
-          className={inputClass}
+          className={storeAuthFormInputClass}
         />
       </label>
       <label className="block">
-        <span className={labelClass}>Contraseña</span>
+        <span className={storeAuthFormLabelClass}>Contraseña</span>
         <input
           name="password"
           type="password"
           required
           autoComplete="current-password"
           placeholder="Tu contraseña"
-          className={inputClass}
+          className={storeAuthFormInputClass}
         />
       </label>
       <button
         type="submit"
         disabled={loading}
-        className="mt-2 w-full rounded-full bg-[var(--store-accent)] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--store-accent-hover)] disabled:opacity-60"
+        className={`${storeAuthFormPrimaryBtnClass} mt-1`}
       >
         {loading ? "Entrando…" : "Iniciar sesión"}
       </button>

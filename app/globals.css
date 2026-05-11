@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
+/* Modo oscuro del admin: `data-admin-theme="dark"` en un ancestro (ver `AdminThemeProvider`). */
+@custom-variant dark (&:where([data-admin-theme="dark"], [data-admin-theme="dark"] *));
+
 :root {
   --background: #ffffff;
   --foreground: #292524;
-  color-scheme: only light;
+  /* Sin `only`: si no, los subárboles no pueden usar color-scheme dark (rompe admin oscuro / nativos). */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -149,4 +153,34 @@ body {
 .store-reveal-out-above {
   opacity: 0;
   transform: translate3d(0, -2.25rem, 0) scale(0.96);
+}
+
+/*
+ * Franja superior: N copias del bloque (ver MARQUEE_SEGMENT_COUNT en StoreAnnouncementBar.tsx).
+ * Un ciclo desplaza exactamente 1 copia: translateX(-100%/N). Con N=12 → -8.333333%.
+ */
+@keyframes store-announcement-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-8.333333%);
+  }
+}
+
+.store-announcement-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: store-announcement-marquee 48s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-announcement-marquee-track {
+    animation: none;
+    margin-inline: auto;
+  }
+
+  .store-announcement-marquee-segment--dupe {
+    display: none;
+  }
 }

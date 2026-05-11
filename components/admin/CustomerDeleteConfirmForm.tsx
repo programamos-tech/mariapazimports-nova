@@ -24,7 +24,7 @@ function IconTrash() {
 }
 
 const dialogClass =
-  "fixed left-1/2 top-1/2 z-[200] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-2xl max-h-[min(90dvh,100%)] overflow-y-auto [&::backdrop]:bg-zinc-950/50";
+  "fixed left-1/2 top-1/2 z-[200] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-2xl max-h-[min(90dvh,100%)] overflow-y-auto dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 [&::backdrop]:bg-zinc-950/50";
 
 type Props = {
   customerId: string;
@@ -67,19 +67,19 @@ export function CustomerDeleteConfirmForm({
         if (pending) e.preventDefault();
       }}
     >
-      <h2 id="customer-delete-dialog-title" className="text-lg font-semibold text-zinc-900">
+      <h2 id="customer-delete-dialog-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
         ¿Eliminar este cliente?
       </h2>
-      <p className="mt-3 text-sm leading-relaxed text-zinc-600">
+      <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
         Se va a borrar{" "}
-        <span className="font-semibold text-zinc-800">«{customerName}»</span>. Esta acción no se
-        puede deshacer.
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200">«{customerName}»</span>.
+        Esta acción no se puede deshacer.
       </p>
       <div className="mt-6 flex flex-wrap justify-end gap-2">
         <button
           type="button"
           disabled={pending}
-          className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
+          className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-none dark:hover:bg-zinc-700"
           onClick={closeDialog}
         >
           Cancelar
@@ -103,7 +103,7 @@ export function CustomerDeleteConfirmForm({
           type="button"
           title="Eliminar cliente"
           aria-label="Eliminar cliente"
-          className="inline-flex size-10 items-center justify-center rounded-full border-2 border-red-200 bg-white text-red-600 shadow-sm transition hover:bg-red-50"
+          className="inline-flex size-10 items-center justify-center rounded-full border-2 border-red-200 bg-white text-red-600 shadow-sm transition hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/25 dark:text-red-400 dark:shadow-none dark:hover:bg-red-950/45"
           onClick={openDialog}
         >
           <IconTrash />
@@ -118,7 +118,7 @@ export function CustomerDeleteConfirmForm({
       <button
         type="button"
         disabled={pending}
-        className="rounded-lg border-2 border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+        className="rounded-lg border-2 border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:opacity-50 dark:border-red-800/55 dark:bg-zinc-900 dark:text-red-400 dark:shadow-none dark:hover:bg-red-950/25"
         onClick={openDialog}
       >
         {children ?? "Eliminar"}

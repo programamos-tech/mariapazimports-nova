@@ -7,6 +7,7 @@ import {
 import { VentasPagination } from "@/components/admin/VentasPagination";
 import { VentasSalesTable, type VentaOrderRow } from "@/components/admin/VentasSalesTable";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { adminPanelClass } from "@/lib/admin-ui";
 import {
   matchesVentaPagoFilter,
   ventaNumeroReferencia,
@@ -24,7 +25,7 @@ type Props = {
 
 function FiltersFallback() {
   return (
-    <div className="h-24 animate-pulse rounded-t-xl border-b border-zinc-100 bg-zinc-50/50 px-4 sm:px-5" />
+    <div className="h-24 animate-pulse rounded-t-xl border-b border-zinc-100 bg-zinc-50/50 px-4 dark:border-zinc-800 dark:bg-zinc-800/40 sm:px-5" />
   );
 }
 
@@ -49,7 +50,7 @@ export default async function AdminVentasPage({ searchParams }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/80 dark:bg-amber-950/35 dark:text-amber-100">
         No se pudieron cargar las ventas. Revisa permisos y conexión.
       </div>
     );
@@ -99,10 +100,10 @@ export default async function AdminVentasPage({ searchParams }: Props) {
     <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">
             Ventas
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
             Gestioná facturas de mostrador y pedidos con envío desde un solo lugar.
           </p>
         </div>
@@ -110,14 +111,14 @@ export default async function AdminVentasPage({ searchParams }: Props) {
           <VentasRefreshButton />
           <Link
             href="/admin/ventas/nueva"
-            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 sm:min-w-0"
+            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white sm:min-w-0"
           >
             + Nueva factura
           </Link>
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/5">
+      <div className={adminPanelClass}>
         <Suspense fallback={<FiltersFallback />}>
           <VentasFiltersBar initialQ={qRaw} />
         </Suspense>

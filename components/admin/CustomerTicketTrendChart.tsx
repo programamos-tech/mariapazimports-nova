@@ -1,7 +1,8 @@
 import { formatCop, formatCopCompact } from "@/lib/money";
 import type { TicketTrendPoint } from "@/lib/customer-ticket-trend";
 
-const chartLineColor = "#18181b";
+const chartPaletteClass =
+  "[--chart-line:#18181b] [--chart-grid:#e4e4e7] [--chart-axis:#d4d4d8] [--chart-point-fill:#ffffff] [--chart-point-stroke:#18181b] dark:[--chart-line:#e4e4e7] dark:[--chart-grid:#3f3f46] dark:[--chart-axis:#52525b] dark:[--chart-point-fill:#27272a] dark:[--chart-point-stroke:#fafafa]";
 
 function monthLabelEs(monthKey: string) {
   const [y, m] = monthKey.split("-").map(Number);
@@ -65,7 +66,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
   }
 
   return (
-    <div className="mt-6 overflow-x-auto">
+    <div className={`mt-6 overflow-x-auto ${chartPaletteClass}`}>
       <svg
         viewBox={`0 0 ${chartW} ${chartH}`}
         className="h-[240px] w-full min-h-[220px] min-w-[520px] sm:h-[280px]"
@@ -81,9 +82,9 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
             x2="0"
             y2="1"
           >
-            <stop offset="0%" stopColor={chartLineColor} stopOpacity="0.12" />
-            <stop offset="55%" stopColor={chartLineColor} stopOpacity="0.04" />
-            <stop offset="100%" stopColor={chartLineColor} stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--chart-line)" stopOpacity="0.12" />
+            <stop offset="55%" stopColor="var(--chart-line)" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="var(--chart-line)" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -98,7 +99,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
                   y1={y}
                   x2={padL + plotW}
                   y2={y}
-                  stroke="#e4e4e7"
+                  stroke="var(--chart-grid)"
                   strokeWidth={1}
                   strokeDasharray="4 6"
                 />
@@ -107,7 +108,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
                 x={padL - 10}
                 y={y + 4}
                 textAnchor="end"
-                className="fill-zinc-500"
+                className="fill-zinc-500 dark:fill-zinc-400"
                 style={{ fontSize: "11px" }}
               >
                 {formatCopCompact(Math.round(tick))}
@@ -121,7 +122,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
           y1={padT + plotH}
           x2={padL + plotW}
           y2={padT + plotH}
-          stroke="#d4d4d8"
+          stroke="var(--chart-axis)"
           strokeWidth={1.25}
         />
         <line
@@ -129,7 +130,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
           y1={padT}
           x2={padL}
           y2={padT + plotH}
-          stroke="#d4d4d8"
+          stroke="var(--chart-axis)"
           strokeWidth={1.25}
         />
 
@@ -137,7 +138,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
         {trend.length > 1 ? (
           <polyline
             fill="none"
-            stroke={chartLineColor}
+            stroke="var(--chart-line)"
             strokeWidth={2.25}
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -152,8 +153,8 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
               cx={xAt(i)}
               cy={yAt(t.value)}
               r="4"
-              fill="white"
-              stroke={chartLineColor}
+              fill="var(--chart-point-fill)"
+              stroke="var(--chart-point-stroke)"
               strokeWidth={2}
             />
           </g>
@@ -166,7 +167,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
               x={xAt(i)}
               y={chartH - 10}
               textAnchor="middle"
-              className="fill-zinc-600"
+              className="fill-zinc-600 dark:fill-zinc-300"
               style={{ fontSize: trend.length > 24 ? "10px" : "12px" }}
             >
               {monthLabelEs(t.monthKey)}
@@ -175,7 +176,7 @@ export function CustomerTicketTrendChart({ points }: { points: TicketTrendPoint[
         )}
       </svg>
       {maxRaw > 0 ? (
-        <p className="mt-2 text-center text-xs text-zinc-400">
+        <p className="mt-2 text-center text-xs text-zinc-400 dark:text-zinc-500">
           Pico del periodo: {formatCop(maxRaw)} ticket promedio
         </p>
       ) : null}

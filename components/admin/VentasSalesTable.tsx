@@ -70,26 +70,26 @@ function IconEye() {
 }
 
 const thClass =
-  "px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 sm:px-4 md:px-5";
+  "px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500 sm:px-4 md:px-5";
 
 export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
   if (rows.length === 0) {
     return (
-      <div className="px-4 py-12 text-center text-sm text-zinc-500 sm:px-5">
+      <div className="px-4 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400 sm:px-5">
         No hay ventas que coincidan con los filtros.
       </div>
     );
   }
 
   const cardClass =
-    "flex h-full flex-col rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 transition hover:border-zinc-300 hover:shadow-md";
+    "flex flex-col rounded-xl border border-zinc-200/90 bg-white p-3.5 shadow-sm ring-1 ring-zinc-950/5 transition hover:border-zinc-300 hover:shadow-md dark:border-zinc-700/90 dark:bg-zinc-900 dark:ring-white/[0.06] dark:hover:border-zinc-600 dark:hover:shadow-lg sm:p-4";
 
   return (
     <>
-      {/* Con sidebar fijo, por debajo de xl el área útil suele ser estrecha y la tabla genera scroll horizontal: cuadrícula 1/2 cols. Tabla solo desde xl (1280px). */}
+      {/* Por debajo de xl: tarjetas tipo tablero (una columna); fecha a la izquierda, pago + estado a la derecha. xl+: tabla. */}
       <ul
         role="list"
-        className="grid grid-cols-1 gap-4 px-4 pb-4 pt-2 sm:grid-cols-2 sm:gap-4 sm:px-5 xl:hidden"
+        className="grid grid-cols-1 gap-3 px-3 pb-3 pt-2 sm:gap-3.5 sm:px-4 sm:pb-4 xl:hidden"
       >
         {rows.map((row) => {
           const fisica = isVentaFisica(row.wompi_reference);
@@ -99,46 +99,48 @@ export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
           return (
             <li key={row.id} className="min-w-0">
               <article className={cardClass}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-start gap-2.5">
                     {fisica ? (
-                      <IconStorefront className="size-5 shrink-0 text-zinc-500" />
+                      <IconStorefront className="mt-0.5 size-[22px] shrink-0 text-zinc-400 dark:text-zinc-500" />
                     ) : (
-                      <IconPackage className="size-5 shrink-0 text-amber-600" />
+                      <IconPackage className="mt-0.5 size-[22px] shrink-0 text-amber-600" />
                     )}
                     <div className="min-w-0">
-                      <p className="font-mono text-sm font-semibold tabular-nums text-zinc-900">
+                      <p className="font-mono text-base font-bold tabular-nums leading-none text-zinc-900 dark:text-zinc-100 sm:text-[17px]">
                         {ref}
                       </p>
-                      <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">
+                      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 dark:text-zinc-100">
                         {row.customer_name}
                       </p>
                     </div>
                   </div>
                   <Link
                     href={`/admin/orders/${row.id}`}
-                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-500 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-800"
+                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-500 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     aria-label={`Ver detalle del pedido ${ref}`}
                   >
                     <IconEye />
                   </Link>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-[11px] text-zinc-600 sm:text-xs">
-                  <span className="whitespace-nowrap">
+                <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+                  <span className="min-w-0 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400 sm:text-xs">
                     {formatVentaFecha(row.created_at)}
                   </span>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${pago.className}`}
-                  >
-                    {pago.label}
-                  </span>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${estado.className}`}
-                  >
-                    {estado.label}
-                  </span>
+                  <div className="flex max-w-[58%] shrink-0 flex-wrap items-center justify-end gap-1.5 sm:max-w-[65%]">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:py-1 sm:text-xs ${pago.className}`}
+                    >
+                      {pago.label}
+                    </span>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:py-1 sm:text-xs ${estado.className}`}
+                    >
+                      {estado.label}
+                    </span>
+                  </div>
                 </div>
-                <p className="mt-auto pt-4 text-lg font-bold tabular-nums text-zinc-900">
+                <p className="mt-3 text-xl font-bold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
                   {formatCop(Number(row.total_cents ?? 0))}
                 </p>
               </article>
@@ -151,7 +153,7 @@ export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
       <div className="hidden overflow-x-auto xl:block">
         <table className="w-full min-w-[700px] text-sm xl:min-w-0">
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50/50">
+            <tr className="border-b border-zinc-100 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/80">
               <th className={thClass}>Factura / pedido</th>
               <th className={`${thClass} w-[9rem]`}>Fecha</th>
               <th className={thClass}>Cliente</th>
@@ -170,24 +172,24 @@ export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-zinc-100 bg-white transition hover:bg-zinc-50/80"
+                  className="border-b border-zinc-100 bg-white transition hover:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
                 >
                   <td className="px-3 py-3.5 sm:px-4 md:px-5">
                     <div className="flex items-center gap-2.5">
                       {fisica ? (
-                        <IconStorefront className="size-5 shrink-0 text-zinc-500" />
+                        <IconStorefront className="size-5 shrink-0 text-zinc-500 dark:text-zinc-400" />
                       ) : (
                         <IconPackage className="size-5 shrink-0 text-amber-600" />
                       )}
-                      <span className="font-mono text-xs font-semibold tabular-nums text-zinc-900">
+                      <span className="font-mono text-xs font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                         {ref}
                       </span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3.5 text-zinc-600 sm:px-4 md:px-5">
+                  <td className="whitespace-nowrap px-3 py-3.5 text-zinc-600 dark:text-zinc-400 sm:px-4 md:px-5">
                     {formatVentaFecha(row.created_at)}
                   </td>
-                  <td className="min-w-0 max-w-[10rem] truncate px-3 py-3.5 font-semibold text-zinc-900 sm:max-w-[12rem] sm:px-4 md:max-w-[16rem] md:px-5 xl:max-w-none">
+                  <td className="min-w-0 max-w-[10rem] truncate px-3 py-3.5 font-semibold text-zinc-900 dark:text-zinc-100 sm:max-w-[12rem] sm:px-4 md:max-w-[16rem] md:px-5 xl:max-w-none">
                     {row.customer_name}
                   </td>
                   <td className="px-3 py-3.5 sm:px-4 md:px-5">
@@ -204,13 +206,13 @@ export function VentasSalesTable({ rows }: { rows: VentaOrderRow[] }) {
                       {estado.label}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3.5 text-right text-sm font-bold tabular-nums text-zinc-900 sm:px-4 md:px-5">
+                  <td className="whitespace-nowrap px-3 py-3.5 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-zinc-50 sm:px-4 md:px-5">
                     {formatCop(Number(row.total_cents ?? 0))}
                   </td>
                   <td className="px-3 py-3.5 text-center sm:px-4 md:px-5">
                     <Link
                       href={`/admin/orders/${row.id}`}
-                      className="inline-flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800"
+                      className="inline-flex size-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                       aria-label={`Ver detalle del pedido ${ref}`}
                     >
                       <IconEye />

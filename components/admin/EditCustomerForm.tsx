@@ -10,6 +10,9 @@ import {
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
 
+const shellCard =
+  "rounded-2xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
+
 const LABEL_OPTIONS = ["Casa", "Oficina", "Negocio", "Otro"] as const;
 type LabelOption = (typeof LABEL_OPTIONS)[number];
 
@@ -109,35 +112,38 @@ export function EditCustomerHeader({
         <CustomerAvatar
           seed={avatarSeed}
           size={100}
-          className="shadow-md ring-2 ring-zinc-200/90"
+          className="shadow-md ring-2 ring-zinc-200/90 dark:ring-zinc-600"
           label={`Avatar de ${customerName}`}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-zinc-500">
-            <Link href="/admin/customers" className="hover:text-zinc-800">
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <Link
+              href="/admin/customers"
+              className="hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
               Clientes
             </Link>
-            <span className="mx-1.5 text-zinc-300">/</span>
+            <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
             <Link
               href={`/admin/customers/${customerId}`}
-              className="hover:text-zinc-800"
+              className="hover:text-zinc-800 dark:hover:text-zinc-200"
             >
               {customerName}
             </Link>
-            <span className="mx-1.5 text-zinc-300">/</span>
-            <span className="text-zinc-700">Editar</span>
+            <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
+            <span className="text-zinc-700 dark:text-zinc-300">Editar</span>
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
             Editar cliente
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+          <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Modifica los datos y direcciones del cliente.
           </p>
         </div>
       </div>
       <Link
         href={`/admin/customers/${customerId}`}
-        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:shadow-none dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         aria-label="Volver al detalle"
       >
         <span className="text-lg leading-none" aria-hidden>
@@ -201,12 +207,12 @@ export function EditCustomerForm(props: EditCustomerFormProps) {
 
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className={`${shellCard} p-6 sm:p-8`}>
             <h2 className={sectionTitle}>Datos personales</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="ec-name" className={labelClass}>
-                  Nombre completo <span className="text-red-600">*</span>
+                  Nombre completo <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <input
                   id="ec-name"
@@ -260,18 +266,18 @@ export function EditCustomerForm(props: EditCustomerFormProps) {
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className={`${shellCard} p-6 sm:p-8`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
                 <h2 className={sectionTitle}>Direcciones</h2>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
                   Casa, oficina, etc. Dirección completa y punto de referencia.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={addAddress}
-                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-none dark:hover:bg-zinc-700"
               >
                 + Añadir dirección
               </button>
@@ -281,17 +287,17 @@ export function EditCustomerForm(props: EditCustomerFormProps) {
               {addresses.map((a, i) => (
                 <div
                   key={a.key}
-                  className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 sm:p-5"
+                  className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 sm:p-5 dark:border-zinc-700 dark:bg-zinc-950/50"
                 >
                   <div className="mb-4 flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
                       Dirección {i + 1}
                     </p>
                     {addresses.length > 1 ? (
                       <button
                         type="button"
                         onClick={() => removeAddress(i)}
-                        className="text-xs font-semibold text-red-600 hover:underline"
+                        className="text-xs font-semibold text-red-600 hover:underline dark:text-red-400"
                       >
                         Quitar
                       </button>
@@ -371,19 +377,19 @@ export function EditCustomerForm(props: EditCustomerFormProps) {
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
-          <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <section className={`${shellCard} p-6 sm:p-8`}>
             <h2 className={sectionTitle}>Guardar</h2>
             <div className="mt-5 flex flex-col gap-3">
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full rounded-lg bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
+                className="w-full rounded-lg bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
               >
                 Guardar cambios
               </button>
               <Link
                 href={`/admin/customers/${customerId}`}
-                className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-white py-3.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-zinc-50"
+                className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-white py-3.5 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-none dark:hover:bg-zinc-700"
               >
                 Cancelar
               </Link>

@@ -20,7 +20,7 @@ import { formatCop, parseCopInputDigitsToInt } from "@/lib/money";
 import { unitPriceGrossCents } from "@/lib/product-vat-price";
 
 const cardSectionClass =
-  "rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6";
+  "rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
 
 type ProductHit = {
   id: string;
@@ -121,23 +121,26 @@ export function NewInvoiceHeader() {
   return (
     <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <p className="text-xs font-medium text-zinc-500">
-          <Link href="/admin/ventas" className="hover:text-zinc-800">
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <Link
+            href="/admin/ventas"
+            className="hover:text-zinc-800 dark:hover:text-zinc-200"
+          >
             Ventas
           </Link>
-          <span className="mx-1.5 text-zinc-300">/</span>
-          <span className="text-zinc-700">Nueva factura</span>
+          <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
+          <span className="text-zinc-700 dark:text-zinc-300">Nueva factura</span>
         </p>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">
           Nueva factura
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+        <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Selecciona el cliente, agrega productos al carrito y elige el método de pago.
         </p>
       </div>
       <Link
         href="/admin/ventas"
-        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900 sm:self-auto"
+        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:self-auto"
         aria-label="Volver a ventas"
       >
         <span className="text-lg leading-none" aria-hidden>
@@ -172,7 +175,7 @@ function ConfirmInvoiceButton({ disabled }: { disabled: boolean }) {
     <button
       type="submit"
       disabled={disabled || pending}
-      className="mt-5 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-200 disabled:text-zinc-500"
+      className="mt-5 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-200 disabled:text-zinc-500 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
     >
       {pending ? "Guardando…" : "Confirmar factura"}
     </button>
@@ -444,7 +447,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
   return (
     <div className="space-y-6">
       {banner ? (
-        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
           {banner}
         </p>
       ) : null}
@@ -466,11 +469,15 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                 autoComplete="off"
               />
               {productQuery.trim().length > 0 ? (
-                <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md shadow-zinc-900/10">
+                <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md shadow-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-lg dark:shadow-black/30">
                   {productLoading ? (
-                    <p className="px-3 py-2 text-sm text-zinc-500">Buscando…</p>
+                    <p className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      Buscando…
+                    </p>
                   ) : productHits.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-zinc-500">Sin resultados.</p>
+                    <p className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      Sin resultados.
+                    </p>
                   ) : (
                     productHits.map((p) => {
                       const stock = Number(p.stock_local ?? p.stock_quantity ?? 0);
@@ -480,10 +487,12 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                           type="button"
                           onClick={() => addProduct(p)}
                           disabled={stock < 1}
-                          className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition hover:bg-zinc-50/80 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition hover:bg-zinc-50/80 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800/90"
                         >
-                          <span className="font-medium text-zinc-900">{p.name}</span>
-                          <span className="text-xs text-zinc-500">
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {p.name}
+                          </span>
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
                             {p.reference ? `${p.reference} · ` : null}
                             {formatCop(Number(p.price_cents ?? 0))}
                             {stock < 6 ? ` · Stock tienda: ${stock}` : null}
@@ -502,11 +511,11 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
           >
             <h2 className={sectionTitle}>Productos seleccionados</h2>
             {lines.length === 0 ? (
-              <p className="mt-5 text-sm text-zinc-500">
+              <p className="mt-5 text-sm text-zinc-500 dark:text-zinc-400">
                 Agrega productos desde la búsqueda.
               </p>
             ) : (
-              <ul className="mt-5 divide-y divide-zinc-200/80">
+              <ul className="mt-5 divide-y divide-zinc-200/80 dark:divide-zinc-700/90">
                 {lines.map((line) => {
                   const stock = Number(
                     line.product.stock_local ?? line.product.stock_quantity ?? 0,
@@ -520,8 +529,10 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       className="flex flex-wrap items-center gap-3 py-4 first:pt-0"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-zinc-900">{line.product.name}</p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {line.product.name}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           {formatCop(Number(line.product.price_cents ?? 0))} c/u
                           {line.product.has_vat
                             ? ` · IVA ${String(line.product.vat_percent ?? 0).replace(/\.0+$/, "")}%`
@@ -531,30 +542,30 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
                           onClick={() => setQty(line.key, line.quantity - 1)}
                         >
                           −
                         </button>
-                        <span className="w-8 text-center text-sm font-medium tabular-nums">
+                        <span className="w-8 text-center text-sm font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                           {line.quantity}
                         </span>
                         <button
                           type="button"
-                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
                           onClick={() => setQty(line.key, line.quantity + 1)}
                           disabled={line.quantity >= stock}
                         >
                           +
                         </button>
                       </div>
-                      <p className="text-sm font-medium tabular-nums text-zinc-900">
+                      <p className="text-sm font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                         {formatCop(lineTotal)}
                       </p>
                       <button
                         type="button"
                         onClick={() => removeLine(line.key)}
-                        className="text-xs font-medium text-red-600 hover:underline"
+                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
                       >
                         Quitar
                       </button>
@@ -575,7 +586,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
           >
             <section className={`${cardSectionClass} order-1 xl:order-none`}>
               <h2 className={sectionTitle}>
-                Cliente <span className="text-red-600">*</span>
+                Cliente <span className="text-red-600 dark:text-red-400">*</span>
               </h2>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-stretch">
                 <div className="relative min-w-0 flex-1">
@@ -588,11 +599,15 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                     autoComplete="off"
                   />
                   {!customer && customerQuery.trim().length > 0 ? (
-                    <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md shadow-zinc-900/10">
+                    <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-md shadow-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-lg dark:shadow-black/30">
                       {customerLoading ? (
-                        <p className="px-3 py-2 text-sm text-zinc-500">Buscando…</p>
+                        <p className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                          Buscando…
+                        </p>
                       ) : customerHits.length === 0 ? (
-                        <p className="px-3 py-2 text-sm text-zinc-500">Sin resultados.</p>
+                        <p className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">
+                          Sin resultados.
+                        </p>
                       ) : (
                         customerHits.map((c) => (
                           <button
@@ -603,10 +618,12 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                               setCustomerQuery("");
                               setCustomerHits([]);
                             }}
-                            className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition hover:bg-zinc-50/80"
+                            className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/90"
                           >
-                            <span className="font-medium text-zinc-900">{c.name}</span>
-                            <span className="text-xs text-zinc-500">
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                              {c.name}
+                            </span>
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
                               {[c.document_id, c.email, c.phone].filter(Boolean).join(" · ")}
                             </span>
                           </button>
@@ -621,17 +638,19 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                     setQuickError(null);
                     setQuickModalOpen(true);
                   }}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50"
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
                 >
                   + Nuevo cliente
                 </button>
               </div>
               {customer ? (
-                <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2 text-sm">
-                  <span className="font-medium text-zinc-900">{customer.name}</span>
+                <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950/80">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {customer.name}
+                  </span>
                   <button
                     type="button"
-                    className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:underline"
+                    className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100"
                     onClick={() => {
                       setCustomer(null);
                       setShipChoice(null);
@@ -650,11 +669,13 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                 Envío
               </h2>
               {!customer ? (
-                <p className="mt-4 text-sm text-zinc-500">
+                <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
                   Selecciona un cliente para habilitar el envío
                 </p>
               ) : shipLoading ? (
-                <p className="mt-4 text-sm text-zinc-500">Cargando direcciones…</p>
+                <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                  Cargando direcciones…
+                </p>
               ) : (
                 <div className="mt-4">
                   <label className={labelClass}>Entrega</label>
@@ -676,7 +697,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
 
             <section className={`${cardSectionClass} order-5 xl:order-none`}>
               <h2 className={sectionTitle}>Método de pago</h2>
-              <div className="mt-4 flex rounded-xl border border-zinc-200/90 bg-zinc-100 p-1">
+              <div className="mt-4 flex rounded-xl border border-zinc-200/90 bg-zinc-100 p-1 dark:border-zinc-700 dark:bg-zinc-800/80">
                 {(
                   [
                     { id: "cash" as const, label: "Efectivo", icon: <IconCoin /> },
@@ -693,8 +714,8 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       className={[
                         "flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-center text-xs font-medium transition sm:flex-row sm:text-sm",
                         active
-                          ? "border border-zinc-300 bg-white text-zinc-900 shadow-sm"
-                          : "text-zinc-600 hover:bg-white/80 hover:text-zinc-900",
+                          ? "border border-zinc-300 bg-white text-zinc-900 shadow-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-none"
+                          : "text-zinc-600 hover:bg-white/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-100",
                       ].join(" ")}
                     >
                       {tab.icon}
@@ -718,7 +739,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                   </div>
                   <div>
                     <label className={labelClass}>Cuánto regreso</label>
-                    <p className="mt-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2.5 text-sm font-medium tabular-nums text-zinc-900">
+                    <p className="mt-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2.5 text-sm font-medium tabular-nums text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/80 dark:text-zinc-100">
                       {changeCents !== null ? formatCop(changeCents) : "—"}
                     </p>
                   </div>
@@ -739,7 +760,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
 
               {payment === "mixed" ? (
                 <div className="mt-5 space-y-4">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Los importes en efectivo y transferencia deben sumar el total exacto.
                   </p>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -763,7 +784,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                     </div>
                   </div>
                   {!mixedOk && totalCents > 0 ? (
-                    <p className="text-xs font-medium text-amber-700">
+                    <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
                       La suma debe ser {formatCop(totalCents)}.
                     </p>
                   ) : null}
@@ -773,35 +794,37 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
 
             <section className={`${cardSectionClass} order-6 xl:order-none`}>
               <h2 className={sectionTitle}>Resumen</h2>
-              <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-3 text-sm sm:p-4">
-                <dl className="space-y-2 text-zinc-700">
+              <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-3 text-sm sm:p-4 dark:border-zinc-700 dark:bg-zinc-950/70">
+                <dl className="space-y-2 text-zinc-700 dark:text-zinc-300">
                   <div className="flex justify-between gap-2">
-                    <dt className="text-zinc-500">Subtotal</dt>
-                    <dd className="tabular-nums font-medium text-zinc-900">
+                    <dt className="text-zinc-500 dark:text-zinc-400">Subtotal</dt>
+                    <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
                       {formatCop(subtotalCents)}
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2">
-                    <dt className="text-zinc-500">IVA</dt>
-                    <dd className="tabular-nums font-medium text-zinc-900">
+                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
+                    <dt className="text-zinc-500 dark:text-zinc-400">IVA</dt>
+                    <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
                       {formatCop(vatCents)}
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2">
-                    <dt className="text-zinc-600">Total</dt>
-                    <dd className="tabular-nums font-medium text-zinc-900">
+                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
+                    <dt className="text-zinc-600 dark:text-zinc-400">Total</dt>
+                    <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
                       {formatCop(totalCents)}
                     </dd>
                   </div>
                 </dl>
               </div>
-              <div className="mt-5 border-t border-zinc-200/70 pt-5">
-                <p className="text-xs font-medium text-zinc-500">Total a cobrar</p>
-                <p className="mt-1 text-xl font-medium tabular-nums text-zinc-900 sm:text-2xl">
+              <div className="mt-5 border-t border-zinc-200/70 pt-5 dark:border-zinc-700/90">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  Total a cobrar
+                </p>
+                <p className="mt-1 text-xl font-medium tabular-nums text-zinc-900 dark:text-zinc-50 sm:text-2xl">
                   {formatCop(totalCents)}
                 </p>
               </div>
-              <p className="mt-5 text-xs leading-relaxed text-zinc-500">
+              <p className="mt-5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                 Verifica cliente, productos y pago antes de confirmar. La factura quedará
                 registrada como venta en mostrador.
               </p>
@@ -812,7 +835,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
       </form>
 
       {quickModalOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-zinc-950/40 px-4 py-10 sm:py-16">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-zinc-950/40 px-4 py-10 backdrop-blur-[1px] dark:bg-black/55 sm:py-16">
           <button
             type="button"
             className="absolute inset-0 z-0 cursor-default"
@@ -820,7 +843,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
             onClick={closeQuickCustomerModal}
           />
           <div
-            className="relative z-10 mt-4 w-full max-w-md rounded-xl border border-zinc-200/90 bg-white p-6 shadow-xl sm:mt-8"
+            className="relative z-10 mt-4 w-full max-w-md rounded-xl border border-zinc-200/90 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_24px_64px_-24px_rgba(0,0,0,0.6)] sm:mt-8"
             role="dialog"
             aria-modal="true"
             aria-labelledby="quick-customer-title"
@@ -828,31 +851,31 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
             <div className="flex items-start justify-between gap-4">
               <h2
                 id="quick-customer-title"
-                className="text-lg font-semibold text-zinc-900"
+                className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
               >
                 Nuevo cliente rápido
               </h2>
               <button
                 type="button"
                 onClick={closeQuickCustomerModal}
-                className="rounded-lg p-1.5 text-lg leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+                className="rounded-lg p-1.5 text-lg leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 aria-label="Cerrar"
               >
                 ×
               </button>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               Nombre y cédula para facturar ya. La factura en curso no se pierde.
             </p>
             <form onSubmit={submitQuickCustomer} className="mt-5 space-y-4">
               {quickError ? (
-                <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-900">
+                <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
                   {quickError}
                 </p>
               ) : null}
               <div>
                 <label htmlFor="quick-customer-name" className={labelClass}>
-                  Nombre <span className="text-red-600">*</span>
+                  Nombre <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <input
                   ref={quickNameInputRef}
@@ -881,24 +904,24 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                 <button
                   type="button"
                   onClick={closeQuickCustomerModal}
-                  className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                  className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={quickPending}
-                  className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
                 >
                   {quickPending ? "Guardando…" : "Crear y usar"}
                 </button>
               </div>
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
                 <Link
                   href="/admin/customers/new"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900"
+                  className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:decoration-zinc-600 dark:hover:text-zinc-100"
                   onClick={closeQuickCustomerModal}
                 >
                   Ficha completa con direcciones y más datos

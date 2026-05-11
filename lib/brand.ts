@@ -9,7 +9,7 @@ export const storeLogoPath = encodeURI("/logobackoficce (1).png");
 
 /** Firma Berea Studio en `/public` (nombre con espacios → URL codificada). */
 export const bereaSignaturePath = encodeURI(
-  "/ChatGPT Image 9 may 2026, 07_52_54 p.m..png",
+  "/ChatGPT Image 11 may 2026, 05_18_10 p.m..png",
 );
 
 /**

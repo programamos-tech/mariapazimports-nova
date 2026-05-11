@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { StoreRegisterForm } from "@/components/store/StoreRegisterForm";
 
 type Props = {
@@ -9,11 +9,26 @@ type Props = {
   onClose: () => void;
   /** Tras registro con sesión inmediata (sin confirmar email). */
   onRegistered: () => void;
+  onOpenLogin: () => void;
 };
 
-export function StoreRegisterModal({ open, onClose, onRegistered }: Props) {
+export function StoreRegisterModal({
+  open,
+  onClose,
+  onRegistered,
+  onOpenLogin,
+}: Props) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const dismiss = useCallback(() => {
+    onClose();
+    if (pathname === "/cuenta/registro") {
+      router.replace("/");
+    }
+  }, [onClose, pathname, router]);
 
   useEffect(() => {
     if (!open) {
@@ -32,12 +47,12 @@ export function StoreRegisterModal({ open, onClose, onRegistered }: Props) {
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        onClose();
+        dismiss();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, dismiss]);
 
   useEffect(() => {
     if (open) {
@@ -50,68 +65,70 @@ export function StoreRegisterModal({ open, onClose, onRegistered }: Props) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
-      role="presentation"
-    >
+    <>
       <button
         type="button"
         aria-label="Cerrar"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[1px] transition-opacity"
-        onClick={onClose}
+        className="store-cart-drawer-backdrop fixed inset-0 z-[78] bg-black/45"
+        onClick={dismiss}
       />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-stone-200/90 bg-white p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] sm:p-8"
+        className="store-cart-drawer-panel fixed inset-y-0 right-0 z-[80] flex w-[min(100%,26rem)] flex-col bg-white shadow-[-12px_0_48px_rgba(15,23,42,0.12)]"
       >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
-          aria-label="Cerrar"
-        >
-          <span aria-hidden className="text-xl leading-none">
-            ×
-          </span>
-        </button>
-
-        <h1
-          id={titleId}
-          className="pr-10 text-2xl font-semibold tracking-tight text-stone-900"
-        >
-          Crear cuenta
-        </h1>
-        <p className="mt-2 text-sm text-stone-600">
-          Regístrate con tu correo para guardar direcciones y seguir tus pedidos.
-        </p>
-
-        <div className="mt-8">
-          <StoreRegisterForm onSuccess={onRegistered} />
-        </div>
-
-        <p className="mt-8 text-center text-sm text-stone-600">
-          ¿Ya tienes cuenta?{" "}
-          <Link
-            href="/cuenta/entrar"
-            onClick={onClose}
-            className="font-medium text-[var(--store-accent)] underline decoration-stone-300 underline-offset-4 hover:text-[var(--store-accent-hover)]"
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-stone-200/80 px-6 py-5 sm:px-8">
+          <h2
+            id={titleId}
+            className="pr-8 text-[12px] font-semibold uppercase tracking-[0.18em] text-stone-900 sm:text-sm"
           >
-            Iniciar sesión
-          </Link>
-        </p>
-        <p className="mt-4 text-center text-sm">
+            Crear cuenta
+          </h2>
           <button
             type="button"
-            onClick={onClose}
-            className="text-stone-500 underline decoration-stone-200 underline-offset-4 transition hover:text-stone-800"
+            onClick={dismiss}
+            className="flex size-9 shrink-0 items-center justify-center border border-stone-900/80 text-stone-900 transition hover:bg-stone-900 hover:text-white"
+            aria-label="Cerrar"
           >
-            ← Volver a la tienda
+            <span className="text-lg font-light leading-none">×</span>
           </button>
-        </p>
+        </header>
+
+        <div className="store-cart-drawer-body-scroll flex min-h-0 flex-1 flex-col px-6 pb-8 pt-6 sm:px-8">
+          <p className="text-sm leading-relaxed text-stone-600">
+            Regístrate con tu correo para guardar direcciones y seguir tus pedidos.
+          </p>
+
+          <div className="mt-8">
+            <StoreRegisterForm onSuccess={onRegistered} />
+          </div>
+
+          <p className="mt-8 text-center text-sm text-stone-600">
+            ¿Ya tienes cuenta?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenLogin();
+              }}
+              className="font-medium text-[var(--store-accent)] underline decoration-stone-300 underline-offset-4 hover:text-[var(--store-accent-hover)]"
+            >
+              Iniciar sesión
+            </button>
+          </p>
+          <p className="mt-4 text-center text-sm">
+            <button
+              type="button"
+              onClick={dismiss}
+              className="text-stone-500 underline decoration-stone-200 underline-offset-4 transition hover:text-stone-800"
+            >
+              ← Volver a la tienda
+            </button>
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

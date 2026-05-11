@@ -1,78 +1,11 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const labelClass =
-  "mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500";
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function NoProfileHelp({
-  uid,
-  email,
-}: {
-  uid: string | null;
-  email: string | null;
-}) {
-  const trimmed = uid?.trim() ?? "";
-  const uuidPlaceholder = UUID_RE.test(trimmed)
-    ? trimmed
-    : "PEGA_AQUI_EL_UUID_DE_AUTHENTICATION";
-  const sql = `insert into public.profiles (id)
-values ('${uuidPlaceholder}')
-on conflict (id) do nothing;`;
-
-  return (
-    <div
-      className="space-y-3 border border-neutral-200 border-l-neutral-950 bg-neutral-50 px-3.5 py-4 text-sm leading-relaxed text-neutral-800"
-      role="alert"
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-950">
-        Falta tu perfil de administrador
-      </p>
-      <p className="rounded-sm border border-neutral-200 bg-white px-3 py-2.5 text-[12px] text-neutral-700">
-        <strong className="font-semibold text-neutral-900">Desde la carpeta del proyecto</strong>{" "}
-        (usa la misma URL que <code className="font-mono text-[11px]">.env.local</code>, local o
-        nube):{" "}
-        <code className="block mt-2 whitespace-pre-wrap rounded bg-neutral-100 px-2 py-1.5 font-mono text-[11px] text-neutral-900">
-          npm run admin:link-profile -- tu@correo.com
-        </code>
-      </p>
-      <p className="text-neutral-600">
-        La contraseña puede estar bien: este panel solo abre si existe una fila en{" "}
-        <code className="rounded bg-neutral-200/90 px-1.5 py-0.5 font-mono text-[11px] text-neutral-900">
-          public.profiles
-        </code>{" "}
-        con el mismo{" "}
-        <code className="rounded bg-neutral-200/90 px-1.5 py-0.5 font-mono text-[11px]">
-          id
-        </code>{" "}
-        que tu usuario en Authentication (en la{" "}
-        <strong className="font-medium text-neutral-800">misma</strong> instancia que usa la app).
-      </p>
-      <p className="text-[11px] font-medium text-neutral-500">
-        Alternativa manual en SQL Editor:
-      </p>
-      <pre className="max-h-40 overflow-x-auto overflow-y-auto rounded-sm border border-neutral-200 bg-white p-3 font-mono text-[11px] leading-snug text-neutral-900">
-        {sql}
-      </pre>
-      {email ? (
-        <p className="text-[11px] text-neutral-500">
-          Correo detectado:{" "}
-          <span className="font-medium text-neutral-700">{email}</span>
-        </p>
-      ) : null}
-      {!uid ? (
-        <p className="text-[11px] text-neutral-500">
-          Si la URL no trae el UID, ejecutá el comando de arriba o pegá el UUID en el SQL.
-        </p>
-      ) : null}
-    </div>
-  );
-}
+  "mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-zinc-400";
 
 const platformEmail = process.env.NEXT_PUBLIC_PLATFORM_EMAIL ?? "";
 
@@ -126,10 +59,10 @@ function IconEyeOff({ className }: { className?: string }) {
 
 /** Misma base que inputs del panel + icono a la izquierda (sin caja de color). */
 const iconInputWrap =
-  "flex items-center gap-2.5 rounded-sm border border-neutral-300 bg-white px-3 transition-[border-color,box-shadow] duration-200 focus-within:border-neutral-950 focus-within:shadow-[0_0_0_1px_rgba(10,10,10,1)]";
+  "flex items-center gap-2.5 rounded-sm border border-neutral-300 bg-white px-3 transition-[border-color,box-shadow] duration-200 focus-within:border-neutral-950 focus-within:shadow-[0_0_0_1px_rgba(10,10,10,1)] dark:border-zinc-600 dark:bg-zinc-900/80 dark:focus-within:border-zinc-300 dark:focus-within:shadow-[0_0_0_1px_rgba(212,212,216,0.35)]";
 
 const iconInputInner =
-  "min-w-0 flex-1 border-0 bg-transparent py-3 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-0";
+  "min-w-0 flex-1 border-0 bg-transparent py-3 text-sm text-neutral-950 placeholder:text-neutral-400 focus:outline-none focus:ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500";
 
 /** Supabase suele responder en inglés; lo pasamos a español y damos contexto útil. */
 function friendlyAuthError(raw: string): string {
@@ -156,11 +89,6 @@ function friendlyAuthError(raw: string): string {
 
 export function AdminLoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const errParam = searchParams.get("error");
-  const uidParam = searchParams.get("uid");
-  const emailParam = searchParams.get("email");
-  const isNoProfile = errParam === "no_profile";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -190,18 +118,15 @@ export function AdminLoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {isNoProfile ? (
-        <NoProfileHelp uid={uidParam} email={emailParam} />
-      ) : null}
-      {!isNoProfile && error ? (
-        <p className="border border-neutral-200 border-l-neutral-950 bg-neutral-50 px-3.5 py-3 text-sm leading-relaxed text-neutral-900">
+      {error ? (
+        <p className="border border-neutral-200 border-l-neutral-950 bg-neutral-50 px-3.5 py-3 text-sm leading-relaxed text-neutral-900 dark:border-zinc-700 dark:border-l-red-400 dark:bg-red-950/25 dark:text-red-100">
           {error}
         </p>
       ) : null}
       <label className="block">
         <span className={labelClass}>Correo electrónico</span>
         <div className={iconInputWrap}>
-          <IconMail className="size-[18px] shrink-0 text-neutral-400" />
+          <IconMail className="size-[18px] shrink-0 text-neutral-400 dark:text-zinc-500" />
           <input
             name="email"
             type="email"
@@ -216,7 +141,7 @@ export function AdminLoginForm() {
       <label className="block">
         <span className={labelClass}>Contraseña</span>
         <div className={iconInputWrap}>
-          <IconLock className="size-[18px] shrink-0 text-neutral-400" />
+          <IconLock className="size-[18px] shrink-0 text-neutral-400 dark:text-zinc-500" />
           <input
             name="password"
             type={showPassword ? "text" : "password"}
@@ -228,7 +153,7 @@ export function AdminLoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="-mr-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+            className="-mr-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             aria-pressed={showPassword}
           >
@@ -243,7 +168,7 @@ export function AdminLoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="mt-2 w-full rounded-sm bg-neutral-950 py-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition-[background-color,opacity] duration-200 hover:bg-black disabled:opacity-50"
+        className="mt-2 w-full rounded-sm bg-neutral-950 py-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition-[background-color,opacity] duration-200 hover:bg-black disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
       >
         {loading ? "Entrando…" : "Iniciar sesión"}
       </button>

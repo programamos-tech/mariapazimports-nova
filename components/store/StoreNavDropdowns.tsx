@@ -9,16 +9,21 @@ import {
   STORE_HEADER_ICON_STROKE,
 } from "@/lib/store-header-icons";
 import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
+import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
 
 export function StoreNavDropdowns({
   menuCategories,
   accountHref,
   accountLabel,
+  guestOpensAuthDrawer = false,
 }: {
   menuCategories: StoreCategoryMenuItem[];
   accountHref: string;
   accountLabel: string;
+  /** Si es true, “Mi cuenta” / login abre el panel lateral en lugar de navegar. */
+  guestOpensAuthDrawer?: boolean;
 }) {
+  const { openLogin } = useStoreAuthModals();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const baseId = useId();
@@ -143,27 +148,54 @@ export function StoreNavDropdowns({
         </div>
 
         <div className="shrink-0 border-t border-stone-200 px-4 py-5">
-          <Link
-            href={accountHref}
-            onClick={close}
-            className="flex items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
-          >
-            <span className="flex items-center gap-3">
-              <UserRound
-                className="size-5 shrink-0 text-stone-900"
-                strokeWidth={STORE_HEADER_ICON_STROKE}
+          {guestOpensAuthDrawer ? (
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                openLogin();
+              }}
+              className="flex w-full items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
+            >
+              <span className="flex items-center gap-3">
+                <UserRound
+                  className="size-5 shrink-0 text-stone-900"
+                  strokeWidth={STORE_HEADER_ICON_STROKE}
+                  aria-hidden
+                />
+                <span className="text-sm font-normal text-stone-900">
+                  {accountLabel}
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-stone-400"
+                strokeWidth={1.75}
                 aria-hidden
               />
-              <span className="text-sm font-normal text-stone-900">
-                {accountLabel}
+            </button>
+          ) : (
+            <Link
+              href={accountHref}
+              onClick={close}
+              className="flex items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
+            >
+              <span className="flex items-center gap-3">
+                <UserRound
+                  className="size-5 shrink-0 text-stone-900"
+                  strokeWidth={STORE_HEADER_ICON_STROKE}
+                  aria-hidden
+                />
+                <span className="text-sm font-normal text-stone-900">
+                  {accountLabel}
+                </span>
               </span>
-            </span>
-            <ChevronRight
-              className="size-4 shrink-0 text-stone-400"
-              strokeWidth={1.75}
-              aria-hidden
-            />
-          </Link>
+              <ChevronRight
+                className="size-4 shrink-0 text-stone-400"
+                strokeWidth={1.75}
+                aria-hidden
+              />
+            </Link>
+          )}
 
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-100 pt-5 text-[13px] text-stone-600">
             <Link

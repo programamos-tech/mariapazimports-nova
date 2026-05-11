@@ -12,7 +12,7 @@ import {
 } from "@/lib/ventas-sales";
 
 const labelClass =
-  "text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400";
+  "text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500";
 
 type Line = {
   id: string;
@@ -171,26 +171,31 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
     : "Retiro en tienda";
 
   const th =
-    "px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 md:px-5";
+    "px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500 md:px-5";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 print:max-w-none">
-      <nav className="text-sm text-zinc-500 print:text-zinc-800">
-        <Link href="/admin/ventas" className="font-medium hover:text-zinc-800">
+      <nav className="text-sm text-zinc-500 print:text-zinc-800 dark:text-zinc-400">
+        <Link
+          href="/admin/ventas"
+          className="font-medium hover:text-zinc-800 dark:hover:text-zinc-200"
+        >
           Ventas
         </Link>
-        <span className="mx-2 text-zinc-300">/</span>
-        <span className="text-zinc-800">Factura #{invoiceRef}</span>
+        <span className="mx-2 text-zinc-300 dark:text-zinc-600">/</span>
+        <span className="text-zinc-800 dark:text-zinc-200 print:text-zinc-800">
+          Factura #{invoiceRef}
+        </span>
       </nav>
 
-      <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] sm:p-6 md:p-7">
+      <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none sm:p-6 md:p-7">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="min-w-0 flex-1 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
+          <h1 className="min-w-0 flex-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">
             Factura #{invoiceRef}
           </h1>
           <Link
             href="/admin/ventas"
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 print:hidden"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 print:hidden"
             aria-label="Volver a ventas"
           >
             <svg
@@ -208,56 +213,56 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
           </Link>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 text-sm text-zinc-700 sm:gap-4 md:grid-cols-2 md:gap-x-8 md:gap-y-3 xl:flex xl:flex-row xl:flex-wrap xl:gap-x-10 xl:gap-y-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 text-sm text-zinc-700 dark:text-zinc-300 sm:gap-4 md:grid-cols-2 md:gap-x-8 md:gap-y-3 xl:flex xl:flex-row xl:flex-wrap xl:gap-x-10 xl:gap-y-3">
           <p className="flex min-w-0 items-start gap-2 sm:items-center">
-            <IconClock className="mt-0.5 size-4 shrink-0 text-zinc-400 sm:mt-0" />
+            <IconClock className="mt-0.5 size-4 shrink-0 text-zinc-400 dark:text-zinc-500 sm:mt-0" />
             <span className="min-w-0 leading-snug">{formatInvoiceDate(createdAt)}</span>
           </p>
           <p className="flex min-w-0 items-start gap-2 sm:items-center">
-            <IconUser className="mt-0.5 size-4 shrink-0 text-zinc-400 sm:mt-0" />
+            <IconUser className="mt-0.5 size-4 shrink-0 text-zinc-400 dark:text-zinc-500 sm:mt-0" />
             <span className="min-w-0 break-words leading-snug">
               {customerName}
               {customerEmail ? (
-                <span className="text-zinc-500"> · {customerEmail}</span>
+                <span className="text-zinc-500 dark:text-zinc-400"> · {customerEmail}</span>
               ) : null}
             </span>
           </p>
           <p className="flex min-w-0 items-start gap-2 sm:items-center">
-            <IconStore className="mt-0.5 size-4 shrink-0 text-zinc-400 sm:mt-0" />
+            <IconStore className="mt-0.5 size-4 shrink-0 text-zinc-400 dark:text-zinc-500 sm:mt-0" />
             <span className="min-w-0 break-words leading-snug">
-              <span className="text-zinc-500">Tienda · </span>
+              <span className="text-zinc-500 dark:text-zinc-400">Tienda · </span>
               {storeBrand}
             </span>
           </p>
           <p className="flex min-w-0 items-start gap-2 sm:items-center">
-            <IconBuilding className="mt-0.5 size-4 shrink-0 text-zinc-400 sm:mt-0" />
+            <IconBuilding className="mt-0.5 size-4 shrink-0 text-zinc-400 dark:text-zinc-500 sm:mt-0" />
             <span className="min-w-0 break-words leading-snug">{ubicacionLine}</span>
           </p>
           <p className="flex min-w-0 items-start gap-2 sm:items-center md:col-span-2 xl:col-span-1">
-            <IconSpark className="mt-0.5 size-4 shrink-0 text-zinc-400 sm:mt-0" />
+            <IconSpark className="mt-0.5 size-4 shrink-0 text-zinc-400 dark:text-zinc-500 sm:mt-0" />
             <span className="min-w-0 break-words leading-snug">{adminOwnerDisplayName}</span>
           </p>
         </div>
 
         {shippingPhone ? (
-          <p className="mt-3 break-words text-sm text-zinc-600">
-            Tel. <span className="font-medium">{shippingPhone}</span>
+          <p className="mt-3 break-words text-sm text-zinc-600 dark:text-zinc-400">
+            Tel. <span className="font-medium text-zinc-800 dark:text-zinc-200">{shippingPhone}</span>
           </p>
         ) : null}
 
         {status === "cancelled" && cancellationReason?.trim() ? (
-          <div className="mt-5 rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-900">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-red-700">
+          <div className="mt-5 rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
               Motivo de anulación
             </p>
             <p className="mt-1 whitespace-pre-wrap">{cancellationReason.trim()}</p>
           </div>
         ) : null}
 
-        <div className="mt-6 grid grid-cols-1 gap-5 border-t border-zinc-100 pt-6 sm:grid-cols-2 sm:gap-6 xl:grid-cols-5 xl:gap-6">
+        <div className="mt-6 grid grid-cols-1 gap-5 border-t border-zinc-100 pt-6 dark:border-zinc-800 sm:grid-cols-2 sm:gap-6 xl:grid-cols-5 xl:gap-6">
           <div className="min-w-0">
             <p className={labelClass}>Total</p>
-            <p className="mt-1 text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">
+            <p className="mt-1 text-xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50 sm:text-2xl">
               {formatCop(totalCents)}
             </p>
           </div>
@@ -300,17 +305,17 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] md:p-7">
+      <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none md:p-7">
         <p className={labelClass}>Productos de la factura</p>
 
         {lines.length === 0 ? (
-          <p className="mt-6 text-sm text-zinc-500">No hay ítems en este pedido.</p>
+          <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">No hay ítems en este pedido.</p>
         ) : (
           <>
             <div className="mt-5 overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100">
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800">
                     <th className={th}>Producto</th>
                     <th className={th}>Cant. pedida</th>
                     <th className={th}>P. unit.</th>
@@ -325,26 +330,26 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
                     return (
                       <tr
                         key={line.id}
-                        className="border-b border-zinc-100 bg-white last:border-0"
+                        className="border-b border-zinc-100 bg-white last:border-0 dark:border-zinc-800 dark:bg-zinc-900"
                       >
-                        <td className="px-4 py-4 font-medium text-zinc-900 md:px-5">
+                        <td className="px-4 py-4 font-medium text-zinc-900 dark:text-zinc-100 md:px-5">
                           <span>{line.name}</span>
                           {ref ? (
-                            <span className="mt-0.5 block font-mono text-xs font-normal text-zinc-400">
+                            <span className="mt-0.5 block font-mono text-xs font-normal text-zinc-400 dark:text-zinc-500">
                               ({ref})
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-4 py-4 tabular-nums text-zinc-700 md:px-5">
+                        <td className="px-4 py-4 tabular-nums text-zinc-700 dark:text-zinc-300 md:px-5">
                           {line.quantity}
                         </td>
-                        <td className="px-4 py-4 tabular-nums text-zinc-700 md:px-5">
+                        <td className="px-4 py-4 tabular-nums text-zinc-700 dark:text-zinc-300 md:px-5">
                           {formatCop(line.unitPriceCents)}
                         </td>
-                        <td className="px-4 py-4 tabular-nums text-zinc-700 md:px-5">
+                        <td className="px-4 py-4 tabular-nums text-zinc-700 dark:text-zinc-300 md:px-5">
                           {line.quantity}
                         </td>
-                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-zinc-900 md:px-5">
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-zinc-900 dark:text-zinc-100 md:px-5">
                           {formatCop(sub)}
                         </td>
                       </tr>
@@ -355,16 +360,16 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
             </div>
 
             <div className="mt-6 flex justify-end print:break-inside-avoid">
-              <div className="w-full max-w-xs rounded-xl border border-zinc-200 bg-zinc-50/80 px-5 py-4">
+              <div className="w-full max-w-xs rounded-xl border border-zinc-200 bg-zinc-50/80 px-5 py-4 dark:border-zinc-700 dark:bg-zinc-950/80">
                 <div className="flex justify-between gap-4 text-sm">
-                  <span className="text-zinc-500">Subtotal productos</span>
-                  <span className="font-semibold tabular-nums text-zinc-900">
+                  <span className="text-zinc-500 dark:text-zinc-400">Subtotal productos</span>
+                  <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                     {formatCop(subtotalLines)}
                   </span>
                 </div>
-                <div className="mt-3 flex justify-between gap-4 border-t border-zinc-200/80 pt-3">
-                  <span className="font-semibold text-zinc-800">Total a despachar</span>
-                  <span className="text-lg font-bold tabular-nums text-zinc-900">
+                <div className="mt-3 flex justify-between gap-4 border-t border-zinc-200/80 pt-3 dark:border-zinc-700/90">
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">Total a despachar</span>
+                  <span className="text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
                     {formatCop(totalCents)}
                   </span>
                 </div>

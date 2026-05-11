@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { CuentaFavoritosResumenCard } from "@/components/store/CuentaFavoritosResumenCard";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
 
@@ -26,7 +26,14 @@ const cardTitle =
   "text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900";
 const cardBody = "mt-6 flex flex-1 flex-col items-center justify-center text-sm leading-relaxed text-stone-600";
 
-export default async function CuentaResumenPage() {
+export default async function CuentaResumenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cumple?: string }>;
+}) {
+  const sp = await searchParams;
+  const cumpleOk = sp.cumple === "ok";
+
   const supabase = await createSupabaseServerClient();
 
   const { data: lastOrder } = await supabase
@@ -38,6 +45,11 @@ export default async function CuentaResumenPage() {
 
   return (
     <div className="space-y-10">
+      {cumpleOk ? (
+        <p className="rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-center text-sm font-medium text-emerald-900">
+          Guardamos tu fecha de cumpleaños. ¡Gracias!
+        </p>
+      ) : null}
       <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
         <article className="flex min-h-[15rem] flex-col border border-stone-200/90 bg-white p-6 sm:min-h-[16rem] sm:p-8">
           <h2 className={`${cardTitle} text-center`}>Pedido reciente</h2>
@@ -71,25 +83,7 @@ export default async function CuentaResumenPage() {
           </div>
         </article>
 
-        <article className="flex min-h-[15rem] flex-col border border-stone-200/90 bg-white p-6 sm:min-h-[16rem] sm:p-8">
-          <h2 className={`${cardTitle} text-center`}>Mis favoritos</h2>
-          <div className={`${cardBody} gap-4`}>
-            <Heart
-              className="size-8 text-stone-900"
-              strokeWidth={1.25}
-              aria-hidden
-            />
-            <p className="max-w-[14rem] text-center text-sm">
-              Esta lista está vacía — guarda favoritos mientras compras.
-            </p>
-            <Link
-              href="/favoritos"
-              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-600"
-            >
-              Ver favoritos
-            </Link>
-          </div>
-        </article>
+        <CuentaFavoritosResumenCard />
 
         <article className="flex min-h-[15rem] flex-col border border-stone-200/90 bg-white p-6 sm:min-h-[16rem] sm:p-8">
           <h2 className={`${cardTitle} text-center`}>Exclusivos</h2>

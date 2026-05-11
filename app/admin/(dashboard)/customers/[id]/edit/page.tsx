@@ -44,7 +44,7 @@ export default async function AdminCustomerEditPage({ params, searchParams }: Pr
       />
 
       {error ? (
-        <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
           {error === "name" ? (
             "El nombre es obligatorio."
           ) : error === "duplicate_email" ? (
@@ -55,7 +55,7 @@ export default async function AdminCustomerEditPage({ params, searchParams }: Pr
             <>
               No se pudo guardar en la base de datos. Si falta la tabla de direcciones,
               ejecuta la migración{" "}
-              <code className="rounded bg-red-100/80 px-1 py-0.5 text-xs">
+              <code className="rounded bg-red-100/80 px-1 py-0.5 text-xs dark:bg-red-950/60">
                 20260513120000_customer_addresses.sql
               </code>{" "}
               en Supabase.

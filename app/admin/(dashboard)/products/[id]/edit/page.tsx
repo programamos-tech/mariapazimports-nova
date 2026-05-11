@@ -116,29 +116,29 @@ export default async function EditProductPage({ params, searchParams }: Props) {
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-medium text-zinc-500">
-            <Link href="/admin/products" className="hover:text-zinc-800">
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <Link href="/admin/products" className="hover:text-zinc-800 dark:hover:text-zinc-200">
               Inventario
             </Link>
-            <span className="mx-1.5 text-zinc-300">/</span>
+            <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
             <Link
               href={`/admin/products/${id}`}
-              className="text-zinc-600 hover:text-zinc-900"
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
               title={p.name}
             >
               {breadcrumbSegment(p.name)}
             </Link>
-            <span className="mx-1.5 text-zinc-300">/</span>
-            <span className="text-zinc-700">Editar</span>
+            <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
+            <span className="text-zinc-700 dark:text-zinc-300">Editar</span>
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
             Editar producto
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+          <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Modifica los datos del producto. El stock se ajusta desde{" "}
             <Link
               href="/admin/products"
-              className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900"
+              className="font-medium text-zinc-700 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900 dark:text-zinc-300 dark:decoration-zinc-600 dark:hover:text-zinc-100"
             >
               Actualizar stock
             </Link>{" "}
@@ -147,7 +147,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
         </div>
         <Link
           href="/admin/products"
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           aria-label="Volver al listado"
         >
           <span className="text-lg leading-none" aria-hidden>
@@ -157,7 +157,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       </div>
 
       {error ? (
-        <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
           {error === "rls"
             ? "No tienes permiso para actualizar. Verifica que exista tu fila en public.profiles con rol admin."
             : error === "reference"
@@ -196,9 +196,9 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       <ProductDeleteConfirmForm
         productId={id}
         productName={p.name}
-        className="mt-8 rounded-xl border border-zinc-200/90 bg-white p-6"
+        className="mt-8 rounded-xl border border-zinc-200/90 bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]"
       >
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-zinc-600 dark:text-zinc-300">
           Elimina el producto solo si no debe volver a figurar en el catálogo.
         </p>
       </ProductDeleteConfirmForm>

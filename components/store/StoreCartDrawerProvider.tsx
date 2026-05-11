@@ -221,7 +221,7 @@ function DrawerLine({
 }) {
   const img = storagePublicObjectUrl(item.imagePath);
   return (
-    <li className="border-b border-stone-200/90 py-6 first:pt-0">
+    <li className="border-b border-stone-200/90 py-6">
       <div className="flex gap-4">
         <Link
           href={`/products/${item.productId}`}

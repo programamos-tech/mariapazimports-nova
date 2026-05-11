@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
+import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminUserMenu } from "@/components/admin/AdminUserMenu";
 import { CustomerAvatar } from "@/components/admin/CustomerAvatar";
 import {
@@ -60,12 +61,12 @@ type AdminTopBarProps = {
 
 export function AdminTopBar({ onMenuClick, menuOpen }: AdminTopBarProps = {}) {
   return (
-    <header className="sticky top-0 z-50 w-full min-w-0 overflow-visible border-b border-stone-200/90 bg-white/90 backdrop-blur-md print:hidden">
+    <header className="sticky top-0 z-50 w-full min-w-0 overflow-visible border-b border-stone-200/90 bg-white/90 backdrop-blur-md print:hidden dark:border-zinc-800 dark:bg-zinc-900/90">
       <div className="flex h-14 min-w-0 items-center gap-2 overflow-visible px-3 sm:h-16 sm:gap-3 sm:px-6">
         <button
           type="button"
           onClick={onMenuClick}
-          className="flex size-10 shrink-0 items-center justify-center rounded-lg text-stone-800 transition hover:bg-stone-100 active:bg-stone-200/80 lg:hidden"
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg text-stone-800 transition hover:bg-stone-100 active:bg-stone-200/80 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:active:bg-zinc-700/80 lg:hidden"
           aria-label="Abrir menú"
           aria-expanded={menuOpen ?? false}
           aria-controls="admin-sidebar-nav"
@@ -81,6 +82,9 @@ export function AdminTopBar({ onMenuClick, menuOpen }: AdminTopBarProps = {}) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="lg:hidden">
+            <AdminThemeToggle />
+          </div>
           <Link
             href="/admin/ventas/nueva"
             className="flex size-9 items-center justify-center rounded-full border border-neutral-950 bg-neutral-950 text-lg font-light leading-none text-white shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)] transition hover:bg-black sm:size-10"
@@ -88,31 +92,32 @@ export function AdminTopBar({ onMenuClick, menuOpen }: AdminTopBarProps = {}) {
           >
             +
           </Link>
-          <div className="ml-0.5 hidden items-center gap-0.5 border-l border-stone-200/90 pl-2 lg:flex">
+          <div className="ml-0.5 hidden items-center gap-0.5 border-l border-stone-200/90 pl-2 dark:border-zinc-700 lg:flex">
+            <AdminThemeToggle />
             <button
               type="button"
-              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800"
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               title="Ayuda"
             >
               <IconHelp />
             </button>
             <Link
               href="/admin/actividades"
-              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800"
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               title="Registro de actividades"
             >
               <IconPulse />
             </Link>
             <Link
               href="/admin/settings"
-              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800"
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               title="Ajustes"
             >
               <IconSliders />
             </Link>
             <button
               type="button"
-              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800"
+              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               title="Notificaciones"
             >
               <IconBell />

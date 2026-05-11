@@ -12,7 +12,7 @@ import {
 } from "@/components/admin/product-form-primitives";
 
 const cardSectionClass =
-  "rounded-xl border border-zinc-200/90 bg-white p-4 sm:p-6";
+  "rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
 
 const conceptOptions: Array<{
   concept: string;
@@ -36,23 +36,23 @@ export function NewExpenseHeader() {
   return (
     <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <p className="text-xs font-medium text-zinc-500">
-          <Link href="/admin/egresos" className="hover:text-zinc-800">
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <Link href="/admin/egresos" className="hover:text-zinc-800 dark:hover:text-zinc-200">
             Egresos
           </Link>
-          <span className="mx-1.5 text-zinc-300">/</span>
-          <span className="text-zinc-700">Nuevo egreso</span>
+          <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">/</span>
+          <span className="text-zinc-700 dark:text-zinc-300">Nuevo egreso</span>
         </p>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl md:text-3xl">
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">
           Nuevo egreso
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+        <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
           Registra un gasto operativo con el mismo patrón visual de los demás módulos.
         </p>
       </div>
       <Link
         href="/admin/egresos"
-        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-white hover:text-zinc-900 sm:self-auto"
+        className="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:self-auto"
         aria-label="Volver a egresos"
       >
         <span className="text-lg leading-none" aria-hidden>
@@ -96,7 +96,7 @@ export function NewExpenseForm({ initialError }: { initialError?: string }) {
   return (
     <form action={createStoreExpense} className="space-y-6">
       {err ? (
-        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
           {err}
         </p>
       ) : null}
@@ -194,7 +194,7 @@ export function NewExpenseForm({ initialError }: { initialError?: string }) {
         </div>
         <button
           type="submit"
-          className="mt-5 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
+          className="mt-5 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
         >
           Registrar egreso
         </button>

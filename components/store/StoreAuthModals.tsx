@@ -8,11 +8,14 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { StoreLoginModal } from "@/components/store/StoreLoginModal";
 import { StoreRegisterModal } from "@/components/store/StoreRegisterModal";
 
 type StoreAuthModalContextValue = {
   openRegister: () => void;
   closeRegister: () => void;
+  openLogin: () => void;
+  closeLogin: () => void;
 };
 
 const StoreAuthModalContext = createContext<StoreAuthModalContextValue | null>(
@@ -34,9 +37,20 @@ export function StoreAuthModalProvider({
 }) {
   const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
 
-  const openRegister = useCallback(() => setRegisterOpen(true), []);
   const closeRegister = useCallback(() => setRegisterOpen(false), []);
+  const closeLogin = useCallback(() => setLoginOpen(false), []);
+
+  const openRegister = useCallback(() => {
+    setLoginOpen(false);
+    setRegisterOpen(true);
+  }, []);
+
+  const openLogin = useCallback(() => {
+    setRegisterOpen(false);
+    setLoginOpen(true);
+  }, []);
 
   const onRegistered = useCallback(() => {
     setRegisterOpen(false);
@@ -45,8 +59,13 @@ export function StoreAuthModalProvider({
   }, [router]);
 
   const value = useMemo(
-    () => ({ openRegister, closeRegister }),
-    [openRegister, closeRegister],
+    () => ({
+      openRegister,
+      closeRegister,
+      openLogin,
+      closeLogin,
+    }),
+    [openRegister, closeRegister, openLogin, closeLogin],
   );
 
   return (
@@ -56,6 +75,12 @@ export function StoreAuthModalProvider({
         open={registerOpen}
         onClose={closeRegister}
         onRegistered={onRegistered}
+        onOpenLogin={openLogin}
+      />
+      <StoreLoginModal
+        open={loginOpen}
+        onClose={closeLogin}
+        onOpenRegister={openRegister}
       />
     </StoreAuthModalContext.Provider>
   );

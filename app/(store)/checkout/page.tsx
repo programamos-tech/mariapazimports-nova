@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { startCheckout } from "@/app/actions/checkout";
+import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
 import { getCart, normalizeCartForCheckout } from "@/lib/cart";
 import { formatCop } from "@/lib/money";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -247,6 +248,8 @@ export default async function CheckoutPage({
     );
   }
 
+  await syncStoreCustomerFromSession();
+
   const sessionSb = await createSupabaseServerClient();
   const {
     data: { user: checkoutUser },
@@ -312,6 +315,10 @@ export default async function CheckoutPage({
       } else {
         shippingInitial.firstName = defaultFirst;
         shippingInitial.lastName = defaultLast;
+        const authPhone = checkoutUser.phone?.trim();
+        if (authPhone) {
+          shippingInitial.mobile = authPhone;
+        }
       }
     }
   }

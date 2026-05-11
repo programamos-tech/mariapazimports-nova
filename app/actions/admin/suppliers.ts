@@ -2,7 +2,12 @@
 
 import { randomUUID } from "node:crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { supplierInvoiceFolioFromIssueDate } from "@/lib/supplier-invoices";
+import {
+  DEFAULT_SUPPLIER_VAT_BPS,
+  supplierInvoiceFolioFromIssueDate,
+  supplierLineGrossCents,
+  supplierLineNetCents,
+} from "@/lib/supplier-invoices";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -41,6 +46,8 @@ type ParsedSupplierLine = {
   productName: string;
   quantity: number;
   unitPriceCents: number;
+  /** Basis points (1900 = 19 %). Omisión: 1900 en cliente; 0 = sin IVA. */
+  vatRateBps?: number;
 };
 
 export async function createSupplierInvoiceAction(formData: FormData) {
@@ -83,6 +90,7 @@ export async function createSupplierInvoiceAction(formData: FormData) {
     product_name_snapshot: string;
     quantity: number;
     unit_price_cents: number;
+    vat_rate_bps: number;
     sort_order: number;
   }[] = [];
   let totalCents = 0;
@@ -92,13 +100,21 @@ export async function createSupplierInvoiceAction(formData: FormData) {
     const name = String(l?.productName ?? "").trim();
     const qty = Math.floor(Number(l?.quantity));
     const unit = Math.floor(Number(l?.unitPriceCents));
+    const vatRaw = l?.vatRateBps;
+    const vatBps =
+      vatRaw === undefined || vatRaw === null || !Number.isFinite(Number(vatRaw))
+        ? DEFAULT_SUPPLIER_VAT_BPS
+        : Math.max(0, Math.min(10000, Math.floor(Number(vatRaw))));
     if (!pid || !name || qty < 1 || unit < 0) redirectValidation();
-    totalCents += qty * unit;
+    const net = supplierLineNetCents(qty, unit);
+    const gross = supplierLineGrossCents(net, vatBps);
+    totalCents += gross;
     lineRows.push({
       product_id: pid,
       product_name_snapshot: name,
       quantity: qty,
       unit_price_cents: unit,
+      vat_rate_bps: vatBps,
       sort_order: i,
     });
   }
@@ -129,6 +145,7 @@ export async function createSupplierInvoiceAction(formData: FormData) {
     product_name_snapshot: r.product_name_snapshot,
     quantity: r.quantity,
     unit_price_cents: r.unit_price_cents,
+    vat_rate_bps: r.vat_rate_bps,
     sort_order: r.sort_order,
   }));
 

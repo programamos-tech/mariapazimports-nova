@@ -29,7 +29,7 @@ export function CustomerDetailHeaderActions({ customerId, customerName }: Props)
     <div className="flex flex-wrap items-center gap-2">
       <Link
         href="/admin/customers"
-        className="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:shadow-none dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         title="Volver"
         aria-label="Volver al listado de clientes"
       >
@@ -37,7 +37,7 @@ export function CustomerDetailHeaderActions({ customerId, customerName }: Props)
       </Link>
       <Link
         href={`/admin/customers/${customerId}/edit`}
-        className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+        className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
       >
         Editar
       </Link>

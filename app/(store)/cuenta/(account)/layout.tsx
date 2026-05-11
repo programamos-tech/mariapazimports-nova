@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
 import { StoreAccountBirthdayBanner } from "@/components/store/StoreAccountBirthdayBanner";
 import { StoreAccountHeroNav } from "@/components/store/StoreAccountHeroNav";
@@ -16,10 +17,21 @@ function accountHeroFirstName(displayName: string): string {
   return t.toLocaleUpperCase("es-CO");
 }
 
-function CuentaAccountHero({ heroName }: { heroName: string }) {
+function CuentaAccountHero({
+  heroName,
+  birthDate,
+}: {
+  heroName: string;
+  /** `undefined` = staff (sin banner). `null` o string = comprador; si hay fecha, el banner no se monta. */
+  birthDate?: string | null;
+}) {
   return (
     <>
-      <StoreAccountBirthdayBanner />
+      {birthDate !== undefined ? (
+        <Suspense fallback={null}>
+          <StoreAccountBirthdayBanner birthDate={birthDate} />
+        </Suspense>
+      ) : null}
       <section className="relative isolate min-h-[15.5rem] w-full sm:min-h-[19rem]">
         <Image
           src={STORE_ACCOUNT_HERO_IMAGE}
@@ -88,10 +100,13 @@ export default async function CuentaAccountLayout({
     );
   }
 
-  const { data: customerBrief } = await supabase
-    .from("customers")
-    .select("name")
-    .maybeSingle();
+  const { data: customerBrief } = user
+    ? await supabase
+        .from("customers")
+        .select("name, birth_date")
+        .eq("auth_user_id", user.id)
+        .maybeSingle()
+    : { data: null };
 
   const displayName =
     customerBrief?.name?.trim() ||
@@ -103,7 +118,15 @@ export default async function CuentaAccountLayout({
 
   return (
     <div className="min-w-0 overflow-x-hidden bg-white">
-      <CuentaAccountHero heroName={heroName} />
+      <CuentaAccountHero
+        heroName={heroName}
+        birthDate={
+          customerBrief?.birth_date != null &&
+          String(customerBrief.birth_date).trim() !== ""
+            ? String(customerBrief.birth_date).slice(0, 10)
+            : null
+        }
+      />
       <div className={shellClass}>
         <div className={innerClass}>{children}</div>
       </div>

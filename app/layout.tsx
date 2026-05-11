@@ -30,7 +30,6 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
-      style={{ colorScheme: "light" }}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

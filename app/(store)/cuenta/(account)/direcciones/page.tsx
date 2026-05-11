@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { updateStoreCustomerBirthDateAction } from "@/app/actions/store-customer-birthday";
 import { StoreAddressesManager } from "@/components/store/StoreAddressesManager";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { storeBrand, storeSupportEmail, storeWhatsAppUrl } from "@/lib/brand";
 
 export const metadata = {
@@ -15,6 +16,10 @@ const btnOutline =
   "inline-flex shrink-0 items-center justify-center border border-stone-900 bg-white px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 transition hover:bg-stone-900 hover:text-white";
 const labelMuted = "text-[11px] font-semibold uppercase tracking-[0.1em] text-stone-500";
 const valueText = "mt-1 text-sm text-stone-900";
+const dateInputClass =
+  "mt-2 w-full max-w-[12rem] rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-400/25";
+const btnSaveClass =
+  "inline-flex shrink-0 items-center justify-center border border-stone-900 bg-stone-900 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-stone-800";
 
 function profileLocationLine(
   city: string | null | undefined,
@@ -28,7 +33,24 @@ function profileLocationLine(
   return "Colombia";
 }
 
-export default async function CuentaDireccionesPage() {
+function formatBirthDisplay(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("es-CO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default async function CuentaDireccionesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cumple?: string }>;
+}) {
+  const sp = await searchParams;
+  const cumple = typeof sp.cumple === "string" ? sp.cumple : undefined;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -38,7 +60,7 @@ export default async function CuentaDireccionesPage() {
 
   const { data: customer } = await supabase
     .from("customers")
-    .select("name, email, shipping_city, shipping_address")
+    .select("name, email, shipping_city, shipping_address, birth_date")
     .maybeSingle();
 
   const displayName =
@@ -56,6 +78,12 @@ export default async function CuentaDireccionesPage() {
     storeWhatsAppUrl !== "#"
       ? `${storeWhatsAppUrl}?text=${encodeURIComponent("Hola, quiero actualizar los datos de mi perfil.")}`
       : storeWhatsAppUrl;
+
+  const birthIso =
+    customer?.birth_date != null && String(customer.birth_date).trim() !== ""
+      ? String(customer.birth_date).slice(0, 10)
+      : "";
+  const maxBirth = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="mx-auto max-w-xl space-y-8">
@@ -83,16 +111,62 @@ export default async function CuentaDireccionesPage() {
             <p className={labelMuted}>Ubicación</p>
             <p className={valueText}>{location}</p>
           </div>
-          <div className="flex items-start gap-3 border border-stone-100 bg-stone-50/80 px-4 py-3">
-            <span
-              className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white"
-              aria-hidden
+          <div className="border-t border-stone-100 pt-6">
+            <p className={labelMuted}>Cumpleaños</p>
+            {birthIso ? (
+              <p className={valueText}>
+                Registrado:{" "}
+                <span className="font-medium">{formatBirthDisplay(birthIso)}</span>
+              </p>
+            ) : (
+              <p className={`${valueText} text-stone-600`}>
+                Todavía no registramos tu fecha. Guardala abajo para recibir un saludo especial.
+              </p>
+            )}
+            {cumple === "ok" ? (
+              <p className="mt-3 rounded-lg border border-emerald-200/90 bg-emerald-50/90 px-3 py-2 text-xs font-medium text-emerald-900">
+                Fecha de cumpleaños guardada.
+              </p>
+            ) : null}
+            {cumple === "invalid" || cumple === "db" || cumple === "forbidden" ? (
+              <p className="mt-3 rounded-lg border border-red-200/90 bg-red-50/90 px-3 py-2 text-xs font-medium text-red-900">
+                {cumple === "invalid"
+                  ? "Revisá la fecha (debe ser válida y no futura)."
+                  : cumple === "forbidden"
+                    ? "Esta acción no está disponible para tu tipo de usuario."
+                    : "No pudimos guardar. Intentá de nuevo."}
+              </p>
+            ) : null}
+            <form
+              action={updateStoreCustomerBirthDateAction}
+              className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
             >
-              !
-            </span>
-            <p className="text-sm leading-relaxed text-stone-700">
-              Actualiza la información de tu cumpleaños para recibir un saludo
-              especial. Escribinos por WhatsApp o indicalo en tu próximo pedido.
+              <input type="hidden" name="next" value="/cuenta/direcciones" readOnly />
+              <div className="min-w-0">
+                <label htmlFor="cuenta-birth-date" className="sr-only">
+                  Fecha de cumpleaños
+                </label>
+                <input
+                  id="cuenta-birth-date"
+                  type="date"
+                  name="birth_date"
+                  required
+                  min="1900-01-01"
+                  max={maxBirth}
+                  defaultValue={birthIso || undefined}
+                  className={dateInputClass}
+                />
+              </div>
+              <button type="submit" className={btnSaveClass}>
+                Guardar fecha
+              </button>
+            </form>
+            <p className="mt-3 text-xs leading-relaxed text-stone-500">
+              Podés cambiarla cuando quieras. Los datos de nombre y correo siguen gestionándose por{" "}
+              <Link href={waEdit} className="font-medium text-stone-700 underline underline-offset-2">
+                WhatsApp
+              </Link>
+              .
             </p>
           </div>
         </div>

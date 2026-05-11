@@ -73,7 +73,7 @@ export function ProductSizeRows({ initialRows }: Props) {
             <button
               type="button"
               onClick={() => remove(i)}
-              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
               aria-label="Quitar tamaño"
             >
               <Trash2 className="size-4" strokeWidth={1.5} />
@@ -84,12 +84,12 @@ export function ProductSizeRows({ initialRows }: Props) {
       <button
         type="button"
         onClick={add}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800"
       >
         <Plus className="size-4" strokeWidth={1.5} aria-hidden />
         Añadir tamaño
       </button>
-      <p className="mt-2 text-xs text-zinc-500">
+      <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
         Podés cargar varias presentaciones (ej. 177 ml y 400 ml). La primera fila
         también actualiza el tamaño que usa el filtro del catálogo cuando aplica.
       </p>

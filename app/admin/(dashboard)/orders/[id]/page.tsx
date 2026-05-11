@@ -55,7 +55,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const invoiceRef = ventaNumeroReferencia(id);
 
   return (
-    <div className="-m-4 bg-zinc-50/70 px-4 py-6 md:-m-6 md:px-6 print:m-0 print:bg-transparent print:p-0">
+    <div className="-m-4 bg-zinc-50/70 px-4 py-6 dark:bg-zinc-950/80 md:-m-6 md:px-6 print:m-0 print:bg-transparent print:p-0">
       <OrderInvoiceDetailView
         orderId={id}
         invoiceRef={invoiceRef}

@@ -7,6 +7,7 @@ create table if not exists public.supplier_invoice_lines (
   product_name_snapshot text not null,
   quantity integer not null check (quantity > 0),
   unit_price_cents integer not null check (unit_price_cents >= 0),
+  vat_rate_bps integer not null default 0 check (vat_rate_bps >= 0 and vat_rate_bps <= 10000),
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );

@@ -53,6 +53,7 @@ export async function StoreHeader() {
             menuCategories={menuCategories}
             accountHref={userIconHref}
             accountLabel={userIconLabel}
+            guestOpensAuthDrawer={!user}
           />
         </div>
 
@@ -91,6 +92,7 @@ export async function StoreHeader() {
             userIconHref={userIconHref}
             userIconLabel={userIconLabel}
             accountFirstName={accountFirstName}
+            guestOpensAuthDrawer={!user}
           />
         </div>
       </div>

@@ -18,6 +18,7 @@ import {
   fetchAdminProductsList,
 } from "@/lib/supabase/admin-products-list";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { adminProductCardClass, adminTableWrapClass } from "@/lib/admin-ui";
 import { formatCop } from "@/lib/money";
 import { AdminProductsFlashToast } from "@/components/admin/AdminProductsFlashToast";
 
@@ -28,7 +29,7 @@ const LOW_STOCK_MAX = 4;
 /** Mismo padding horizontal en todas las columnas (sin rayas verticales). */
 const colGap = "px-4";
 
-const thCell = `bg-white py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600 ${colGap}`;
+const thCell = `bg-white py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 ${colGap}`;
 
 const tdCell = `py-3.5 align-middle ${colGap}`;
 
@@ -49,18 +50,21 @@ function stockBadge(stock: number) {
   if (stock <= 0) {
     return {
       label: "Sin stock",
-      className: "bg-red-50 text-red-800 ring-red-200/90",
+      className:
+        "bg-red-50 text-red-800 ring-red-200/90 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-800/50",
     };
   }
   if (stock <= LOW_STOCK_MAX) {
     return {
       label: "Stock bajo",
-      className: "bg-amber-50 text-amber-900 ring-amber-200/90",
+      className:
+        "bg-amber-50 text-amber-900 ring-amber-200/90 dark:bg-amber-950/45 dark:text-amber-100 dark:ring-amber-700/50",
     };
   }
   return {
     label: "Con stock",
-    className: "bg-emerald-50 text-emerald-900 ring-emerald-200/90",
+    className:
+      "bg-emerald-50 text-emerald-900 ring-emerald-200/90 dark:bg-emerald-950/45 dark:text-emerald-100 dark:ring-emerald-700/50",
   };
 }
 
@@ -114,9 +118,6 @@ function normalizeAdminProductRow(row: unknown): AdminProductRowModel {
     stockBadgeInfo: stockBadge(stockQty),
   };
 }
-
-const productCardClass =
-  "flex h-full flex-col rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 transition hover:border-zinc-300 hover:shadow-md";
 
 export default async function AdminProductsPage({
   searchParams,
@@ -206,7 +207,7 @@ export default async function AdminProductsPage({
     <div className="min-w-0">
       <div className="flex flex-col gap-4 border-b border-zinc-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
             Productos
           </h1>
           <p className="mt-1 max-w-xl text-sm text-zinc-600">
@@ -217,13 +218,13 @@ export default async function AdminProductsPage({
           <Link
             href={categoriesOpenHref}
             scroll={false}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50"
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
           >
             Categorías
           </Link>
           <Link
             href="/admin/products"
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50"
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             title="Quitar filtros y recargar"
           >
             Actualizar
@@ -284,7 +285,7 @@ export default async function AdminProductsPage({
           <p className="text-sm text-zinc-600">No hay productos con estos criterios.</p>
           <Link
             href="/admin/products/new"
-            className="mt-4 inline-block text-sm font-semibold text-zinc-900 underline decoration-zinc-300"
+            className="mt-4 inline-block text-sm font-semibold text-zinc-900 underline decoration-zinc-300 dark:text-zinc-100 dark:decoration-zinc-600"
           >
             Crear el primero
           </Link>
@@ -298,17 +299,17 @@ export default async function AdminProductsPage({
         >
           {productRows.map((p) => (
             <li key={p.id} className="min-w-0">
-              <article className={productCardClass}>
+              <article className={adminProductCardClass}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/admin/products/${p.id}`}
-                      className="line-clamp-2 font-semibold leading-snug text-zinc-900 hover:underline"
+                      className="line-clamp-2 font-semibold leading-snug text-zinc-900 hover:underline dark:text-zinc-100"
                     >
                       {p.name}
                     </Link>
                     <p
-                      className="mt-1 line-clamp-1 font-mono text-xs text-zinc-500"
+                      className="mt-1 line-clamp-1 font-mono text-xs text-zinc-500 dark:text-zinc-400"
                       title={p.code}
                     >
                       {p.code}
@@ -316,19 +317,19 @@ export default async function AdminProductsPage({
                   </div>
                   <ProductTableActions productId={p.id} />
                 </div>
-                <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">
+                <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
                   {p.categoryLabel}
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-zinc-400">Local</span>
-                    <p className="tabular-nums font-semibold text-zinc-900">
+                    <span className="text-zinc-400 dark:text-zinc-500">Local</span>
+                    <p className="tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
                       {p.stock_local}
                     </p>
                   </div>
                   <div>
-                    <span className="text-zinc-400">Bodega</span>
-                    <p className="tabular-nums font-semibold text-zinc-900">
+                    <span className="text-zinc-400 dark:text-zinc-500">Bodega</span>
+                    <p className="tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
                       {p.stock_warehouse}
                     </p>
                   </div>
@@ -340,7 +341,7 @@ export default async function AdminProductsPage({
                     {p.stockBadgeInfo.label}
                   </span>
                 </div>
-                <p className="mt-auto pt-4 text-lg font-bold tabular-nums text-zinc-900">
+                <p className="mt-auto pt-4 text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
                   {formatCop(p.price_cents)}
                 </p>
               </article>
@@ -348,8 +349,8 @@ export default async function AdminProductsPage({
           ))}
         </ul>
 
-        <div className="hidden overflow-x-auto border-t border-zinc-100 xl:block">
-          <div className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-[0_1px_3px_0_rgb(24_24_27/0.06)]">
+        <div className="hidden overflow-x-auto border-t border-zinc-100 dark:border-zinc-800 xl:block">
+          <div className={adminTableWrapClass}>
             <table className="w-full min-w-0 table-fixed border-collapse text-left text-sm xl:min-w-[1120px]">
               <colgroup>
                 <col style={{ width: "25%" }} />
@@ -362,7 +363,7 @@ export default async function AdminProductsPage({
                 <col style={{ width: "16%" }} />
               </colgroup>
               <thead>
-                <tr className="border-b border-zinc-200 bg-white">
+                <tr className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                   <th className={thCell}>Producto</th>
                   <th className={thCell}>Código</th>
                   <th className={thCell}>Categoría</th>
@@ -381,15 +382,15 @@ export default async function AdminProductsPage({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 bg-white">
+              <tbody className="divide-y divide-zinc-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
                 {productRows.map((p) => (
                   <tr
                     key={p.id}
-                    className="bg-white transition-colors hover:bg-zinc-50/80"
+                    className="bg-white transition-colors hover:bg-zinc-50/80 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
                   >
                     <td className={tdCell}>
                       <div className="min-w-0">
-                        <p className="font-medium text-zinc-900">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
                           <Link
                             href={`/admin/products/${p.id}`}
                             className="hover:underline"
@@ -401,22 +402,22 @@ export default async function AdminProductsPage({
                     </td>
                     <td className={`${tdCell} align-top`}>
                       <div
-                        className="min-w-0 truncate font-mono text-xs leading-snug text-zinc-600"
+                        className="min-w-0 truncate font-mono text-xs leading-snug text-zinc-600 dark:text-zinc-400"
                         title={p.code}
                       >
                         {p.code}
                       </div>
                     </td>
-                    <td className={`${tdCell} min-w-0 text-zinc-600`}>
+                    <td className={`${tdCell} min-w-0 text-zinc-600 dark:text-zinc-400`}>
                       {p.categoryLabel}
                     </td>
                     <td
-                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800`}
+                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800 dark:text-zinc-200`}
                     >
                       {p.stock_local}
                     </td>
                     <td
-                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800`}
+                      className={`${tdCell} whitespace-nowrap text-right tabular-nums text-zinc-800 dark:text-zinc-200`}
                     >
                       {p.stock_warehouse}
                     </td>
@@ -428,7 +429,7 @@ export default async function AdminProductsPage({
                       </span>
                     </td>
                     <td className={`${tdCell} text-right`}>
-                      <span className="inline-block whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-900">
+                      <span className="inline-block whitespace-nowrap text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                         {formatCop(p.price_cents)}
                       </span>
                     </td>

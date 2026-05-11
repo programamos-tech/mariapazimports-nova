@@ -7,6 +7,7 @@ import {
   STORE_HEADER_ICON_STROKE,
 } from "@/lib/store-header-icons";
 import { StoreFavoritesNavLink } from "@/components/store/StoreFavoritesNavLink";
+import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 
 const iconBtn =
@@ -18,33 +19,51 @@ export function StoreHeaderActions({
   userIconHref,
   userIconLabel,
   accountFirstName,
+  guestOpensAuthDrawer = false,
 }: {
   isLoggedIn: boolean;
   cartItemCount: number;
   userIconHref: string;
   userIconLabel: string;
   accountFirstName: string | null;
+  guestOpensAuthDrawer?: boolean;
 }) {
   const { openCart } = useStoreCartDrawer();
+  const { openLogin } = useStoreAuthModals();
 
   return (
     <div className="flex shrink-0 items-center gap-1 sm:gap-2 md:gap-4">
-      <Link
-        href={userIconHref}
-        aria-label={userIconLabel}
-        className={`${iconBtn} gap-2`}
-      >
-        <UserRound
-          className={STORE_HEADER_ICON_LG}
-          strokeWidth={STORE_HEADER_ICON_STROKE}
-          aria-hidden
-        />
-        {isLoggedIn && accountFirstName ? (
-          <span className="hidden text-[13px] font-normal tracking-wide text-stone-600 md:inline">
-            Hola, {accountFirstName}
-          </span>
-        ) : null}
-      </Link>
+      {guestOpensAuthDrawer ? (
+        <button
+          type="button"
+          onClick={() => openLogin()}
+          aria-label={userIconLabel}
+          className={`${iconBtn} gap-2`}
+        >
+          <UserRound
+            className={STORE_HEADER_ICON_LG}
+            strokeWidth={STORE_HEADER_ICON_STROKE}
+            aria-hidden
+          />
+        </button>
+      ) : (
+        <Link
+          href={userIconHref}
+          aria-label={userIconLabel}
+          className={`${iconBtn} gap-2`}
+        >
+          <UserRound
+            className={STORE_HEADER_ICON_LG}
+            strokeWidth={STORE_HEADER_ICON_STROKE}
+            aria-hidden
+          />
+          {isLoggedIn && accountFirstName ? (
+            <span className="hidden text-[13px] font-normal tracking-wide text-stone-600 md:inline">
+              Hola, {accountFirstName}
+            </span>
+          ) : null}
+        </Link>
+      )}
       <StoreFavoritesNavLink />
       <button
         type="button"

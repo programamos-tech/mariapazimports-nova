@@ -12,7 +12,7 @@ export function CustomerRowActions({
   email,
 }: Props) {
   const iconBtn =
-    "inline-flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900";
+    "inline-flex size-9 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";
 
   return (
     <div className="flex justify-end gap-0.5">

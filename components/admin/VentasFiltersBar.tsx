@@ -12,7 +12,7 @@ function IconSearch() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="pointer-events-none size-4 text-zinc-400"
+      className="pointer-events-none size-4 text-zinc-400 dark:text-zinc-500"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.8}
@@ -88,7 +88,7 @@ export function VentasFiltersBar({ initialQ }: VentasFiltersBarProps) {
   }, [q, pushQuery, searchParams]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-t-xl border-b border-zinc-100 px-4 py-4 sm:px-5 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-4">
+    <div className="flex flex-col gap-4 rounded-t-xl border-b border-zinc-100 px-4 py-4 dark:border-zinc-800 sm:px-5 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-4">
       <div className="relative min-w-0 w-full flex-1 lg:min-w-[12rem]">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
           <IconSearch />
@@ -146,7 +146,7 @@ export function VentasRefreshButton() {
     <button
       type="button"
       onClick={() => router.refresh()}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:shadow-none dark:hover:bg-zinc-800 sm:w-auto"
     >
       <svg
         viewBox="0 0 24 24"

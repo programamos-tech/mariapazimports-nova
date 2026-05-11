@@ -18,7 +18,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const cardLabelClass =
-  "text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400";
+  "text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400 dark:text-zinc-500";
 
 /** Acento del gráfico — mismo eje cromático que login / tienda. */
 const chartLineColor = "#1c1917";
@@ -250,10 +250,10 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
     <div className="space-y-0">
       <div className="flex flex-col gap-4 pb-8 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 sm:pb-10">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl md:text-3xl">
+          <h1 className="text-xl font-semibold tracking-tight text-stone-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">
             Reportes
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-500">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-500 dark:text-zinc-400">
             Resumen ejecutivo y métricas de rendimiento de la tienda principal.
           </p>
         </div>
@@ -266,25 +266,25 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <div className="border-t border-stone-200/80 pt-10 pb-12">
+      <div className="border-t border-stone-200/80 pt-10 pb-12 dark:border-zinc-800">
         <p className={cardLabelClass}>Resumen del periodo</p>
-        <p className="mt-1 text-sm text-stone-500">{periodLabel}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-zinc-400">{periodLabel}</p>
         <dl className="mt-6 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="min-w-0">
             <dt className={cardLabelClass}>Total ingresos</dt>
-            <dd className="mt-1 text-2xl font-normal tabular-nums text-stone-900">
+            <dd className="mt-1 text-2xl font-normal tabular-nums text-stone-900 dark:text-zinc-100">
               {formatCop(ingresosConIvaPeriod)}
             </dd>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-stone-500 dark:text-zinc-400">
               {ventasPagadasPeriod} venta{ventasPagadasPeriod === 1 ? "" : "s"} · total con IVA
             </p>
-            <div className="mt-3 space-y-1 border-t border-stone-100 pt-3 text-[11px] leading-snug text-stone-500">
+            <div className="mt-3 space-y-1 border-t border-stone-100 pt-3 text-[11px] leading-snug text-stone-500 dark:border-zinc-800 dark:text-zinc-400">
               <p className="tabular-nums">
-                <span className="text-stone-400">Total sin IVA (base): </span>
+                <span className="text-stone-400 dark:text-zinc-500">Total sin IVA (base): </span>
                 {formatCop(ingresosSinIvaPeriod)}
               </p>
               <p className="tabular-nums">
-                <span className="text-stone-400">IVA recaudado: </span>
+                <span className="text-stone-400 dark:text-zinc-500">IVA recaudado: </span>
                 {formatCop(ivaRecaudadoPeriod)}
               </p>
             </div>
@@ -320,19 +320,23 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
           ].map(([label, value, hint]) => (
             <div key={label} className="min-w-0">
               <dt className={cardLabelClass}>{label}</dt>
-              <dd className="mt-1 text-2xl font-normal tabular-nums text-stone-900">{value}</dd>
-              <p className="mt-1 text-xs text-stone-500">{hint}</p>
+              <dd className="mt-1 text-2xl font-normal tabular-nums text-stone-900 dark:text-zinc-100">
+                {value}
+              </dd>
+              <p className="mt-1 text-xs text-stone-500 dark:text-zinc-400">{hint}</p>
             </div>
           ))}
         </dl>
       </div>
 
-      <div className="border-t border-stone-200/80 pt-10">
-        <h2 className="text-xl font-semibold text-stone-900">Tendencia de Ingresos</h2>
-        <p className="mt-1 text-sm text-stone-500">
+      <div className="border-t border-stone-200/80 pt-10 dark:border-zinc-800">
+        <h2 className="text-xl font-semibold text-stone-900 dark:text-zinc-100">
+          Tendencia de Ingresos
+        </h2>
+        <p className="mt-1 text-sm text-stone-500 dark:text-zinc-400">
           Monto con IVA por día (ventas pagadas) · {periodLabel}
         </p>
-        <div className="mt-6 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-[0_1px_3px_0_rgb(28_25_23/0.06)] sm:p-6">
+        <div className="mt-6 rounded-2xl border border-stone-200/90 bg-white p-4 shadow-[0_1px_3px_0_rgb(28_25_23/0.06)] dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-[0_1px_0_0_rgb(0_0_0/0.35)] sm:p-6">
           <div className="overflow-x-auto">
             <svg
               viewBox={`0 0 ${chartW} ${chartH}`}
@@ -375,7 +379,7 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
                       x={padL - 10}
                       y={y + 4}
                       textAnchor="end"
-                      className="fill-stone-500"
+                      className="fill-stone-500 dark:fill-zinc-400"
                       style={{ fontSize: "11px" }}
                     >
                       {formatCopCompact(Math.round(tick))}
@@ -418,7 +422,7 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
                     cx={xAt(i)}
                     cy={yAt(t.value)}
                     r="4"
-                    fill="white"
+                    className="fill-white dark:fill-zinc-900"
                     stroke={chartLineColor}
                     strokeWidth={2}
                   />
@@ -432,7 +436,7 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
                     x={xAt(i)}
                     y={chartH - 12}
                     textAnchor="middle"
-                    className="fill-stone-600"
+                    className="fill-stone-600 dark:fill-zinc-400"
                     style={{ fontSize: trend.length > 24 ? "10px" : "12px" }}
                   >
                     {prettyDayLabel(t.key)}
@@ -442,7 +446,7 @@ export default async function AdminHomePage({ searchParams }: PageProps) {
             </svg>
           </div>
           {maxRaw > 0 ? (
-            <p className="mt-3 text-center text-xs text-stone-400">
+            <p className="mt-3 text-center text-xs text-stone-400 dark:text-zinc-500">
               Máximo del periodo: {formatCop(maxRaw)}
             </p>
           ) : null}

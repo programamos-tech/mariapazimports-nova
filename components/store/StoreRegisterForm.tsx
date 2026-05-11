@@ -5,18 +5,20 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { friendlyStoreAuthError } from "@/components/store/store-auth-shared";
+import {
+  storeAuthFormErrorClass,
+  storeAuthFormHintClass,
+  storeAuthFormInfoClass,
+  storeAuthFormInputClass,
+  storeAuthFormLabelClass,
+  storeAuthFormPrimaryBtnClass,
+} from "@/components/store/store-auth-form-primitives";
 import { normalizeDocumentIdForMatch } from "@/lib/normalize-document-id";
-
-const labelClass = "mb-2 block text-sm font-medium text-stone-800";
-const defaultInputClass =
-  "w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 shadow-[0_1px_0_0_rgb(24_24_27/0.04)] focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-[var(--store-accent)]/20";
-const defaultSubmitClass =
-  "mt-2 w-full rounded-full bg-[var(--store-accent)] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--store-accent-hover)] disabled:opacity-60";
 
 export function StoreRegisterForm({
   onSuccess,
-  inputClassName = defaultInputClass,
-  submitButtonClassName = defaultSubmitClass,
+  inputClassName = storeAuthFormInputClass,
+  submitButtonClassName = storeAuthFormPrimaryBtnClass,
 }: {
   onSuccess?: () => void;
   inputClassName?: string;
@@ -53,7 +55,7 @@ export function StoreRegisterForm({
     if (!documentNorm) {
       setLoading(false);
       setError(
-        "Ingresa tu cédula o documento (solo números, mínimo 6 dígitos). Así vinculamos tu historial si ya compraste en la tienda.",
+        "Escribí tu documento solo con números (mínimo 6 dígitos). Así podemos unirte con tus compras anteriores si ya compraste con nosotras.",
       );
       return;
     }
@@ -74,8 +76,13 @@ export function StoreRegisterForm({
     }
 
     if (data.session) {
-      await syncStoreCustomerFromSession();
-      setLoading(false);
+      try {
+        await syncStoreCustomerFromSession();
+      } catch {
+        /* el layout /cuenta vuelve a intentar; no bloquear el flujo por fallo puntual */
+      } finally {
+        setLoading(false);
+      }
       if (onSuccess) {
         onSuccess();
       } else {
@@ -92,19 +99,11 @@ export function StoreRegisterForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error ? (
-        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-900">
-          {error}
-        </p>
-      ) : null}
-      {info ? (
-        <p className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-stone-800">
-          {info}
-        </p>
-      ) : null}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error ? <p className={storeAuthFormErrorClass}>{error}</p> : null}
+      {info ? <p className={storeAuthFormInfoClass}>{info}</p> : null}
       <label className="block">
-        <span className={labelClass}>Nombre</span>
+        <span className={storeAuthFormLabelClass}>Nombre</span>
         <input
           name="name"
           type="text"
@@ -115,26 +114,23 @@ export function StoreRegisterForm({
         />
       </label>
       <label className="block">
-        <span className={labelClass}>
-          Cédula de ciudadanía o documento{" "}
-          <span className="font-normal text-stone-500">(obligatorio)</span>
-        </span>
+        <span className={storeAuthFormLabelClass}>Cédula o documento</span>
         <input
           name="documentId"
           type="text"
           required
           autoComplete="off"
           inputMode="numeric"
-          placeholder="Sin puntos ni guiones, ej. 1234567890"
+          placeholder="Solo números, ej. 1234567890"
           className={inputClassName}
         />
-        <p className="mt-1.5 text-xs text-stone-500">
-          Lo usamos para identificarte si ya existís como cliente manual o por
-          ventas en tienda: vas a ver el mismo historial de pedidos en tu cuenta.
+        <p className={storeAuthFormHintClass}>
+          Si ya compraste con nosotras, con este dato te reconocemos y unimos tu historial en esta
+          cuenta.
         </p>
       </label>
       <label className="block">
-        <span className={labelClass}>Correo electrónico</span>
+        <span className={storeAuthFormLabelClass}>Correo electrónico</span>
         <input
           name="email"
           type="email"
@@ -145,7 +141,7 @@ export function StoreRegisterForm({
         />
       </label>
       <label className="block">
-        <span className={labelClass}>Contraseña</span>
+        <span className={storeAuthFormLabelClass}>Contraseña</span>
         <input
           name="password"
           type="password"
@@ -159,7 +155,7 @@ export function StoreRegisterForm({
       <button
         type="submit"
         disabled={loading}
-        className={submitButtonClassName}
+        className={`${submitButtonClassName} mt-1`}
       >
         {loading ? "Creando cuenta…" : "Crear cuenta"}
       </button>

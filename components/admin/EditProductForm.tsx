@@ -25,6 +25,12 @@ import {
 } from "@/components/admin/ProductSizeRows";
 import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
 
+const cardClass =
+  "rounded-xl border border-zinc-200 bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
+
+const summaryInset =
+  "mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-950/60";
+
 type Initial = {
   name: string;
   reference: string;
@@ -101,12 +107,12 @@ export function EditProductForm({
 
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
+          <section className={cardClass}>
             <h2 className={sectionTitle}>Información básica</h2>
             <div className="mt-5 space-y-4">
               <div>
                 <label htmlFor="ep-name" className={labelClass}>
-                  Nombre del producto <span className="text-red-600">*</span>
+                  Nombre del producto <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <input
                   id="ep-name"
@@ -119,7 +125,7 @@ export function EditProductForm({
               </div>
               <div>
                 <label htmlFor="ep-ref" className={labelClass}>
-                  Referencia <span className="text-red-600">*</span>
+                  Referencia <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <input
                   id="ep-ref"
@@ -148,7 +154,7 @@ export function EditProductForm({
                 <span className={labelClass}>Imagen (catálogo en línea)</span>
                 <div className="flex flex-wrap items-start gap-4">
                   {currentImageUrl ? (
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60">
+                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-950">
                       <Image
                         src={currentImageUrl}
                         alt=""
@@ -164,7 +170,7 @@ export function EditProductForm({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <label className="inline-flex cursor-pointer">
-                        <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50">
+                        <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700">
                           Seleccionar archivo
                         </span>
                         <input
@@ -185,9 +191,9 @@ export function EditProductForm({
                           }}
                         />
                       </label>
-                      <span className="text-sm text-zinc-500">{fileLabel}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">{fileLabel}</span>
                     </div>
-                    <p className="mt-2 text-xs text-zinc-500">
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                       JPG, PNG o WebP. Máx. {MAX_PRODUCT_IMAGE_BYTES / (1024 * 1024)} MB.
                     </p>
                   </div>
@@ -243,8 +249,8 @@ export function EditProductForm({
                           key={color}
                           className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
                             checked
-                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240]"
-                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240] dark:border-emerald-700/80 dark:bg-emerald-950/45 dark:text-emerald-100"
+                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-500"
                           }`}
                         >
                           <input
@@ -271,7 +277,7 @@ export function EditProductForm({
               </div>
               <ProductFragranceRows initialRows={initial.fragranceRows} />
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                <label className="flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                   <input
                     type="checkbox"
                     name="has_expiration"
@@ -281,7 +287,7 @@ export function EditProductForm({
                       setHasExpiration(next);
                       if (!next) setExpirationDate("");
                     }}
-                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80 dark:border-zinc-600 dark:accent-zinc-100 dark:focus:ring-zinc-600/40"
                   />
                   Tiene fecha de vencimiento
                 </label>
@@ -299,7 +305,7 @@ export function EditProductForm({
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex items-center gap-2 text-sm text-zinc-800">
+                <label className="flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                   <input
                     type="checkbox"
                     name="has_vat"
@@ -309,7 +315,7 @@ export function EditProductForm({
                       setHasVat(next);
                       if (!next) setVatPercent("");
                     }}
-                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                    className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80 dark:border-zinc-600 dark:accent-zinc-100 dark:focus:ring-zinc-600/40"
                   />
                   Maneja IVA
                 </label>
@@ -332,14 +338,14 @@ export function EditProductForm({
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-zinc-800">
+              <label className="flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                 <input
                   type="checkbox"
                   name="is_published"
                   value="on"
                   checked={isPublished}
                   onChange={(e) => setIsPublished(e.target.checked)}
-                  className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80"
+                  className="rounded border-zinc-300 accent-zinc-900 focus:ring-zinc-200/80 dark:border-zinc-600 dark:accent-zinc-100 dark:focus:ring-zinc-600/40"
                 />
                 Publicado en la tienda
               </label>
@@ -348,12 +354,12 @@ export function EditProductForm({
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
-          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
+          <section className={cardClass}>
             <h2 className={sectionTitle}>Información financiera</h2>
             <div className="mt-5 space-y-4">
               <div>
                 <label className={labelClass}>
-                  Costo de compra <span className="text-red-600">*</span>
+                  Costo de compra <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <ProductMoneyInput
                   name="cost_cents"
@@ -364,7 +370,7 @@ export function EditProductForm({
               </div>
               <div>
                 <label className={labelClass}>
-                  Precio de venta <span className="text-red-600">*</span>
+                  Precio de venta <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <ProductMoneyInput
                   name="price_cents"
@@ -373,72 +379,72 @@ export function EditProductForm({
                   required
                 />
               </div>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Este producto no podrá ser vendido por menos del valor de precio de venta.
               </p>
             </div>
           </section>
 
-          <section className="rounded-xl border border-zinc-200/90 bg-white p-6">
+          <section className={cardClass}>
             <h2 className={sectionTitle}>Resumen del producto</h2>
-            <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 p-4 text-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+            <div className={summaryInset}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
                 Producto
               </p>
-              <dl className="mt-3 space-y-2 text-zinc-700">
+              <dl className="mt-3 space-y-2 text-zinc-700 dark:text-zinc-300">
                 <div className="flex justify-between gap-2">
-                  <dt className="text-zinc-500">Nombre</dt>
-                  <dd className="max-w-[60%] truncate text-right text-zinc-900">
+                  <dt className="text-zinc-500 dark:text-zinc-400">Nombre</dt>
+                  <dd className="max-w-[60%] truncate text-right text-zinc-900 dark:text-zinc-100">
                     {name.trim() || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-zinc-500">Referencia</dt>
-                  <dd className="font-mono text-xs text-zinc-900">
+                  <dt className="text-zinc-500 dark:text-zinc-400">Referencia</dt>
+                  <dd className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
                     {reference.trim() || "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-zinc-500">Categoría</dt>
-                  <dd className="max-w-[55%] truncate text-right text-zinc-800">
+                  <dt className="text-zinc-500 dark:text-zinc-400">Categoría</dt>
+                  <dd className="max-w-[55%] truncate text-right text-zinc-800 dark:text-zinc-100">
                     {categoryLabel}
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className="mt-5 border-t border-zinc-200/70 pt-5">
-              <p className="text-xs font-medium text-zinc-500">Precio de venta</p>
-              <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900">
+            <div className="mt-5 border-t border-zinc-200/70 pt-5 dark:border-zinc-800">
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Precio de venta</p>
+              <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                 {formatCop(priceCents)}
               </p>
             </div>
 
-            <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm">
-              <li className="flex justify-between text-zinc-600">
+            <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm dark:border-zinc-800">
+              <li className="flex justify-between text-zinc-600 dark:text-zinc-400">
                 <span>Costo</span>
-                <span className="tabular-nums text-zinc-900">
+                <span className="tabular-nums text-zinc-900 dark:text-zinc-100">
                   {formatCop(costCents)}
                 </span>
               </li>
-              <li className="flex justify-between font-medium text-zinc-900">
+              <li className="flex justify-between font-medium text-zinc-900 dark:text-zinc-100">
                 <span>Precio venta</span>
                 <span className="tabular-nums">{formatCop(priceCents)}</span>
               </li>
             </ul>
 
-            <p className="mt-5 text-xs font-medium text-zinc-500">
+            <p className="mt-5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Guardar cambios
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Se actualizarán los datos del producto en el catálogo. El stock se ajusta
-              desde <span className="font-medium text-zinc-700">Inventario</span> con
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Se actualizarán los datos del producto en el catálogo. El stock se ajusta desde{" "}
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">Inventario</span> con
               Actualizar stock.
             </p>
 
             <button
               type="submit"
-              className="mt-4 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800"
+              className="mt-4 w-full rounded-lg border border-zinc-900 bg-zinc-900 py-3.5 text-sm font-medium text-white transition hover:bg-zinc-800 dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
             >
               Guardar cambios
             </button>

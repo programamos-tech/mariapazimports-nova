@@ -146,7 +146,7 @@ export function ProductFragranceRows({ initialRows }: Props) {
           return (
             <div
               key={i}
-              className="rounded-xl border border-zinc-200/90 bg-zinc-50/40 p-3 sm:p-4"
+              className="rounded-xl border border-zinc-200/90 bg-zinc-50/40 p-3 dark:border-zinc-700 dark:bg-zinc-950/50 sm:p-4"
             >
               <div className="flex gap-2">
                 <input
@@ -160,7 +160,7 @@ export function ProductFragranceRows({ initialRows }: Props) {
                 <button
                   type="button"
                   onClick={() => remove(i)}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900"
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                   aria-label="Quitar fragancia o tono"
                 >
                   <Trash2 className="size-4" strokeWidth={1.5} />
@@ -176,7 +176,7 @@ export function ProductFragranceRows({ initialRows }: Props) {
 
               <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
                 <div className="min-w-0 flex-1">
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-600">
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                     Imagen para esta opción (opcional)
                   </label>
                   <input
@@ -184,18 +184,18 @@ export function ProductFragranceRows({ initialRows }: Props) {
                     name="fragrance_option_image"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    className="block w-full max-w-md text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border file:border-zinc-200 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-50"
+                    className="block w-full max-w-md text-sm text-zinc-700 file:mr-3 file:rounded-lg file:border file:border-zinc-200 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-800 hover:file:bg-zinc-50 dark:text-zinc-300 dark:file:border-zinc-600 dark:file:bg-zinc-800 dark:file:text-zinc-100 dark:hover:file:bg-zinc-700"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
                       onPickImage(i, f);
                     }}
                   />
-                  <p className="mt-1 text-[11px] text-zinc-500">
+                  <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                     JPG, PNG o WebP. Máx. {MAX_PRODUCT_IMAGE_BYTES / (1024 * 1024)} MB.
                   </p>
                 </div>
                 {displayedPreview ? (
-                  <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-white">
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                     <Image
                       src={displayedPreview}
                       alt=""
@@ -215,7 +215,7 @@ export function ProductFragranceRows({ initialRows }: Props) {
                 <button
                   type="button"
                   onClick={() => clearStoredImage(i)}
-                  className="mt-2 text-xs font-medium text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900"
+                  className="mt-2 text-xs font-medium text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900 dark:text-zinc-400 dark:decoration-zinc-600 dark:hover:text-zinc-200"
                 >
                   Quitar imagen guardada
                 </button>
@@ -227,12 +227,12 @@ export function ProductFragranceRows({ initialRows }: Props) {
       <button
         type="button"
         onClick={add}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:bg-zinc-800"
       >
         <Plus className="size-4" strokeWidth={1.5} aria-hidden />
         Añadir fragancia o tono
       </button>
-      <p className="mt-2 text-xs text-zinc-500">
+      <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
         Cada nombre debe coincidir con lo que verá el cliente al elegir en la tienda. Si hay
         varias opciones, podés subir una foto distinta por cada una.
       </p>
