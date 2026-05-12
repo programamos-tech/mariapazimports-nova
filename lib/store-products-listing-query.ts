@@ -127,6 +127,13 @@ export async function fetchPublishedProductsForListing(
       query = query.order("created_at", { ascending: false });
   }
 
-  const { data: products } = await query;
+  const { data: products, error: productsError } = await query;
+  if (productsError) {
+    console.error(
+      "[store-products-listing]",
+      productsError.message,
+      productsError.code,
+    );
+  }
   return (products ?? []) as StoreListingProductRow[];
 }

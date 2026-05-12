@@ -29,7 +29,7 @@ const STORE_HIGHLIGHTS = [
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient();
   const heroBanners = await fetchPublishedBanners(supabase, "hero");
-  const { data: homeProducts } = await supabase
+  const { data: homeProducts, error: homeProductsError } = await supabase
     .from("products")
     .select(
       "id,name,brand,description,price_cents,image_path,stock_quantity,fragrance_options,created_at",
@@ -37,6 +37,14 @@ export default async function HomePage() {
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(HOME_PRODUCTS_LIMIT);
+
+  if (homeProductsError) {
+    console.error(
+      "[home] products:",
+      homeProductsError.message,
+      homeProductsError.code,
+    );
+  }
 
   const featuredProducts = homeProducts ?? [];
   const couponPctByProductId =

@@ -26,7 +26,10 @@ import {
   parseProductsPriceMinParam,
   parseProductsSizesParam,
 } from "@/lib/product-list-query";
-import { fetchPublishedProductsForListing } from "@/lib/store-products-listing-query";
+import {
+  fetchPublishedProductsForListing,
+  type StoreListingProductRow,
+} from "@/lib/store-products-listing-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { fetchCatalogBrowseSections } from "@/lib/catalog-browse-rows";
@@ -124,11 +127,19 @@ export default async function ProductsPage({ searchParams }: Props) {
     categoryView && categoryHeroResolvedSrc,
   );
 
-  const { data: allCategoryRows } = await supabase
+  const { data: allCategoryRows, error: categoriesReadError } = await supabase
     .from("categories")
     .select("id,name,sort_order")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
+
+  if (categoriesReadError) {
+    console.error(
+      "[products] categories:",
+      categoriesReadError.message,
+      categoriesReadError.code,
+    );
+  }
 
   const filterCategoryIds = categoryFilterId
     ? []
@@ -217,6 +228,46 @@ export default async function ProductsPage({ searchParams }: Props) {
       allCategoryRows,
     });
   }
+
+  /** Si el modo “por categorías” no devolvió secciones pero hay filas publicadas (p. ej. error al leer categorías), mostrar grid plano. */
+  let browseFlatFallback: StoreListingProductRow[] = [];
+  let publishedProductHeadCount: number | null = null;
+  if (
+    catalogBrowseMode &&
+    (!catalogSections || catalogSections.length === 0)
+  ) {
+    const { count, error: countErr } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("is_published", true);
+    if (countErr) {
+      console.error("[products] count published:", countErr.message, countErr.code);
+    } else {
+      publishedProductHeadCount = count ?? 0;
+    }
+    if ((publishedProductHeadCount ?? 0) > 0) {
+      browseFlatFallback = await fetchPublishedProductsForListing(supabase, {
+        categoryFilterId: null,
+        filterCategoryIds: [],
+        activeBrands: [],
+        activeColors: [],
+        activeSizes: [],
+        priceMin: null,
+        priceMax: null,
+        q: "",
+        sort,
+        allCategoryRows,
+      });
+    }
+  }
+
+  const showCatalogBrowseSections =
+    catalogBrowseMode &&
+    Boolean(catalogSections && catalogSections.length > 0);
+  const showBrowseFlatFallback =
+    catalogBrowseMode &&
+    !showCatalogBrowseSections &&
+    browseFlatFallback.length > 0;
 
   const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
   const couponPctByProductId =
@@ -329,18 +380,48 @@ export default async function ProductsPage({ searchParams }: Props) {
           </RevealOnScroll>
         ) : null}
 
-        {catalogBrowseMode ? (
-          catalogSections && catalogSections.length > 0 ? (
-            <CatalogBrowseSections
-              sections={catalogSections}
-              cartQtyByProductId={cartQtyByProductId}
-              couponPctByProductId={couponPctByProductId}
-            />
-          ) : (
-            <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
-              Aún no hay productos publicados. Cárgalos desde el admin.
-            </p>
-          )
+        {showCatalogBrowseSections ? (
+          <CatalogBrowseSections
+            sections={catalogSections!}
+            cartQtyByProductId={cartQtyByProductId}
+            couponPctByProductId={couponPctByProductId}
+          />
+        ) : showBrowseFlatFallback ? (
+          <ul className="grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
+            {browseFlatFallback.map((p, index) => (
+              <li key={p.id}>
+                <RevealOnScroll
+                  className="h-full"
+                  delayMs={Math.min(index * 60, 420)}
+                >
+                  <ProductListingCard
+                    accentImageBg={index % 4 === 3}
+                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                    product={{
+                      id: p.id,
+                      name: p.name,
+                      brand: p.brand,
+                      description: p.description,
+                      price_cents: p.price_cents,
+                      image_path: p.image_path,
+                      stock_quantity: p.stock_quantity,
+                      size_options: p.size_options,
+                      size_value: p.size_value,
+                      size_unit: p.size_unit,
+                      fragrance_options: p.fragrance_options,
+                    }}
+                  />
+                </RevealOnScroll>
+              </li>
+            ))}
+          </ul>
+        ) : catalogBrowseMode ? (
+          <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
+            {publishedProductHeadCount != null && publishedProductHeadCount > 0
+              ? "Hay productos publicados en la base de datos, pero no se pudieron agrupar para la vitrina. Revisa en Vercel que NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY sean del mismo proyecto Supabase donde ves los datos, y vuelve a desplegar tras cambiar variables."
+              : "Aún no hay productos publicados. Cárgalos desde el admin."}
+          </p>
         ) : list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             {invalidCategory
