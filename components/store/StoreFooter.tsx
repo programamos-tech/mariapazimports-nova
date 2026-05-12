@@ -9,7 +9,6 @@ import {
   storeSupportEmail,
   storeSupportHours,
   storeSupportPhone,
-  storeWhatsAppUrl,
 } from "@/lib/brand";
 
 const footerColumnTitle =
@@ -58,16 +57,6 @@ export function StoreFooter() {
                       className={footerLink}
                     >
                       {storeSupportEmail}
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href={storeWhatsAppUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={footerLink}
-                    >
-                      WhatsApp
                     </a>
                   </li>
                   <li>

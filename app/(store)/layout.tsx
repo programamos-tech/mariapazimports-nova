@@ -5,7 +5,6 @@ import { StoreFooter } from "@/components/store/StoreFooter";
 import { StoreHeader } from "@/components/store/StoreHeader";
 import { StoreWelcomeSignupModal } from "@/components/store/StoreWelcomeSignupModal";
 import { StoreWelcomeDiscountBanner } from "@/components/store/StoreWelcomeDiscountBanner";
-import { StoreWhatsAppFloatingButton } from "@/components/store/StoreWhatsAppFloatingButton";
 import { StoreCartDrawerProvider } from "@/components/store/StoreCartDrawerProvider";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchBannerStoreCoupon } from "@/lib/store-coupons";
@@ -34,7 +33,6 @@ export default async function StoreLayout({
             ) : null}
             <main className="flex-1">{children}</main>
             <StoreFooter />
-            <StoreWhatsAppFloatingButton />
             <StoreCookiesBanner />
             {welcomeModal ? (
               <StoreWelcomeSignupModal
