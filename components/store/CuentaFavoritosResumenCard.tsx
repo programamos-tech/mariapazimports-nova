@@ -94,7 +94,8 @@ export function CuentaFavoritosResumenCard() {
             ) : null}
             {!loadingNames && preview.length > 0 && preview.length < count ? (
               <p className="max-w-[16rem] text-center text-xs text-stone-500">
-                Parte de tus guardados ya no aparece en el catálogo público; seguís viéndolos en Favoritos.
+                Parte de tus guardados ya no aparece entre los productos públicos; seguís viéndolos en
+                Favoritos.
               </p>
             ) : null}
             {!loadingNames && preview.length === 0 && count > 0 ? (

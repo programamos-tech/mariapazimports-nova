@@ -107,7 +107,7 @@ export function FavoritosView() {
     return (
       <div className={shellClass}>
         <FavoritosPageHeader
-          eyebrow="Catálogo"
+          eyebrow="Todos los productos"
           title="Favoritos"
           description="Estamos cargando tu lista guardada en este dispositivo."
         />
@@ -122,9 +122,9 @@ export function FavoritosView() {
     return (
       <div className={shellClass}>
         <FavoritosPageHeader
-          eyebrow="Catálogo"
+          eyebrow="Todos los productos"
           title="Favoritos"
-          description="Guarda piezas mientras navegas el catálogo; quedan en esta lista en tu navegador."
+          description="Guarda piezas mientras navegas todos los productos; quedan en esta lista en tu navegador."
         />
         <div className="mx-auto max-w-lg">
           <div className="flex flex-col items-center rounded-xl border border-stone-200/90 bg-white px-6 py-12 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-14">
@@ -135,11 +135,11 @@ export function FavoritosView() {
               <Heart className="size-7 text-stone-800" strokeWidth={1.25} />
             </div>
             <p className="mt-6 max-w-sm text-sm leading-relaxed text-stone-600">
-              Todavía no tienes productos guardados. En cada tarjeta del catálogo toca el corazón y
-              los verás aquí.
+              Todavía no tienes productos guardados. Toca el corazón en las tarjetas de todos los
+              productos y los verás aquí.
             </p>
             <Link href="/products" className={`${primaryCtaClass} mt-8 w-full max-w-xs sm:w-auto`}>
-              Ir al catálogo
+              Ir a todos los productos
             </Link>
           </div>
         </div>
@@ -150,7 +150,7 @@ export function FavoritosView() {
   return (
     <div className={shellClass}>
       <FavoritosPageHeader
-        eyebrow="Catálogo"
+        eyebrow="Todos los productos"
         title="Favoritos"
         description={`Piezas que marcaste en ${storeBrand}. Puedes quitarlas tocando de nuevo el corazón en la tarjeta.`}
       />
@@ -166,7 +166,7 @@ export function FavoritosView() {
             href="/products"
             className="font-medium text-[var(--store-accent)] underline underline-offset-4 hover:text-[var(--store-accent-hover)]"
           >
-            Ver catálogo
+            Ver todos los productos
           </Link>
         </div>
       ) : (
