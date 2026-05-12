@@ -6,7 +6,7 @@ import {
   storeWhatsAppUrl,
 } from "@/lib/brand";
 
-/** Logo WhatsApp monocromo (relleno), para fondo oscuro. */
+/** Logo WhatsApp (relleno blanco sobre fondo verde marca). */
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
     <svg
@@ -31,13 +31,13 @@ export function StoreWhatsAppFloatingButton() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[60] flex w-max max-w-[min(20rem,calc(100%-2rem))] items-center gap-2.5 rounded-2xl border border-stone-200/90 bg-white/95 py-2 pl-3.5 pr-2 shadow-[0_12px_40px_-14px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm transition hover:border-stone-300 hover:bg-white hover:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:bottom-6 sm:right-6"
-      aria-label={`¡Habla conmigo! — WhatsApp ${storeSupportPhone}`}
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[60] flex w-max max-w-[min(24rem,calc(100%-2rem))] items-center gap-2.5 rounded-2xl border border-stone-200/90 bg-white/95 py-2 pl-3.5 pr-2 shadow-[0_12px_40px_-14px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm transition hover:border-stone-300 hover:bg-white hover:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:bottom-6 sm:right-6"
+      aria-label={`¿Necesitas ayuda? ¡Chatea conmigo! — WhatsApp ${storeSupportPhone}`}
     >
-      <span className="min-w-0 select-none text-[13px] font-semibold leading-tight tracking-tight text-stone-800 sm:text-sm">
-        ¡Habla conmigo!
+      <span className="min-w-0 select-none text-[12px] font-semibold leading-snug tracking-tight text-stone-800 sm:text-[13px]">
+        ¿Necesitas ayuda? ¡Chatea conmigo!
       </span>
-      <span className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border border-stone-800 bg-stone-950 text-white shadow-inner">
+      <span className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border border-[#128C7E]/40 bg-[#25D366] text-white shadow-inner">
         <WhatsAppGlyph className="size-[1.45rem] text-white opacity-[0.97]" />
       </span>
     </a>
