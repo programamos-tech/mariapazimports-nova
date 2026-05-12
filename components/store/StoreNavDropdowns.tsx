@@ -178,7 +178,7 @@ export function StoreNavDropdowns({
                   strokeWidth={STORE_HEADER_ICON_STROKE}
                   aria-hidden
                 />
-                <span className="text-sm font-normal text-stone-900">
+                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
                   {accountLabel}
                 </span>
               </span>
@@ -200,7 +200,7 @@ export function StoreNavDropdowns({
                   strokeWidth={STORE_HEADER_ICON_STROKE}
                   aria-hidden
                 />
-                <span className="text-sm font-normal text-stone-900">
+                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
                   {accountLabel}
                 </span>
               </span>
