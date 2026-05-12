@@ -119,7 +119,7 @@ export function StoreFooter() {
                   </li>
                   <li>
                     <Link href="/products" className={footerLink}>
-                      Catálogo completo
+                      Todos los productos
                     </Link>
                   </li>
                 </ul>

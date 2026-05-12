@@ -158,7 +158,7 @@ export default async function HomePage() {
                     href="/products"
                     className="inline-flex border border-stone-900 bg-white px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
                   >
-                    Ver catálogo completo
+                    Ver todos los productos
                   </Link>
                 </RevealOnScroll>
               </>

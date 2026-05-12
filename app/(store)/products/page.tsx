@@ -425,7 +425,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         ) : list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             {invalidCategory
-              ? "Esa categoría no existe o fue eliminada. Vuelve al catálogo completo."
+              ? "Esa categoría no existe o fue eliminada. Vuelve a ver todos los productos."
               : q
                 ? "No hay productos que coincidan. Prueba otra búsqueda o orden."
                 : categoryName

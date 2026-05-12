@@ -303,7 +303,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                 href="/products"
                 className="text-sm font-medium text-stone-700 underline decoration-stone-300 underline-offset-4 transition hover:text-stone-900"
               >
-                Ver catálogo completo
+                Ver todos los productos
               </Link>
             </p>
           </>
