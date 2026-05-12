@@ -20,7 +20,6 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
-import { catalogSizeSummaryLine } from "@/lib/product-size-options";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
@@ -164,8 +163,6 @@ function CatalogProductCard({
   const favorite = ready && has(product.id);
   const img = storagePublicObjectUrl(product.image_path);
   const outOfStock = product.stock_quantity <= 0;
-  const sizeLine = catalogSizeSummaryLine(product);
-
   const afterCartMutation = () => {
     router.refresh();
     onCartChange?.();
@@ -182,7 +179,6 @@ function CatalogProductCard({
     ? storefrontPriceAfterCouponCents(product.price_cents, pct)
     : product.price_cents;
 
-  const titleWithSize = sizeLine ? `${product.name} · ${sizeLine}` : product.name;
   const needsFragranceOnPdp = productRequiresFragranceChoice(product);
 
   const imageBgClass = accentImageBg ? "bg-[#fceff3]" : "bg-white";
@@ -246,7 +242,7 @@ function CatalogProductCard({
           href={`/products/${product.id}`}
           className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"
         >
-          <span className="line-clamp-3">{titleWithSize}</span>
+          <span className="line-clamp-3">{product.name}</span>
         </Link>
         <div className="space-y-0.5 pt-0.5">
           {hasCouponPrice ? (
