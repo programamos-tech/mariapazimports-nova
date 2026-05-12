@@ -1,7 +1,6 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const labelClass =
@@ -87,9 +86,12 @@ function friendlyAuthError(raw: string): string {
   return raw;
 }
 
-export function AdminLoginForm() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+export function AdminLoginForm({
+  initialNotice = null,
+}: {
+  initialNotice?: string | null;
+}) {
+  const [error, setError] = useState<string | null>(initialNotice ?? null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -97,23 +99,35 @@ export function AdminLoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const form = e.currentTarget;
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const password = (form.elements.namedItem("password") as HTMLInputElement)
-      .value;
+    try {
+      const form = e.currentTarget;
+      const email = (form.elements.namedItem("email") as HTMLInputElement)
+        .value;
+      const password = (
+        form.elements.namedItem("password") as HTMLInputElement
+      ).value;
 
-    const supabase = createSupabaseBrowserClient();
-    const { error: signErr } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (signErr) {
-      setError(friendlyAuthError(signErr.message));
-      return;
+      const supabase = createSupabaseBrowserClient();
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signErr) {
+        setError(friendlyAuthError(signErr.message));
+        return;
+      }
+      /** Navegación completa: asegura cookies de sesión antes del middleware en /admin. */
+      window.location.assign("/admin");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(
+        msg.includes("NEXT_PUBLIC_SUPABASE")
+          ? "Falta configurar Supabase en el entorno (URL o anon key). Revisá las variables en Vercel y redeployá."
+          : friendlyAuthError(msg),
+      );
+    } finally {
+      setLoading(false);
     }
-    router.replace("/admin");
-    router.refresh();
   }
 
   return (
@@ -129,7 +143,11 @@ export function AdminLoginForm() {
           <IconMail className="size-[18px] shrink-0 text-neutral-400 dark:text-zinc-500" />
           <input
             name="email"
-            type="email"
+            type="text"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
             autoComplete="username"
             defaultValue={platformEmail}

@@ -6,7 +6,18 @@ import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
 
 const serif = "[font-family:ui-serif,Georgia,Cambria,'Times_New_Roman',serif]";
 
-export default function AdminLoginPage() {
+type Props = {
+  searchParams: Promise<{ error?: string; email?: string }>;
+};
+
+export default async function AdminLoginPage({ searchParams }: Props) {
+  const sp = await searchParams;
+  const err = typeof sp.error === "string" ? sp.error : "";
+  const initialNotice =
+    err === "no_profile" ?
+      "Tu sesión existe en Auth, pero no hay perfil de administrador vinculado (tabla public.profiles). Creá o actualizá la fila con el mismo id que auth.users, o ejecutá el script de asegurar admin en el proyecto correcto."
+    : null;
+
   return (
     <div className="relative min-h-screen bg-white text-neutral-950 antialiased dark:bg-zinc-950 dark:text-zinc-100">
       <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-5 sm:top-5">
@@ -54,8 +65,11 @@ export default function AdminLoginPage() {
 
         {/* Formulario */}
         <main className="relative flex flex-1 flex-col justify-center bg-neutral-50/40 px-6 py-14 sm:px-10 dark:bg-zinc-950 lg:px-16 xl:px-24">
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(250,250,250,0.65)_100%)] dark:bg-[linear-gradient(180deg,rgba(24,24,27,0.92)_0%,rgba(9,9,11,0.85)_100%)]" />
-          <div className="relative mx-auto w-full max-w-[420px]">
+          <div
+            className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(250,250,250,0.65)_100%)] dark:bg-[linear-gradient(180deg,rgba(24,24,27,0.92)_0%,rgba(9,9,11,0.85)_100%)]"
+            aria-hidden
+          />
+          <div className="relative z-10 mx-auto w-full max-w-[420px]">
             <div className="border border-neutral-200/90 bg-white px-8 py-10 shadow-[0_32px_90px_-40px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.8)_inset] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_32px_90px_-40px_rgba(0,0,0,0.55),inset_0_1px_0_0_rgba(255,255,255,0.04)] sm:px-10 sm:py-12">
               <h1 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-neutral-950 dark:text-zinc-100">
                 Iniciar sesión
@@ -67,7 +81,7 @@ export default function AdminLoginPage() {
               </p>
 
               <div className="mt-10">
-                <AdminLoginForm />
+                <AdminLoginForm initialNotice={initialNotice} />
               </div>
 
               <p className="mt-10 text-center">
