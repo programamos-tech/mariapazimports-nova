@@ -27,9 +27,11 @@ export default async function StoreLayout({
     <StoreFavoritesProvider>
       <StoreCartDrawerProvider>
         <StoreAuthModalProvider>
-          <div className="flex min-h-full flex-col bg-white text-stone-800">
+          <div className="flex min-h-full min-w-0 flex-col overflow-x-clip bg-white text-stone-800">
             <StoreHeader />
-            <StoreWelcomeDiscountBanner dbCoupon={promoBanner} />
+            {promoBanner ? (
+              <StoreWelcomeDiscountBanner dbCoupon={promoBanner} />
+            ) : null}
             <main className="flex-1">{children}</main>
             <StoreFooter />
             <StoreWhatsAppFloatingButton />

@@ -10,6 +10,11 @@ type ListOpts = {
   pageSize: number;
 };
 
+/** Evita romper `.or()` de PostgREST y metacaracteres de ILIKE. */
+function sanitizeAdminProductSearch(raw: string): string {
+  return raw.replace(/[%_\\,]/g, "").trim().slice(0, 120);
+}
+
 function isRetriableSelectError(err: { message?: string; code?: string } | null) {
   const m = err?.message ?? "";
   return (
@@ -43,6 +48,7 @@ export async function fetchAdminProductsList(
   totalCount: number;
 }> {
   const { q, status, categoryId, lowStockMax, page, pageSize } = opts;
+  const qClean = q ? sanitizeAdminProductSearch(q) : "";
   const safePage = Math.max(1, Math.floor(page));
   const safeSize = Math.min(100, Math.max(10, Math.floor(pageSize)));
   const from = (safePage - 1) * safeSize;
@@ -60,8 +66,13 @@ export async function fetchAdminProductsList(
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (q) {
-      query = query.ilike("name", `%${q}%`);
+    if (qClean) {
+      const pattern = `%${qClean}%`;
+      if (sel.includes("reference")) {
+        query = query.or(`name.ilike.${pattern},reference.ilike.${pattern}`);
+      } else {
+        query = query.ilike("name", pattern);
+      }
     }
     if (categoryId && sel.includes("category_id")) {
       query = query.eq("category_id", categoryId);

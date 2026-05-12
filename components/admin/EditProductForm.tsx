@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AdminDateInput,
   ProductMoneyInput,
@@ -80,6 +80,18 @@ export function EditProductForm({
   );
   const [selectedColors, setSelectedColors] = useState(initial.colors);
   const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
+  /** Vista previa local del archivo elegido (blob:); se revoca al cambiar o desmontar. */
+  const [pickedPreviewUrl, setPickedPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pickedPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(pickedPreviewUrl);
+      }
+    };
+  }, [pickedPreviewUrl]);
+
+  const thumbSrc = pickedPreviewUrl ?? currentImageUrl;
 
   const categoryLabel =
     categories.find((c) => c.id === categoryId)?.name ?? "—";
@@ -153,18 +165,25 @@ export function EditProductForm({
               <div>
                 <span className={labelClass}>Imagen (catálogo en línea)</span>
                 <div className="flex flex-wrap items-start gap-4">
-                  {currentImageUrl ? (
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-950">
-                      <Image
-                        src={currentImageUrl}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                        unoptimized={shouldUnoptimizeStorageImageUrl(
-                          currentImageUrl,
-                        )}
-                      />
+                  {thumbSrc ? (
+                    <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-950">
+                      {thumbSrc.startsWith("blob:") ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- vista previa local (blob:)
+                        <img
+                          src={thumbSrc}
+                          alt="Vista previa de la imagen seleccionada"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src={thumbSrc}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                          unoptimized={shouldUnoptimizeStorageImageUrl(thumbSrc)}
+                        />
+                      )}
                     </div>
                   ) : null}
                   <div className="min-w-0 flex-1">
@@ -180,14 +199,21 @@ export function EditProductForm({
                           className="sr-only"
                           onChange={(e) => {
                             const f = e.target.files?.[0];
-                            const msg = assertProductImageSize(f ?? undefined);
-                            if (msg) {
-                              alert(msg);
-                              e.target.value = "";
+                            if (!f) {
+                              setPickedPreviewUrl(null);
                               setFileLabel("Ningún archivo seleccionado");
                               return;
                             }
-                            setFileLabel(f ? f.name : "Ningún archivo seleccionado");
+                            const msg = assertProductImageSize(f);
+                            if (msg) {
+                              alert(msg);
+                              e.target.value = "";
+                              setPickedPreviewUrl(null);
+                              setFileLabel("Ningún archivo seleccionado");
+                              return;
+                            }
+                            setPickedPreviewUrl(URL.createObjectURL(f));
+                            setFileLabel(f.name);
                           }}
                         />
                       </label>

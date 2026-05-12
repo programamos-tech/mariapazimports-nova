@@ -44,7 +44,7 @@ export async function StoreHeader() {
   const accountFirstName = accountFirstNameFromUser(user);
 
   return (
-    <header className="border-b border-stone-200/90 bg-white">
+    <header className="min-w-0 overflow-x-clip border-b border-stone-200/90 bg-white">
       <StoreAnnouncementBar />
 
       <div className="relative flex items-center justify-between gap-3 px-4 py-4 lg:gap-6 lg:px-10 lg:py-5">

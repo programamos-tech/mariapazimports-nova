@@ -84,7 +84,7 @@ export function StoreNavDropdowns({
         role="dialog"
         aria-modal="true"
         aria-labelledby={`${baseId}-shop-drawer-title`}
-        className={`fixed inset-y-0 left-0 z-[70] flex w-[min(100vw-2rem,22rem)] flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out sm:w-[min(100vw-3rem,24rem)] ${
+        className={`fixed inset-y-0 left-0 z-[70] flex w-[min(22rem,calc(100svw-2rem))] flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out sm:w-[min(24rem,calc(100svw-3rem))] ${
           open ? "translate-x-0" : "-translate-x-full pointer-events-none"
         }`}
       >
@@ -132,9 +132,24 @@ export function StoreNavDropdowns({
           )}
 
           <Link
-            href="/products"
+            href="/marcas"
             onClick={close}
             className="mt-2 flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
+          >
+            <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+              Marcas
+            </span>
+            <ChevronRight
+              className="size-4 shrink-0 text-stone-400"
+              strokeWidth={1.75}
+              aria-hidden
+            />
+          </Link>
+
+          <Link
+            href="/products"
+            onClick={close}
+            className="flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
           >
             <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
               Todo el catálogo
@@ -219,6 +234,17 @@ export function StoreNavDropdowns({
               }
             >
               Quién soy
+            </Link>
+            <Link
+              href="/marcas"
+              onClick={close}
+              className={
+                pathname === "/marcas"
+                  ? "font-semibold text-stone-900"
+                  : "transition hover:text-stone-900"
+              }
+            >
+              Marcas
             </Link>
           </div>
         </div>

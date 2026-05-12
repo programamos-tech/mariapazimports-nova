@@ -22,6 +22,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 ];
 
 function buildListingQuery(opts: {
+  listingPath: string;
   lockedCategoryId: string | null;
   brands: string[];
   colors: string[];
@@ -45,7 +46,8 @@ function buildListingQuery(opts: {
   if (opts.sort && opts.sort !== "newest") p.set("sort", opts.sort);
   if (opts.q) p.set("q", opts.q);
   const qs = p.toString();
-  return qs ? `/products?${qs}` : "/products";
+  const base = opts.listingPath.replace(/\/$/, "");
+  return qs ? `${base}?${qs}` : base;
 }
 
 function parsePriceInput(raw: string): number | null {
@@ -58,12 +60,15 @@ function parsePriceInput(raw: string): number | null {
 
 export function ProductsListingControls({
   lockedCategoryId,
+  listingPath = "/products",
   facets,
   selection,
   sort,
   searchQuery,
 }: {
   lockedCategoryId: string | null;
+  /** Ruta del listado (query de filtros). Por defecto `/products`. */
+  listingPath?: string;
   facets: {
     brands: string[];
     colors: string[];
@@ -129,6 +134,7 @@ export function ProductsListingControls({
     }) => {
       router.push(
         buildListingQuery({
+          listingPath,
           lockedCategoryId,
           brands: next.brands ?? selection.brands,
           colors: next.colors ?? selection.colors,
@@ -146,6 +152,7 @@ export function ProductsListingControls({
       setFilterOpen(false);
     },
     [
+      listingPath,
       lockedCategoryId,
       router,
       searchQuery,
@@ -528,8 +535,8 @@ export function ProductsListingControls({
             <Link
               href={
                 lockedCategoryId
-                  ? `/products?category=${encodeURIComponent(lockedCategoryId)}`
-                  : "/products"
+                  ? `${listingPath}?category=${encodeURIComponent(lockedCategoryId)}`
+                  : listingPath
               }
               className="mt-4 block text-center text-[11px] text-stone-500 hover:text-stone-800"
               onClick={() => setFilterOpen(false)}

@@ -7,10 +7,8 @@ export const storeBrand =
  */
 export const storeLogoPath = encodeURI("/logobackoficce (1).png");
 
-/** Firma Berea Studio en `/public` (nombre con espacios → URL codificada). */
-export const bereaSignaturePath = encodeURI(
-  "/ChatGPT Image 11 may 2026, 05_18_10 p.m..png",
-);
+/** Firma Berea en `/public/logo-berea.png` (footer tienda, cookies, login admin, sidebar). */
+export const bereaSignaturePath = "/logo-berea.png";
 
 /**
  * Nombre en el pie © (independiente del nombre corto de marca si usás env de plantilla).

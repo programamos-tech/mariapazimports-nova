@@ -218,7 +218,7 @@ export function StoreSearch({
       onPick={close}
       panelClassName={
         variant === "minimal"
-          ? `${panelBase} right-0 w-[min(100vw-2rem,22rem)]`
+          ? `${panelBase} left-auto right-0 w-[min(22rem,calc(100svw-2rem))]`
           : `${panelBase} right-0 w-full`
       }
     />

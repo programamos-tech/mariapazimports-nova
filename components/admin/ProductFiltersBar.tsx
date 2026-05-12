@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { productInputOnWhiteClass } from "@/components/admin/product-form-primitives";
 
 type Category = { id: string; name: string };
@@ -24,14 +25,30 @@ export function ProductFiltersBar({
   categories,
   categoriesModalOpen = false,
 }: Props) {
+  const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+    };
+  }, []);
+
   const labelClass =
     "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600";
   const fieldClass = `${productInputOnWhiteClass} font-medium`;
 
   return (
     <form
+      key={[
+        defaultQ,
+        defaultStatus,
+        defaultCategoryId,
+        String(defaultPerPage),
+        categoriesModalOpen ? "1" : "0",
+      ].join("|")}
       method="get"
       action="/admin/products"
+      id="admin-product-filters"
       className="grid gap-4 sm:grid-cols-12"
     >
       {categoriesModalOpen ? (
@@ -50,6 +67,15 @@ export function ProductFiltersBar({
           defaultValue={defaultQ}
           placeholder="Buscar…"
           className={fieldClass}
+          onChange={(e) => {
+            const form = e.currentTarget.form;
+            if (!form) return;
+            if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+            submitTimerRef.current = setTimeout(() => {
+              submitTimerRef.current = null;
+              form.requestSubmit();
+            }, 400);
+          }}
         />
       </div>
       <div className="sm:col-span-3">

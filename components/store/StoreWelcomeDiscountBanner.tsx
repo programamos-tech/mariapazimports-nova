@@ -2,29 +2,19 @@
 
 import { X } from "lucide-react";
 import { useCallback, useSyncExternalStore } from "react";
-import {
-  storeWelcomeDiscountCode,
-  storeWelcomeDiscountMessage,
-} from "@/lib/brand";
 import { STORE_HEADER_ICON_STROKE } from "@/lib/store-header-icons";
 import type { StoreCouponBannerPayload } from "@/lib/store-coupons";
 
 const PROMO_DISMISS_EVENT = "tiendas-promo-dismiss";
 
-function dismissStorageKey(dbCoupon: StoreCouponBannerPayload | null) {
-  return dbCoupon
-    ? `tiendas_store_promo_dismissed_${dbCoupon.id}`
-    : "tiendas_store_promo_dismissed_env";
-}
-
 export function StoreWelcomeDiscountBanner({
   dbCoupon,
 }: {
-  dbCoupon: StoreCouponBannerPayload | null;
+  dbCoupon: StoreCouponBannerPayload;
 }) {
-  const message = dbCoupon?.banner_message ?? storeWelcomeDiscountMessage;
-  const code = dbCoupon?.code ?? storeWelcomeDiscountCode;
-  const dismissKey = dismissStorageKey(dbCoupon);
+  const message = dbCoupon.banner_message;
+  const code = dbCoupon.code;
+  const dismissKey = `tiendas_store_promo_dismissed_${dbCoupon.id}`;
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {

@@ -26,21 +26,13 @@ import {
   parseProductsPriceMinParam,
   parseProductsSizesParam,
 } from "@/lib/product-list-query";
+import { fetchPublishedProductsForListing } from "@/lib/store-products-listing-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { fetchCatalogBrowseSections } from "@/lib/catalog-browse-rows";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 
 export const dynamic = "force-dynamic";
-
-/** Legacy (`size_value`/`size_unit`) o cualquier entrada en `size_options`. */
-function productMatchesSizeFilterClause(s: {
-  value: number;
-  unit: string;
-}): string {
-  const blob = JSON.stringify([{ value: s.value, unit: s.unit }]);
-  return `and(size_value.eq.${s.value},size_unit.eq.${s.unit}),size_options.cs.${blob}`;
-}
 
 function firstSearchParam(v: string | string[] | undefined): string {
   if (typeof v === "string") return v;
@@ -212,72 +204,18 @@ export default async function ProductsPage({ searchParams }: Props) {
         await fetchCatalogBrowseSections(supabase, allCategoryRows)
       : [];
   } else {
-    let query = supabase
-      .from("products")
-      .select(
-        "id,name,brand,description,price_cents,image_path,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at",
-      )
-      .eq("is_published", true);
-
-    if (categoryFilterId && expandedCategoryIds?.length) {
-      query = query.in("category_id", expandedCategoryIds);
-    } else if (
-      !categoryFilterId &&
-      filterCategoryIds.length > 0 &&
-      allCategoryRows?.length
-    ) {
-      const expandedFilter = expandManyCategoryIdsFromRows(
-        allCategoryRows,
-        filterCategoryIds,
-      );
-      if (expandedFilter.length) {
-        query = query.in("category_id", expandedFilter);
-      }
-    }
-
-    if (activeBrands.length === 1) {
-      query = query.eq("brand", activeBrands[0]!);
-    } else if (activeBrands.length > 1) {
-      query = query.in("brand", activeBrands);
-    }
-
-    if (activeColors.length > 0) {
-      query = query.overlaps("colors", activeColors);
-    }
-
-    if (activeSizes.length >= 1) {
-      query = query.or(
-        activeSizes.map(productMatchesSizeFilterClause).join(","),
-      );
-    }
-
-    if (priceMin != null) {
-      query = query.gte("price_cents", priceMin);
-    }
-    if (priceMax != null) {
-      query = query.lte("price_cents", priceMax);
-    }
-
-    if (q) {
-      query = query.ilike("name", `%${q}%`);
-    }
-
-    switch (sort) {
-      case "price_asc":
-        query = query.order("price_cents", { ascending: true });
-        break;
-      case "price_desc":
-        query = query.order("price_cents", { ascending: false });
-        break;
-      case "name":
-        query = query.order("name", { ascending: true });
-        break;
-      default:
-        query = query.order("created_at", { ascending: false });
-    }
-
-    const { data: products } = await query;
-    list = products ?? [];
+    list = await fetchPublishedProductsForListing(supabase, {
+      categoryFilterId,
+      filterCategoryIds,
+      activeBrands,
+      activeColors,
+      activeSizes,
+      priceMin,
+      priceMax,
+      q,
+      sort,
+      allCategoryRows,
+    });
   }
 
   const cartQtyByProductId = await getStorefrontCartQuantityByProductId();

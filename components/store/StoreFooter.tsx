@@ -92,6 +92,11 @@ export function StoreFooter() {
                     </Link>
                   </li>
                   <li>
+                    <Link href="/marcas" className={footerLink}>
+                      Marcas
+                    </Link>
+                  </li>
+                  <li>
                     <Link href="/checkout" className={footerLink}>
                       Bolsa
                     </Link>

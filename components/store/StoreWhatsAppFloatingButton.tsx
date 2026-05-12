@@ -1,55 +1,10 @@
 "use client";
 
 import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import {
   storeSupportPhone,
   storeWhatsAppPrefilledText,
   storeWhatsAppUrl,
 } from "@/lib/brand";
-
-const STORAGE_KEY = "tiendas_whatsapp_fab_pos_v1";
-const FAB_PX = 52;
-const EDGE = 8;
-const DRAG_THRESHOLD_PX = 10;
-
-function clampPosition(x: number, y: number): { x: number; y: number } {
-  if (typeof window === "undefined") return { x, y };
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const maxX = Math.max(EDGE, vw - FAB_PX - EDGE);
-  const maxY = Math.max(EDGE, vh - FAB_PX - EDGE);
-  return {
-    x: Math.min(maxX, Math.max(EDGE, x)),
-    y: Math.min(maxY, Math.max(EDGE, y)),
-  };
-}
-
-function defaultPosition(): { x: number; y: number } {
-  const margin = 16;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  return clampPosition(vw - FAB_PX - margin, vh - FAB_PX - margin - 56);
-}
-
-function loadStoredPosition(): { x: number; y: number } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultPosition();
-    const j = JSON.parse(raw) as { x?: unknown; y?: unknown };
-    if (typeof j.x === "number" && typeof j.y === "number") {
-      return clampPosition(j.x, j.y);
-    }
-  } catch {
-    /* ignore */
-  }
-  return defaultPosition();
-}
 
 /** Logo WhatsApp monocromo (relleno), para fondo oscuro. */
 function WhatsAppGlyph({ className }: { className?: string }) {
@@ -66,134 +21,25 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 }
 
 export function StoreWhatsAppFloatingButton() {
-  const href =
-    storeWhatsAppUrl === "#"
-      ? "#"
-      : `${storeWhatsAppUrl}?text=${encodeURIComponent(storeWhatsAppPrefilledText)}`;
+  const baseUrl = storeWhatsAppUrl;
+  if (baseUrl === "#") return null;
 
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const dragRef = useRef({
-    active: false,
-    pointerId: -1,
-    grabX: 0,
-    grabY: 0,
-    didDrag: false,
-    startClientX: 0,
-    startClientY: 0,
-  });
-
-  useLayoutEffect(() => {
-    setPos(loadStoredPosition());
-  }, []);
-
-  const persistPos = useCallback((p: { x: number; y: number }) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    function onResize() {
-      setPos((p) => (p ? clampPosition(p.x, p.y) : p));
-    }
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const openWhatsApp = useCallback(() => {
-    window.open(href, "_blank", "noopener,noreferrer");
-  }, [href]);
-
-  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    const d = dragRef.current;
-    d.active = true;
-    d.pointerId = e.pointerId;
-    d.didDrag = false;
-    d.startClientX = e.clientX;
-    d.startClientY = e.clientY;
-    d.grabX = e.clientX - rect.left;
-    d.grabY = e.clientY - rect.top;
-    el.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const d = dragRef.current;
-    if (!d.active || e.pointerId !== d.pointerId) return;
-
-    const dx = e.clientX - d.startClientX;
-    const dy = e.clientY - d.startClientY;
-    if (Math.hypot(dx, dy) >= DRAG_THRESHOLD_PX) {
-      d.didDrag = true;
-    }
-
-    const nx = e.clientX - d.grabX;
-    const ny = e.clientY - d.grabY;
-    setPos(clampPosition(nx, ny));
-  };
-
-  const endPointer = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const d = dragRef.current;
-    if (!d.active || e.pointerId !== d.pointerId) return;
-    d.active = false;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
-    d.pointerId = -1;
-
-    setPos((p) => {
-      if (!p) return p;
-      const next = clampPosition(p.x, p.y);
-      if (d.didDrag) {
-        persistPos(next);
-      }
-      return next;
-    });
-
-    if (!d.didDrag) {
-      openWhatsApp();
-    }
-  };
-
-  if (href === "#") return null;
-
-  if (pos === null) {
-    return null;
-  }
+  const href = `${baseUrl}?text=${encodeURIComponent(storeWhatsAppPrefilledText)}`;
 
   return (
-    <button
-      type="button"
-      style={{
-        position: "fixed",
-        left: pos.x,
-        top: pos.y,
-        width: FAB_PX,
-        height: FAB_PX,
-        zIndex: 60,
-        touchAction: "none",
-      }}
-      className="flex cursor-grab items-center justify-center rounded-full border border-stone-800 bg-stone-950 text-white shadow-[0_14px_36px_-12px_rgba(0,0,0,0.55)] transition-colors hover:bg-stone-900 hover:shadow-[0_18px_40px_-12px_rgba(0,0,0,0.48)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 active:cursor-grabbing"
-      aria-label={`Escribir por WhatsApp a ${storeSupportPhone}`}
-      title="Arrastrá para mover · Clic para abrir WhatsApp"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endPointer}
-      onPointerCancel={endPointer}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openWhatsApp();
-        }
-      }}
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[60] flex w-max max-w-[min(20rem,calc(100%-2rem))] items-center gap-2.5 rounded-2xl border border-stone-200/90 bg-white/95 py-2 pl-3.5 pr-2 shadow-[0_12px_40px_-14px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm transition hover:border-stone-300 hover:bg-white hover:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:bottom-6 sm:right-6"
+      aria-label={`¡Habla conmigo! — WhatsApp ${storeSupportPhone}`}
     >
-      <WhatsAppGlyph className="pointer-events-none size-[1.45rem] text-white opacity-[0.97]" />
-    </button>
+      <span className="min-w-0 select-none text-[13px] font-semibold leading-tight tracking-tight text-stone-800 sm:text-sm">
+        ¡Habla conmigo!
+      </span>
+      <span className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border border-stone-800 bg-stone-950 text-white shadow-inner">
+        <WhatsAppGlyph className="size-[1.45rem] text-white opacity-[0.97]" />
+      </span>
+    </a>
   );
 }
