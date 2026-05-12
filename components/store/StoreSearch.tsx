@@ -8,8 +8,10 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCop } from "@/lib/money";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
-import { useProductCardImageWithFallback } from "@/hooks/use-product-card-image";
-import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import {
+  shouldUnoptimizeStorageImageUrl,
+  storagePublicObjectUrl,
+} from "@/lib/storage-public-url";
 import {
   STORE_HEADER_ICON_SM,
   STORE_HEADER_ICON_STROKE,
@@ -21,64 +23,6 @@ type ProductRow = {
   price_cents: number;
   image_path: string | null;
 };
-
-function SearchResultRow({
-  product,
-  isLast,
-  onPick,
-}: {
-  product: ProductRow;
-  isLast: boolean;
-  onPick: () => void;
-}) {
-  const { src: img, onError: onThumbError } = useProductCardImageWithFallback(
-    product.id,
-    product.image_path,
-  );
-  const reviews = pseudoReviewCount(product.id);
-  return (
-    <li className={isLast ? "" : "border-b border-stone-100"}>
-      <Link
-        href={`/products/${product.id}`}
-        onClick={onPick}
-        className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-[#faf8f5]"
-      >
-        <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-stone-100 ring-1 ring-stone-200/80">
-          {img ? (
-            <Image
-              src={img}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="48px"
-              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
-              onError={onThumbError}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-stone-400">
-              —
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-stone-900">{product.name}</p>
-          <p className="mt-0.5 flex items-center gap-1.5">
-            <span
-              className="text-[11px] leading-none tracking-tight text-[#6b7f6a]"
-              aria-hidden
-            >
-              ★★★★★
-            </span>
-            <span className="text-[11px] text-stone-400">({reviews})</span>
-          </p>
-        </div>
-        <p className="shrink-0 text-sm font-semibold text-[#556654]">
-          {formatCop(product.price_cents)}
-        </p>
-      </Link>
-    </li>
-  );
-}
 
 function SearchResultsPanel({
   debounced,
@@ -121,14 +65,54 @@ function SearchResultsPanel({
         </p>
       ) : (
         <ul className="py-1">
-          {products.map((p, idx) => (
-            <SearchResultRow
-              key={p.id}
-              product={p}
-              isLast={idx === products.length - 1}
-              onPick={onPick}
-            />
-          ))}
+          {products.map((p, idx) => {
+            const img = storagePublicObjectUrl(p.image_path);
+            const reviews = pseudoReviewCount(p.id);
+            return (
+              <li
+                key={p.id}
+                className={idx < products.length - 1 ? "border-b border-stone-100" : ""}
+              >
+                <Link
+                  href={`/products/${p.id}`}
+                  onClick={onPick}
+                  className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-[#faf8f5]"
+                >
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-stone-100 ring-1 ring-stone-200/80">
+                    {img ? (
+                      <Image
+                        src={img}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                        unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-stone-400">
+                        —
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-stone-900">{p.name}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5">
+                      <span
+                        className="text-[11px] leading-none tracking-tight text-[#6b7f6a]"
+                        aria-hidden
+                      >
+                        ★★★★★
+                      </span>
+                      <span className="text-[11px] text-stone-400">({reviews})</span>
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold text-[#556654]">
+                    {formatCop(p.price_cents)}
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

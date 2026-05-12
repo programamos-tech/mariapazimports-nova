@@ -1,12 +1,11 @@
 import {
   storeAnnouncementMessage,
   storeSupportPhone,
+  storeWhatsAppUrl,
 } from "@/lib/brand";
 
 /** Número de copias del bloque (mismo texto). Debe coincidir con el % en `store-announcement-marquee` (-100%/N). */
 const MARQUEE_SEGMENT_COUNT = 12;
-
-const announcementTelHref = `tel:${storeSupportPhone.replace(/[^\d+]/g, "")}`;
 
 const phoneLinkClass =
   "whitespace-nowrap font-normal text-stone-800 underline decoration-stone-800/35 underline-offset-[3px] hover:text-stone-950";
@@ -23,7 +22,12 @@ function AnnouncementSegment({ isDuplicate }: { isDuplicate: boolean }) {
       <span className="text-stone-400" aria-hidden>
         ·
       </span>
-      <a href={announcementTelHref} className={phoneLinkClass}>
+      <a
+        href={storeWhatsAppUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={phoneLinkClass}
+      >
         {storeSupportPhone}
       </a>
     </span>

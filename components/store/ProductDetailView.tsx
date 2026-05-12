@@ -5,7 +5,7 @@ import { ChevronDown, Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
@@ -18,7 +18,6 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
-import { productImageRecoveryUrl } from "@/lib/product-demo-image";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
 
@@ -137,20 +136,6 @@ export function ProductDetailView({
     return mapped ?? imageUrl;
   }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrl]);
 
-  const recoveryHeroUrl = productImageRecoveryUrl(productId);
-  const [heroLoadFailed, setHeroLoadFailed] = useState(false);
-
-  useEffect(() => {
-    setHeroLoadFailed(false);
-  }, [heroImageUrl]);
-
-  const displayHeroUrl = useMemo(() => {
-    if (!heroImageUrl) return null;
-    if (!heroLoadFailed) return heroImageUrl;
-    if (recoveryHeroUrl !== heroImageUrl) return recoveryHeroUrl;
-    return null;
-  }, [heroImageUrl, heroLoadFailed, recoveryHeroUrl]);
-
   const selectedFragranceForCart =
     fragranceLabels.length > 0
       ? fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? ""
@@ -166,22 +151,21 @@ export function ProductDetailView({
       ? `${descriptionText.slice(0, descPreviewLimit).trim()}…`
       : descriptionText;
 
-  const unopt = shouldUnoptimizeStorageImageUrl(displayHeroUrl);
+  const unopt = shouldUnoptimizeStorageImageUrl(heroImageUrl);
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
       {/* Imagen */}
       <div className="relative aspect-square w-full bg-[#f5f5f4]">
-        {displayHeroUrl ? (
+        {heroImageUrl ? (
           <Image
-            src={displayHeroUrl}
+            src={heroImageUrl}
             alt={name}
             fill
             className="object-contain p-8 sm:p-12"
             sizes="(max-width: 1024px) 100vw, 50vw"
             priority
             unoptimized={unopt}
-            onError={() => setHeroLoadFailed(true)}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-6xl text-stone-300">

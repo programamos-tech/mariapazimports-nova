@@ -20,8 +20,10 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
-import { useProductCardImageWithFallback } from "@/hooks/use-product-card-image";
-import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import {
+  shouldUnoptimizeStorageImageUrl,
+  storagePublicObjectUrl,
+} from "@/lib/storage-public-url";
 
 type Product = {
   id: string;
@@ -66,8 +68,7 @@ function ShowcaseProductCard({
   /** Fondo suave tipo bloque de color en algunas columnas (look editorial). */
   accentImageBg?: boolean;
 }) {
-  const { src: img, onError: onProductImageError } =
-    useProductCardImageWithFallback(product.id, product.image_path);
+  const img = storagePublicObjectUrl(product.image_path);
   const outOfStock = product.stock_quantity <= 0;
   const pct = Math.max(
     0,
@@ -101,7 +102,6 @@ function ShowcaseProductCard({
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
-              onError={onProductImageError}
             />
           ) : (
             <span className="flex size-full items-center justify-center text-3xl text-stone-200">
@@ -161,8 +161,7 @@ function CatalogProductCard({
   const [cartPending, startCartTransition] = useTransition();
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(product.id);
-  const { src: img, onError: onProductImageError } =
-    useProductCardImageWithFallback(product.id, product.image_path);
+  const img = storagePublicObjectUrl(product.image_path);
   const outOfStock = product.stock_quantity <= 0;
   const afterCartMutation = () => {
     router.refresh();
@@ -201,7 +200,6 @@ function CatalogProductCard({
               className="object-cover object-center transition duration-300 group-hover/image:scale-[1.02]"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
-              onError={onProductImageError}
             />
           ) : (
             <span className="flex size-full items-center justify-center text-4xl text-stone-300">
