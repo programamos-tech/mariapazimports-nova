@@ -15,7 +15,7 @@ export default async function AdminLoginPage({ searchParams }: Props) {
   const err = typeof sp.error === "string" ? sp.error : "";
   const initialNotice =
     err === "no_profile" ?
-      "Tu sesión existe en Auth, pero no hay perfil de administrador vinculado (tabla public.profiles). Creá o actualizá la fila con el mismo id que auth.users, o ejecutá el script de asegurar admin en el proyecto correcto."
+      "Tu usuario existe en Authentication, pero falta (o no coincide) la fila en public.profiles con el mismo id que auth.users. Desde el repo, con supabase link al proyecto: npm run admin:ensure:remote -- tu@correo.com tuContraseña. Luego cerrá sesión en la tienda si hace falta y volvé a entrar al backoffice."
     : null;
 
   return (
