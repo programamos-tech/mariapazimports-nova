@@ -20,10 +20,8 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
-import {
-  shouldUnoptimizeStorageImageUrl,
-  storagePublicObjectUrl,
-} from "@/lib/storage-public-url";
+import { resolveProductCardImageUrl } from "@/lib/product-demo-image";
+import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 type Product = {
   id: string;
@@ -68,7 +66,7 @@ function ShowcaseProductCard({
   /** Fondo suave tipo bloque de color en algunas columnas (look editorial). */
   accentImageBg?: boolean;
 }) {
-  const img = storagePublicObjectUrl(product.image_path);
+  const img = resolveProductCardImageUrl(product.id, product.image_path);
   const outOfStock = product.stock_quantity <= 0;
   const pct = Math.max(
     0,
@@ -161,7 +159,7 @@ function CatalogProductCard({
   const [cartPending, startCartTransition] = useTransition();
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(product.id);
-  const img = storagePublicObjectUrl(product.image_path);
+  const img = resolveProductCardImageUrl(product.id, product.image_path);
   const outOfStock = product.stock_quantity <= 0;
   const afterCartMutation = () => {
     router.refresh();

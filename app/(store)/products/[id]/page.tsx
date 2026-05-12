@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetailView } from "@/components/store/ProductDetailView";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { resolveProductCardImageUrl } from "@/lib/product-demo-image";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
@@ -42,7 +43,7 @@ export default async function ProductDetailPage({ params }: Props) {
       ? String(catRel.name ?? "").trim() || null
       : null;
 
-  const img = storagePublicObjectUrl(product.image_path);
+  const img = resolveProductCardImageUrl(product.id, product.image_path);
   const fragranceLabelsRaw = Array.isArray(product.fragrance_options)
     ? product.fragrance_options.filter(
         (x): x is string => typeof x === "string" && x.trim().length > 0,

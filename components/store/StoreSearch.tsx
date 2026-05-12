@@ -8,10 +8,8 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCop } from "@/lib/money";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
-import {
-  shouldUnoptimizeStorageImageUrl,
-  storagePublicObjectUrl,
-} from "@/lib/storage-public-url";
+import { resolveProductCardImageUrl } from "@/lib/product-demo-image";
+import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 import {
   STORE_HEADER_ICON_SM,
   STORE_HEADER_ICON_STROKE,
@@ -66,7 +64,7 @@ function SearchResultsPanel({
       ) : (
         <ul className="py-1">
           {products.map((p, idx) => {
-            const img = storagePublicObjectUrl(p.image_path);
+            const img = resolveProductCardImageUrl(p.id, p.image_path);
             const reviews = pseudoReviewCount(p.id);
             return (
               <li
