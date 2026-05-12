@@ -15,7 +15,7 @@ export default async function AdminLoginPage({ searchParams }: Props) {
   const err = typeof sp.error === "string" ? sp.error : "";
   const initialNotice =
     err === "no_profile" ?
-      "Tu usuario existe en Authentication, pero falta (o no coincide) la fila en public.profiles con el mismo id que auth.users. Desde el repo, con supabase link al proyecto: npm run admin:ensure:remote -- tu@correo.com tuContraseña. Luego cerrá sesión en la tienda si hace falta y volvé a entrar al backoffice."
+      "Tu usuario existe en Authentication, pero falta (o no coincide) la fila en public.profiles con el mismo id que auth.users. Desde el repo (supabase link al proyecto): npm run admin:ensure:remote -- tu@correo.com tuContraseña. Si sigue igual: npm run admin:ensure:remote -- --reset tu@correo.com tuContraseña. Cerrá sesión en la tienda y volvé a /admin/login."
     : null;
 
   return (

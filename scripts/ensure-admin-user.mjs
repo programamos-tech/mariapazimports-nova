@@ -6,7 +6,11 @@
  *
  * Uso:
  *   node scripts/ensure-admin-user.mjs correo@dominio.com contraseña
+ *   node scripts/ensure-admin-user.mjs --reset correo@dominio.com contraseña
  *   npm run admin:ensure:remote -- correo@dominio.com contraseña
+ *   npm run admin:ensure:remote -- --reset correo@dominio.com contraseña
+ *
+ * --reset: borra el usuario en Auth (y por CASCADE la fila en profiles) y lo crea de cero.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -52,8 +56,11 @@ loadEnvCloud();
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const email = process.argv[2]?.trim();
-const password = process.argv[3]?.trim();
+const argv = process.argv.slice(2);
+const fullReset = argv[0] === "--reset";
+const posArgs = fullReset ? argv.slice(1) : argv;
+const email = posArgs[0]?.trim();
+const password = posArgs[1]?.trim();
 
 if (!url || !serviceKey) {
   console.error(
@@ -63,7 +70,7 @@ if (!url || !serviceKey) {
 }
 if (!email?.includes("@") || !password) {
   console.error(
-    "Uso: node scripts/ensure-admin-user.mjs correo@dominio.com contraseña",
+    "Uso: node scripts/ensure-admin-user.mjs [--reset] correo@dominio.com contraseña",
   );
   process.exit(1);
 }
@@ -92,6 +99,21 @@ async function findAuthUserByEmail(target) {
 }
 
 try {
+  if (fullReset) {
+    const toDelete = await findAuthUserByEmail(email);
+    if (toDelete) {
+      const { error: delErr } = await supabase.auth.admin.deleteUser(
+        toDelete.id,
+      );
+      if (delErr) throw delErr;
+      console.log(
+        "Reset: usuario eliminado de Authentication (public.profiles en cascada si existía FK).",
+      );
+    } else {
+      console.log("Reset: no había usuario con ese correo en Authentication.");
+    }
+  }
+
   let userId;
   const existing = await findAuthUserByEmail(email);
 
