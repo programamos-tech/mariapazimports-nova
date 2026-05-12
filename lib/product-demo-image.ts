@@ -38,6 +38,24 @@ function stableIndexForId(id: string): number {
   return Math.abs(h) % DEMO_PRODUCT_IMAGE_URLS.length;
 }
 
+function pickDemoUrl(productId: string): string {
+  return DEMO_PRODUCT_IMAGE_URLS[stableIndexForId(productId)]!;
+}
+
+/**
+ * Foto de respaldo cuando la imagen del producto falla al cargar (404, objeto borrado, URL inválida).
+ * No depende de `NEXT_PUBLIC_DEMO_PRODUCT_IMAGES`: solo se usa tras `onError` del `<Image>`.
+ */
+export function productImageRecoveryUrl(productId: string): string {
+  return pickDemoUrl(productId);
+}
+
+/** URL de foto demo (misma rotación que en tarjetas). Solo si placeholders están habilitados. */
+export function productDemoPlaceholderUrl(productId: string): string | null {
+  if (!demoProductPlaceholdersEnabled()) return null;
+  return pickDemoUrl(productId);
+}
+
 /** URL para imagen de tarjeta / miniatura: Storage si hay ruta; si no, demo opcional. */
 export function resolveProductCardImageUrl(
   productId: string,
@@ -45,6 +63,5 @@ export function resolveProductCardImageUrl(
 ): string | null {
   const stored = storagePublicObjectUrl(imagePath);
   if (stored) return stored;
-  if (!demoProductPlaceholdersEnabled()) return null;
-  return DEMO_PRODUCT_IMAGE_URLS[stableIndexForId(productId)] ?? null;
+  return productDemoPlaceholderUrl(productId);
 }
