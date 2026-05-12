@@ -332,30 +332,28 @@ export default async function ProductsPage({ searchParams }: Props) {
 
       <div className="w-full bg-white">
         <div className="mx-auto max-w-7xl">
-          <RevealOnScroll className="w-full">
-            <ProductsListingControls
-              key={controlsKey}
-              lockedCategoryId={categoryFilterId}
-              facets={{
-                brands: listingFacets.brands,
-                colors: listingFacets.colors,
-                sizes: listingFacets.sizes,
-                priceMin: listingFacets.priceMin,
-                priceMax: listingFacets.priceMax,
-                categories: categoriesForFilterMenu,
-              }}
-              selection={{
-                brands: activeBrands,
-                colors: activeColors,
-                sizes: activeSizes.map((s) => `${s.value}:${s.unit}`),
-                categoryIds: filterCategoryIds,
-                priceMin,
-                priceMax,
-              }}
-              sort={sort}
-              searchQuery={q}
-            />
-          </RevealOnScroll>
+          <ProductsListingControls
+            key={controlsKey}
+            lockedCategoryId={categoryFilterId}
+            facets={{
+              brands: listingFacets.brands,
+              colors: listingFacets.colors,
+              sizes: listingFacets.sizes,
+              priceMin: listingFacets.priceMin,
+              priceMax: listingFacets.priceMax,
+              categories: categoriesForFilterMenu,
+            }}
+            selection={{
+              brands: activeBrands,
+              colors: activeColors,
+              sizes: activeSizes.map((s) => `${s.value}:${s.unit}`),
+              categoryIds: filterCategoryIds,
+              priceMin,
+              priceMax,
+            }}
+            sort={sort}
+            searchQuery={q}
+          />
         </div>
       </div>
 
