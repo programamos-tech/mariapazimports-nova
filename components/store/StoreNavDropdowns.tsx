@@ -212,7 +212,7 @@ export function StoreNavDropdowns({
             </Link>
           )}
 
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-100 pt-5 text-[13px] text-stone-600">
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-100 pt-5 text-[12px] font-medium uppercase tracking-[0.08em] text-stone-600">
             <Link
               href="/"
               onClick={close}
