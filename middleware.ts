@@ -1,7 +1,40 @@
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 const cuentaPublicPaths = new Set(["/cuenta/entrar", "/cuenta/registro"]);
+
+/**
+ * Comprueba si auth.uid() tiene fila en public.profiles.
+ * Preferimos la RPC SECURITY DEFINER (migración 20260611130000): evita fallos de RLS
+ * en lecturas directas desde el middleware.
+ */
+async function sessionHasStaffProfile(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("user_has_admin_profile");
+  if (!error && typeof data === "boolean") {
+    return data;
+  }
+  if (error) {
+    console.error(
+      "[middleware] user_has_admin_profile:",
+      error.message,
+      error.code,
+    );
+  }
+  const { data: row, error: selErr } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (selErr) {
+    console.error("[middleware] profiles fallback:", selErr.message, selErr.code);
+    return false;
+  }
+  return Boolean(row);
+}
 
 function isCuentaPath(path: string) {
   return path === "/cuenta" || path.startsWith("/cuenta/");
@@ -41,17 +74,13 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (isCuentaPath(path)) {
-    const { data: profile } = user
-      ? await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle()
-      : { data: null };
+    const hasStaffProfile = user
+      ? await sessionHasStaffProfile(supabase, user.id)
+      : false;
 
     // Staff usa el enlace "Backoffice" del footer; aquí no redirigimos a /admin.
     // Las páginas de registro/login de la tienda no aplican si ya hay sesión de admin.
-    if (user && profile && cuentaPublicPaths.has(path)) {
+    if (user && hasStaffProfile && cuentaPublicPaths.has(path)) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
@@ -61,19 +90,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(next);
     }
 
-    if (cuentaPublicPaths.has(path) && user && !profile) {
+    if (cuentaPublicPaths.has(path) && user && !hasStaffProfile) {
       return NextResponse.redirect(new URL("/cuenta", request.url));
     }
   }
 
   if (path.startsWith("/admin/login")) {
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (profile) {
+      const hasStaffProfile = await sessionHasStaffProfile(supabase, user.id);
+      if (hasStaffProfile) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
       const hasNoProfileError =
@@ -95,12 +120,8 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (!profile) {
+    const hasStaffProfile = await sessionHasStaffProfile(supabase, user.id);
+    if (!hasStaffProfile) {
       const next = new URL("/admin/login", request.url);
       next.searchParams.set("error", "no_profile");
       next.searchParams.set("uid", user.id);

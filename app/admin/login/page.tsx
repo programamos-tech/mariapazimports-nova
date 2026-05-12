@@ -15,7 +15,7 @@ export default async function AdminLoginPage({ searchParams }: Props) {
   const err = typeof sp.error === "string" ? sp.error : "";
   const initialNotice =
     err === "no_profile" ?
-      "Tu usuario existe en Authentication, pero falta (o no coincide) la fila en public.profiles con el mismo id que auth.users. Desde el repo (supabase link al proyecto): npm run admin:ensure:remote -- tu@correo.com tuContraseña. Si sigue igual: npm run admin:ensure:remote -- --reset tu@correo.com tuContraseña. Cerrá sesión en la tienda y volvé a /admin/login."
+      "Hay sesión en el navegador, pero este proyecto no reconoce tu usuario como staff (public.profiles). Revisá en Vercel que NEXT_PUBLIC_SUPABASE_URL y la anon key sean del mismo proyecto Supabase donde está tu usuario. Probá cerrar sesión o borrar cookies del sitio, o ejecutá: npm run admin:ensure:remote -- mp@imports.com admin123 Tras un deploy nuevo, el acceso debería validarse mejor con la base actualizada."
     : null;
 
   return (
