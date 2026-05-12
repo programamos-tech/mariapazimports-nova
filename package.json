@@ -10,6 +10,7 @@
     "seed:demo": "node scripts/seed-fake-products.mjs",
     "seed:csv": "node scripts/seed-products-from-csv.mjs",
     "seed:produtos": "node scripts/seed-produtos-xlsx.mjs",
+    "seed:produtos:remote": "node scripts/seed-produtos-cloud-via-supabase-cli.mjs",
     "admin:link-profile": "node scripts/link-admin-profile.mjs"
   },
   "dependencies": {

@@ -14,13 +14,21 @@
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
  *
+ * Proyecto remoto (nube): crea `.env.cloud` en la raíz con la URL y el service role
+ * del proyecto Supabase.com. Este script carga `.env.local` y luego `.env.cloud`
+ * sobrescribiendo esas variables para apuntar al remoto.
+ *
+ * Imágenes: carpeta `product-photos/` (o `SEED_PRODUCT_PHOTOS_DIR`) con archivos
+ * `1.jpg`, `2.png`, … alineados al primer número de la columna NUMERO FOTO del Excel.
+ * Sube a Storage `product-images` y rellena `image_path`.
+ *
  * Stock inicial (opcional, enteros ≥ 0):
  *   SEED_STOCK_LOCAL (default 100)
  *   SEED_STOCK_WAREHOUSE (default 0)
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,10 +46,9 @@ const DEFAULT_STOCK_WAREHOUSE = Math.max(
   Math.floor(Number(process.env.SEED_STOCK_WAREHOUSE ?? 0)),
 );
 
-function loadEnvLocal() {
-  const p = join(root, ".env.local");
-  if (!existsSync(p)) return;
-  const raw = readFileSync(p, "utf8");
+function loadEnvFromFile(absPath, { overwrite } = { overwrite: false }) {
+  if (!existsSync(absPath)) return;
+  const raw = readFileSync(absPath, "utf8");
   for (const line of raw.split("\n")) {
     const t = line.trim();
     if (!t || t.startsWith("#")) continue;
@@ -55,8 +62,18 @@ function loadEnvLocal() {
     ) {
       val = val.slice(1, -1);
     }
-    if (!process.env[key]) process.env[key] = val;
+    if (overwrite) process.env[key] = val;
+    else if (!process.env[key]) process.env[key] = val;
   }
+}
+
+function loadEnvLocal() {
+  loadEnvFromFile(join(root, ".env.local"), { overwrite: false });
+}
+
+/** Opcional: URL + service role del Supabase remoto (sobrescribe .env.local). */
+function loadEnvCloud() {
+  loadEnvFromFile(join(root, ".env.cloud"), { overwrite: true });
 }
 
 function normalizeHeader(h) {
@@ -279,16 +296,52 @@ function columnIndex(headersNorm, predicate) {
   return headersNorm.findIndex(predicate);
 }
 
+const PHOTO_FILE_EXTS = ["jpg", "jpeg", "png", "webp"];
+const CONTENT_TYPE_BY_EXT = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+function firstPhotoNumber(photoRef) {
+  const s = String(photoRef ?? "").trim();
+  if (!s) return null;
+  const head = (s.split(/[,;]/)[0] ?? "").trim();
+  const m = head.match(/(\d+)/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function findPhotoFile(photosDir, num) {
+  if (!existsSync(photosDir)) return null;
+  for (const ext of PHOTO_FILE_EXTS) {
+    const p = join(photosDir, `${num}.${ext}`);
+    if (existsSync(p)) return p;
+  }
+  return null;
+}
+
 loadEnvLocal();
+loadEnvCloud();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !key) {
   console.error(
-    "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY (.env.local o export).",
+    "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY (.env.local, .env.cloud o export).",
   );
   process.exit(1);
+}
+
+try {
+  const host = new URL(url).hostname;
+  const src = existsSync(join(root, ".env.cloud")) ? " (.env.cloud)" : "";
+  console.log(`Destino Supabase: ${host}${src}`);
+} catch {
+  // ignore
 }
 
 const xlsxArg = process.argv[2]?.trim();
@@ -500,6 +553,56 @@ const products = records.map((r) => {
     colors: [],
   };
 });
+
+const photosDirRaw = process.env.SEED_PRODUCT_PHOTOS_DIR?.trim();
+const photosDir =
+  photosDirRaw && photosDirRaw.length > 0
+    ? resolve(process.cwd(), photosDirRaw)
+    : join(root, "product-photos");
+
+let photoUploaded = 0;
+let photoMissingFile = 0;
+let photoErrors = 0;
+
+if (existsSync(photosDir)) {
+  for (let i = 0; i < products.length; i++) {
+    const r = records[i];
+    const prod = products[i];
+    const num = firstPhotoNumber(r.photoRef);
+    if (!num) continue;
+    const fp = findPhotoFile(photosDir, num);
+    if (!fp) {
+      photoMissingFile++;
+      continue;
+    }
+    const ext = (() => {
+      const j = fp.lastIndexOf(".");
+      return j >= 0 ? fp.slice(j + 1).toLowerCase() : "jpg";
+    })();
+    const objectPath = `${prod.id}/${randomUUID()}.${ext}`;
+    const buf = readFileSync(fp);
+    const { error: upErr } = await supabase.storage
+      .from("product-images")
+      .upload(objectPath, buf, {
+        contentType: CONTENT_TYPE_BY_EXT[ext] || "application/octet-stream",
+        upsert: true,
+      });
+    if (upErr) {
+      console.warn(`Storage «${prod.name}» (foto #${num}):`, upErr.message);
+      photoErrors++;
+      continue;
+    }
+    prod.image_path = `product-images/${objectPath}`;
+    photoUploaded++;
+  }
+  console.log(
+    `Fotos: subidas=${photoUploaded}, sin archivo para el nº=${photoMissingFile}, errores=${photoErrors} (carpeta: ${photosDir})`,
+  );
+} else {
+  console.log(
+    `Fotos: sin carpeta ${photosDir} — image_path null (o usa SEED_PRODUCT_PHOTOS_DIR).`,
+  );
+}
 
 const { error: upsertErr } = await supabase.from("products").upsert(products, {
   onConflict: "id",
