@@ -543,7 +543,7 @@ export function ProductsListingControls({
             >
               {lockedCategoryId
                 ? "Ver todos en esta categoría"
-                : "Ver todo el catálogo"}
+                : "Ver todos los productos"}
             </Link>
           </div>
         </aside>

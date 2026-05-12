@@ -152,7 +152,7 @@ export function StoreNavDropdowns({
             className="flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
           >
             <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
-              Todo el catálogo
+              Todos los productos
             </span>
             <ChevronRight
               className="size-4 shrink-0 text-stone-400"
