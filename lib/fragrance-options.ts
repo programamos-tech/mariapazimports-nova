@@ -62,9 +62,11 @@ function splitFragranceCell(cell: string): string[] {
   if (doubleSpaced.length > 1) return doubleSpaced;
 
   const blob = doubleSpaced[0] ?? s;
+  const titleSplit = splitConcatenatedTitleCase(blob);
+  if (titleSplit.length > 1) return titleSplit;
   if (blob.length < 40) return [blob];
 
-  return splitConcatenatedTitleCase(blob);
+  return titleSplit;
 }
 
 export function expandFragranceLabels(raw: string[]): string[] {

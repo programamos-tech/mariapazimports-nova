@@ -1,11 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { StoreLogo } from "@/components/store/StoreLogo";
 import {
   bereaSignaturePath,
-  storeBrand,
   storeCopyrightHolder,
   storeInstagramUrl,
-  storeLogoPath,
   storeSupportEmail,
   storeSupportHours,
   storeSupportPhone,
@@ -29,18 +28,12 @@ export function StoreFooter() {
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12 xl:gap-16">
-            <div className="shrink-0 lg:max-w-[13rem] lg:pt-0.5">
+            <div className="shrink-0 lg:max-w-[11rem] lg:pt-0.5">
               <Link
                 href="/"
                 className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
               >
-                <Image
-                  src={storeLogoPath}
-                  alt={storeBrand}
-                  width={400}
-                  height={220}
-                  className="h-11 w-auto object-contain object-left sm:h-12 lg:h-[3.35rem]"
-                />
+                <StoreLogo variant="footer" className="object-left" />
               </Link>
             </div>
             <div className="min-w-0 flex-1 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">

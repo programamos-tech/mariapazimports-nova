@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import {
@@ -8,7 +7,7 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
-import { storeBrand, storeLogoPath } from "@/lib/brand";
+import { StoreLogo } from "@/components/store/StoreLogo";
 import { StoreAnnouncementBar } from "@/components/store/StoreAnnouncementBar";
 import { StoreHeaderActions } from "@/components/store/StoreHeaderActions";
 import { StoreNavDropdowns } from "@/components/store/StoreNavDropdowns";
@@ -47,8 +46,12 @@ export async function StoreHeader() {
     <header className="min-w-0 overflow-x-clip border-b border-stone-200/90 bg-white">
       <StoreAnnouncementBar />
 
-      <div className="relative flex items-center justify-between gap-3 px-4 py-4 lg:gap-6 lg:px-10 lg:py-5">
-        <div className="z-10 flex min-w-0 flex-1 items-center justify-start">
+      {/*
+        Móvil/tablet: auto | 1fr | auto — el logo solo ocupa el hueco entre menú e iconos (sin solaparse).
+        Desktop (lg+): 1fr | auto | 1fr — centrado en viewport con espacio simétrico a los lados.
+      */}
+      <div className="relative isolate grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-1.5 px-3 py-3.5 sm:gap-x-2 sm:px-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-x-4 lg:px-10 lg:py-4">
+        <div className="relative z-10 flex shrink-0 items-center bg-white">
           <StoreNavDropdowns
             menuCategories={menuCategories}
             accountHref={userIconHref}
@@ -57,26 +60,23 @@ export async function StoreHeader() {
           />
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-16 sm:px-44 md:px-48 lg:px-[13.5rem]">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-2 lg:max-w-[11.5rem] lg:px-0">
           <Link
             href="/"
-            className="pointer-events-auto shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
+            className="block w-full max-w-full leading-none outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
           >
-            <Image
-              src={storeLogoPath}
-              alt={storeBrand}
-              width={420}
-              height={230}
-              className="h-11 w-auto max-w-[min(58vw,300px)] object-contain object-center sm:h-[3.25rem] md:h-[3.65rem] lg:h-16"
+            <StoreLogo
+              variant="header"
               priority
+              className="mx-auto w-full max-w-full lg:max-w-none"
             />
           </Link>
         </div>
 
-        <div className="z-10 flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4 lg:gap-6">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 bg-white sm:gap-0.5 lg:min-w-0 lg:shrink lg:gap-4">
           <Link
             href="/products"
-            className="flex shrink-0 items-center justify-center p-1.5 text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2 sm:hidden"
+            className="flex shrink-0 items-center justify-center p-1 text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2 lg:hidden"
             aria-label="Buscar productos"
           >
             <Search

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, Heart, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -20,6 +20,7 @@ import {
 import { pseudoReviewCount } from "@/lib/pseudo-review";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
+import { ProductFragrancePicker } from "@/components/store/ProductFragrancePicker";
 
 type Props = {
   productId: string;
@@ -27,9 +28,10 @@ type Props = {
   description: string | null;
   priceCents: number;
   stockQuantity: number;
-  imageUrl: string | null;
-  /** URLs públicas por etiqueta (misma clave que `fragrance_options`). */
-  fragranceImageUrls: Record<string, string | null>;
+  /** Galería del catálogo (primera = portada en listados). */
+  imageUrls: string[];
+  /** URLs por etiqueta de fragancia (misma clave que `fragrance_options`). */
+  fragranceImageUrls: Record<string, string[]>;
   /** Presentaciones normalizadas (ej. `177 ml`, `400 ml`). */
   sizeLabels: string[];
   hasExpiration: boolean | null;
@@ -80,7 +82,7 @@ export function ProductDetailView({
   description,
   priceCents,
   stockQuantity,
-  imageUrl,
+  imageUrls,
   fragranceImageUrls,
   sizeLabels,
   hasExpiration,
@@ -97,6 +99,7 @@ export function ProductDetailView({
   const favorite = ready && has(productId);
   const [colorIdx, setColorIdx] = useState(0);
   const [fragranceIdx, setFragranceIdx] = useState(0);
+  const [galleryIdx, setGalleryIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -127,14 +130,29 @@ export function ProductDetailView({
   const selectedColorLabel =
     colorOptions.length > 0 ? colorOptions[colorIdx] ?? colorOptions[0] : null;
 
-  const heroImageUrl = useMemo(() => {
-    if (fragranceLabels.length === 0) return imageUrl;
+  const showFragrancePicker = fragranceLabels.length > 1;
+
+  const activeGalleryUrls = useMemo(() => {
+    if (fragranceLabels.length === 0) {
+      return imageUrls;
+    }
     const label =
       fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? null;
-    if (!label) return imageUrl;
-    const mapped = fragranceImageUrls[label];
-    return mapped ?? imageUrl;
-  }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrl]);
+    if (!label) return [];
+    const forFragrance = fragranceImageUrls[label];
+    if (forFragrance?.length) return forFragrance;
+    return [];
+  }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrls]);
+
+  const heroImageUrl = activeGalleryUrls[galleryIdx] ?? activeGalleryUrls[0] ?? null;
+
+  const onFragranceChange = (idx: number) => {
+    setFragranceIdx(idx);
+    setGalleryIdx(0);
+  };
+
+  const selectedFragranceLabel =
+    fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? null;
 
   const selectedFragranceForCart =
     fragranceLabels.length > 0
@@ -156,23 +174,29 @@ export function ProductDetailView({
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
       {/* Imagen */}
-      <div className="relative aspect-square w-full bg-[#f5f5f4]">
-        {heroImageUrl ? (
-          <Image
-            src={heroImageUrl}
-            alt={name}
-            fill
-            className="object-contain p-8 sm:p-12"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            priority
-            unoptimized={unopt}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-6xl text-stone-300">
-            ◆
-          </div>
-        )}
-        <button
+      <div className="space-y-3">
+        <div className="relative aspect-square w-full bg-[#f5f5f4]">
+          {heroImageUrl ? (
+            <Image
+              key={heroImageUrl}
+              src={heroImageUrl}
+              alt={
+                selectedFragranceLabel
+                  ? `${name} — ${selectedFragranceLabel}`
+                  : name
+              }
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
+              unoptimized={unopt}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-6xl text-stone-300">
+              ◆
+            </div>
+          )}
+          <button
           type="button"
           onClick={() => toggle(productId)}
           className={
@@ -189,6 +213,35 @@ export function ProductDetailView({
             fill={favorite ? "currentColor" : "none"}
           />
         </button>
+        </div>
+
+        {activeGalleryUrls.length > 1 ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-2 sm:gap-2.5">
+            {activeGalleryUrls.map((url, i) => (
+              <button
+                key={`${url}-${i}`}
+                type="button"
+                onClick={() => setGalleryIdx(i)}
+                className={
+                  galleryIdx === i
+                    ? "relative aspect-square w-full overflow-hidden bg-[#f5f5f4] ring-2 ring-stone-900 ring-offset-2"
+                    : "relative aspect-square w-full overflow-hidden bg-[#f5f5f4] ring-1 ring-stone-200 transition hover:ring-stone-400"
+                }
+                aria-label={`Ver imagen ${i + 1} de ${selectedFragranceLabel ?? name}`}
+                aria-current={galleryIdx === i ? "true" : undefined}
+              >
+                <Image
+                  src={url}
+                  alt=""
+                  fill
+                  className="object-cover object-center"
+                  sizes="(max-width: 1024px) 20vw, 10vw"
+                  unoptimized={shouldUnoptimizeStorageImageUrl(url)}
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {/* Datos */}
@@ -241,6 +294,14 @@ export function ProductDetailView({
           <span className="text-sm tabular-nums text-stone-500">({reviews})</span>
         </div>
 
+        {showFragrancePicker ? (
+          <ProductFragrancePicker
+            labels={fragranceLabels}
+            selectedIndex={fragranceIdx}
+            onSelect={onFragranceChange}
+          />
+        ) : null}
+
         {outOfStock ? (
           <p className="mt-6 border-t border-stone-200/80 pt-6 text-sm font-medium uppercase tracking-wide text-stone-500">
             Agotado
@@ -276,34 +337,6 @@ export function ProductDetailView({
               </p>
             ) : null}
           </div>
-        ) : null}
-
-        {fragranceLabels.length > 1 ? (
-          <fieldset className="mt-8 min-w-0 border-0 p-0">
-            <legend className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
-              Fragancia / tono
-            </legend>
-            <div className="relative mt-3">
-              <select
-                id={`fragrance-${productId}`}
-                value={fragranceIdx}
-                onChange={(e) => setFragranceIdx(Number(e.target.value))}
-                className="w-full cursor-pointer appearance-none rounded-2xl border border-stone-300 bg-white py-3 pl-4 pr-11 text-left text-[13px] text-stone-900 shadow-sm outline-none transition hover:border-stone-400 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/15"
-                aria-label="Fragancia o tono"
-              >
-                {fragranceLabels.map((label, i) => (
-                  <option key={`${i}-${label}`} value={i}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-3.5 top-1/2 size-[18px] -translate-y-1/2 text-stone-500"
-                strokeWidth={1.5}
-                aria-hidden
-              />
-            </div>
-          </fieldset>
         ) : null}
 
         {!outOfStock ? (

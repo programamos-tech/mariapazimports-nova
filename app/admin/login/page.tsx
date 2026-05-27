@@ -40,9 +40,9 @@ export default async function AdminLoginPage({ searchParams }: Props) {
               <Image
                 src={storeLogoPath}
                 alt={storeBrand}
-                width={320}
-                height={140}
-                className="h-auto w-full max-w-[260px] object-contain object-left transition-opacity duration-500 group-hover:opacity-85 sm:max-w-[280px]"
+                width={781}
+                height={217}
+                className="h-auto w-full max-w-[min(100%,18rem)] object-contain object-left transition-opacity duration-500 group-hover:opacity-85"
                 priority
               />
             </Link>

@@ -1,3 +1,7 @@
+import { MAX_PRODUCT_IMAGES_PER_GROUP } from "@/lib/product-images";
+
+export { MAX_PRODUCT_IMAGES_PER_GROUP };
+
 /** Límite alineado con el mensaje de UI y con `serverActions.bodySizeLimit` en next.config. */
 export const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -9,23 +13,30 @@ export function assertProductImageSize(file: File | null | undefined): string | 
   return null;
 }
 
-/** Evita enviar el Server Action si el archivo es grande (doble chequeo respecto a onChange). */
+function checkFileInputs(inputs: HTMLInputElement[]): boolean {
+  for (const el of inputs) {
+    const files = el.files;
+    if (!files?.length) continue;
+    for (let i = 0; i < files.length; i++) {
+      const msg = assertProductImageSize(files[i]);
+      if (msg) {
+        alert(msg);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Evita enviar el Server Action si algún archivo supera el límite. */
 export function blockSubmitIfImageTooLarge(form: HTMLFormElement): boolean {
   const candidates: HTMLInputElement[] = [];
   const main = form.elements.namedItem("image");
   if (main instanceof HTMLInputElement && main.type === "file") {
     candidates.push(main);
   }
-  form.querySelectorAll<HTMLInputElement>('input[name="fragrance_option_image"]').forEach(
-    (el) => candidates.push(el),
-  );
-  for (const el of candidates) {
-    const file = el.files?.[0];
-    const msg = assertProductImageSize(file ?? undefined);
-    if (msg) {
-      alert(msg);
-      return true;
-    }
-  }
-  return false;
+  form
+    .querySelectorAll<HTMLInputElement>('input[type="file"][name^="fragrance_option_image_"]')
+    .forEach((el) => candidates.push(el));
+  return checkFileInputs(candidates);
 }

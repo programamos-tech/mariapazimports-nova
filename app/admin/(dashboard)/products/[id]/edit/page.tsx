@@ -7,6 +7,10 @@ import { updateProduct } from "@/app/actions/admin/products";
 import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
 import type { SizeRowState } from "@/components/admin/ProductSizeRows";
 import { normalizeSizeOptionsFromRow, SIZE_UNITS } from "@/lib/product-size-options";
+import {
+  normalizeProductImagePaths,
+  parseFragranceImagePaths,
+} from "@/lib/product-images";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 
@@ -28,6 +32,7 @@ type ProductRow = {
   stock_local?: number;
   stock_quantity: number;
   image_path: string | null;
+  image_paths?: unknown;
   is_published: boolean;
   category_id?: string | null;
   size_options?: unknown;
@@ -47,7 +52,7 @@ function fragranceRowsForEditForm(p: ProductRow): FragranceRowInitial[] {
     p.fragrance_option_images &&
     typeof p.fragrance_option_images === "object" &&
     !Array.isArray(p.fragrance_option_images)
-      ? (p.fragrance_option_images as Record<string, string>)
+      ? (p.fragrance_option_images as Record<string, unknown>)
       : {};
   const lines = Array.isArray(p.fragrance_options)
     ? p.fragrance_options.filter(
@@ -55,16 +60,14 @@ function fragranceRowsForEditForm(p: ProductRow): FragranceRowInitial[] {
       )
     : [];
   if (lines.length === 0) {
-    return [{ label: "", existingImagePath: null, previewUrl: null }];
+    return [{ label: "", existingImagePaths: [], previewUrls: [] }];
   }
   return lines.map((label) => {
-    const raw = imgMap[label];
-    const path =
-      typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
+    const paths = parseFragranceImagePaths(imgMap[label]);
     return {
       label,
-      existingImagePath: path,
-      previewUrl: path ? storagePublicObjectUrl(path) : null,
+      existingImagePaths: paths,
+      previewUrls: paths.map((path) => storagePublicObjectUrl(path)),
     };
   });
 }
@@ -111,7 +114,11 @@ export default async function EditProductPage({ params, searchParams }: Props) {
   const cats = categories ?? [];
   const categoryId = p.category_id ?? "";
 
-  const img = storagePublicObjectUrl(p.image_path);
+  const catalogPaths = normalizeProductImagePaths(p.image_path, p.image_paths);
+  const catalogImagesExisting = catalogPaths.map((path) => ({
+    path,
+    previewUrl: storagePublicObjectUrl(path),
+  }));
   const boundUpdate = updateProduct.bind(null, id);
 
   return (
@@ -173,7 +180,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       <EditProductForm
         formAction={boundUpdate}
         categories={cats}
-        currentImageUrl={img}
+        catalogImagesExisting={catalogImagesExisting}
         initial={{
           name: p.name,
           reference: p.reference ?? "",

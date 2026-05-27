@@ -328,7 +328,7 @@ export default async function CheckoutPage({
   const { data: products } = await supabase
     .from("products")
     .select(
-      "id,name,price_cents,image_path,fragrance_option_images,is_published,stock_quantity,colors",
+      "id,name,price_cents,image_path,image_paths,fragrance_option_images,is_published,stock_quantity,colors",
     )
     .in("id", ids);
 
@@ -399,6 +399,7 @@ export default async function CheckoutPage({
                       p.image_path,
                       row.fragrance_option_images,
                       frag ?? undefined,
+                      (p as { image_paths?: unknown }).image_paths,
                     );
                     const img = storagePublicObjectUrl(linePath);
                     const maxStock = Math.max(

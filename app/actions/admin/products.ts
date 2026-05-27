@@ -2,6 +2,11 @@
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
 import {
+  MAX_PRODUCT_IMAGES_PER_GROUP,
+  parseFragranceImagesExistingField,
+  primaryImagePath,
+} from "@/lib/product-images";
+import {
   legacySizeFromOptions,
   parseSizeOptionsFromFormData,
 } from "@/lib/product-size-options";
@@ -55,68 +60,97 @@ async function uploadProductImageBlob(
   return { status: "ok", imagePath: `product-images/${objectPath}` };
 }
 
-async function uploadProductImageFromForm(
+async function buildProductImagePathsFromForm(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   productId: string,
   formData: FormData,
-): Promise<ImageUploadResult> {
-  const raw = formData.get("image");
-  if (raw == null || typeof raw === "string") {
-    return { status: "none" };
+): Promise<{ paths: string[]; uploadError: boolean }> {
+  const existing = formData
+    .getAll("image_paths_existing")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const paths: string[] = [];
+  const seen = new Set<string>();
+  for (const p of existing) {
+    if (seen.has(p) || paths.length >= MAX_PRODUCT_IMAGES_PER_GROUP) continue;
+    seen.add(p);
+    paths.push(p);
   }
-  if (!(raw instanceof Blob) || raw.size <= 0) {
-    return { status: "none" };
+
+  let uploadError = false;
+  const files = formData.getAll("image");
+  for (const file of files) {
+    if (paths.length >= MAX_PRODUCT_IMAGES_PER_GROUP) break;
+    if (!(file instanceof Blob) || file.size <= 0) continue;
+    const up = await uploadProductImageBlob(
+      supabase,
+      productId,
+      file,
+      typeof File !== "undefined" && file instanceof File ? file.name : undefined,
+    );
+    if (up.status === "ok" && !seen.has(up.imagePath)) {
+      seen.add(up.imagePath);
+      paths.push(up.imagePath);
+    } else if (up.status === "error") {
+      console.error("product image upload", up.message);
+      uploadError = true;
+    }
   }
-  return uploadProductImageBlob(
-    supabase,
-    productId,
-    raw,
-    typeof File !== "undefined" && raw instanceof File ? raw.name : undefined,
-  );
+
+  return { paths, uploadError };
 }
 
-/** Imagen por fila de fragancia: sube archivos y arma el JSON por etiqueta canónica. */
+/** Imágenes por fila de fragancia (hasta 5 por opción). */
 async function buildFragranceOptionImagesFromForm(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   productId: string,
   formData: FormData,
   fragrance_options: string[],
-): Promise<Record<string, string>> {
+): Promise<Record<string, string[]>> {
   const rawLabels = formData.getAll("fragrance_option").map((v) => String(v));
-  const existing = formData
-    .getAll("fragrance_image_existing")
-    .map((v) => String(v).trim());
-  const files = formData.getAll("fragrance_option_image");
-  const n = Math.max(rawLabels.length, existing.length, files.length);
-  const rowPaths: (string | null)[] = [];
+  const existingRows = formData
+    .getAll("fragrance_images_existing")
+    .map((v) => parseFragranceImagesExistingField(String(v)));
+  const n = Math.max(rawLabels.length, existingRows.length);
+  const rowPathsList: string[][] = [];
 
   for (let i = 0; i < n; i++) {
-    const file = files[i];
-    let path: string | null = null;
-    if (file instanceof Blob && file.size > 0) {
+    const seen = new Set<string>();
+    const paths: string[] = [];
+    for (const p of existingRows[i] ?? []) {
+      if (seen.has(p) || paths.length >= MAX_PRODUCT_IMAGES_PER_GROUP) continue;
+      seen.add(p);
+      paths.push(p);
+    }
+
+    const files = formData.getAll(`fragrance_option_image_${i}`);
+    for (const file of files) {
+      if (paths.length >= MAX_PRODUCT_IMAGES_PER_GROUP) break;
+      if (!(file instanceof Blob) || file.size <= 0) continue;
       const up = await uploadProductImageBlob(
         supabase,
         productId,
         file,
         typeof File !== "undefined" && file instanceof File ? file.name : undefined,
       );
-      if (up.status === "ok") path = up.imagePath;
-      else if (up.status === "error") {
+      if (up.status === "ok" && !seen.has(up.imagePath)) {
+        seen.add(up.imagePath);
+        paths.push(up.imagePath);
+      } else if (up.status === "error") {
         console.error("fragrance image upload", up.message);
       }
     }
-    if (!path && existing[i]) path = existing[i];
-    rowPaths.push(path);
+    rowPathsList.push(paths);
   }
 
-  const out: Record<string, string> = {};
+  const out: Record<string, string[]> = {};
   for (const canon of fragrance_options) {
     const k = canon.toLowerCase();
     for (let j = 0; j < rawLabels.length; j++) {
       const t = rawLabels[j]?.trim().slice(0, 160) ?? "";
       if (!t || t.toLowerCase() !== k) continue;
-      const p = rowPaths[j];
-      if (p) out[canon] = p;
+      const list = rowPathsList[j];
+      if (list?.length) out[canon] = list;
       break;
     }
   }
@@ -221,7 +255,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|has_vat|vat_percent/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|image_paths|has_vat|vat_percent/i.test(m)
   ) {
     return true;
   }
@@ -416,28 +450,29 @@ export async function createProduct(formData: FormData) {
     formData,
     fragrance_options,
   );
-  if (Object.keys(fragranceImagesMap).length > 0) {
-    await supabase
-      .from("products")
-      .update({ fragrance_option_images: fragranceImagesMap })
-      .eq("id", id);
-  }
+  const { paths: imagePaths, uploadError: catalogUploadError } =
+    await buildProductImagePathsFromForm(supabase, id, formData);
 
-  const uploaded = await uploadProductImageFromForm(supabase, id, formData);
-  if (uploaded.status === "ok") {
-    await supabase
-      .from("products")
-      .update({ image_path: uploaded.imagePath })
-      .eq("id", id);
-  } else if (uploaded.status === "error") {
+  const imagePatch: Record<string, unknown> = {
+    image_paths: imagePaths,
+    image_path: primaryImagePath(imagePaths),
+  };
+  if (Object.keys(fragranceImagesMap).length > 0) {
+    imagePatch.fragrance_option_images = fragranceImagesMap;
+  }
+  await supabase.from("products").update(imagePatch).eq("id", id);
+
+  if (catalogUploadError) {
     revalidatePath("/products");
     revalidatePath("/admin/products");
-    redirect("/admin/products?saved=1&uploadError=1");
+    redirect(
+      `/admin/products?saved=1&uploadError=1&created=${encodeURIComponent(id)}`,
+    );
   }
 
   revalidatePath("/products");
   revalidatePath("/admin/products");
-  redirect("/admin/products?saved=1");
+  redirect(`/admin/products?saved=1&created=${encodeURIComponent(id)}`);
 }
 
 export async function updateProduct(productId: string, formData: FormData) {
@@ -483,6 +518,8 @@ export async function updateProduct(productId: string, formData: FormData) {
     formData,
     fragrance_options,
   );
+  const { paths: imagePaths, uploadError: catalogUploadError } =
+    await buildProductImagePathsFromForm(supabase, productId, formData);
 
   const baseUpdate = {
     name,
@@ -502,6 +539,8 @@ export async function updateProduct(productId: string, formData: FormData) {
     colors,
     fragrance_options,
     fragrance_option_images,
+    image_paths: imagePaths,
+    image_path: primaryImagePath(imagePaths),
   };
 
   const extendedUpdate = {
@@ -563,23 +602,21 @@ export async function updateProduct(productId: string, formData: FormData) {
   });
   revalidatePath("/admin/actividades");
 
-  const uploaded = await uploadProductImageFromForm(supabase, productId, formData);
-  if (uploaded.status === "ok") {
-    await supabase
-      .from("products")
-      .update({ image_path: uploaded.imagePath })
-      .eq("id", productId);
-  } else if (uploaded.status === "error") {
+  if (catalogUploadError) {
     revalidatePath("/products");
     revalidatePath(`/products/${productId}`);
     revalidatePath("/admin/products");
-    redirect("/admin/products?saved=1&uploadError=1");
+    redirect(
+      `/admin/products?saved=1&uploadError=1&updated=${encodeURIComponent(productId)}`,
+    );
   }
 
   revalidatePath("/products");
   revalidatePath(`/products/${productId}`);
   revalidatePath("/admin/products");
-  redirect("/admin/products?saved=1");
+  redirect(
+    `/admin/products?saved=1&updated=${encodeURIComponent(productId)}`,
+  );
 }
 
 export async function deleteProduct(productId: string) {

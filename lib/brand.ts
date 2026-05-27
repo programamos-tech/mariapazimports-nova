@@ -2,10 +2,8 @@
 export const storeBrand =
   process.env.NEXT_PUBLIC_STORE_NAME ?? "María Paz Importaciones";
 
-/**
- * Logo en `/public`. El nombre incluye un espacio → la URL se codifica para el navegador.
- */
-export const storeLogoPath = encodeURI("/logobackoficce (1).png");
+/** Logo principal en `/public` (tienda y backoffice). */
+export const storeLogoPath = "/logo-maria-paz-imports.png";
 
 /** Firma Berea en `/public/logo-berea.png` (footer tienda, cookies, login admin, sidebar). */
 export const bereaSignaturePath = "/logo-berea.png";

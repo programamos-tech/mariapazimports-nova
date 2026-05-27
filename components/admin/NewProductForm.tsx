@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createProduct } from "@/app/actions/admin/products";
+import { ProductCatalogImagesField } from "@/components/admin/ProductCatalogImagesField";
 import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
 import {
   AdminDateInput,
@@ -12,11 +13,7 @@ import {
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
-import {
-  assertProductImageSize,
-  blockSubmitIfImageTooLarge,
-  MAX_PRODUCT_IMAGE_BYTES,
-} from "@/lib/product-image-upload";
+import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
 import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
 import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
 import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
@@ -49,16 +46,6 @@ export function NewProductForm({
   const [hasVat, setHasVat] = useState(false);
   const [vatPercent, setVatPercent] = useState("");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
-  const [pickedPreviewUrl, setPickedPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (pickedPreviewUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(pickedPreviewUrl);
-      }
-    };
-  }, [pickedPreviewUrl]);
 
   const totalStock = stockLocal + stockWarehouse;
   const fmtStock = (n: number) =>
@@ -125,61 +112,7 @@ export function NewProductForm({
                   className={inputClass}
                 />
               </div>
-              <div>
-                <span className={labelClass}>Imagen (catálogo en línea, opcional)</span>
-                <div className="flex flex-wrap items-start gap-4">
-                  {pickedPreviewUrl ? (
-                    <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-950">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL de vista previa local */}
-                      <img
-                        src={pickedPreviewUrl}
-                        alt="Vista previa de la imagen seleccionada"
-                        className="size-full object-cover"
-                      />
-                    </div>
-                  ) : null}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="inline-flex cursor-pointer">
-                        <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700">
-                          Seleccionar archivo
-                        </span>
-                        <input
-                          name="image"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="sr-only"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) {
-                              setPickedPreviewUrl(null);
-                              setFileLabel("Ningún archivo seleccionado");
-                              return;
-                            }
-                            const msg = assertProductImageSize(f);
-                            if (msg) {
-                              alert(msg);
-                              e.target.value = "";
-                              setPickedPreviewUrl(null);
-                              setFileLabel("Ningún archivo seleccionado");
-                              return;
-                            }
-                            setPickedPreviewUrl(URL.createObjectURL(f));
-                            setFileLabel(f.name);
-                          }}
-                        />
-                      </label>
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {fileLabel}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      JPG, PNG o WebP. Máx. {MAX_PRODUCT_IMAGE_BYTES / (1024 * 1024)} MB.
-                      Visible en el catálogo público.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ProductCatalogImagesField />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="np-brand" className={labelClass}>

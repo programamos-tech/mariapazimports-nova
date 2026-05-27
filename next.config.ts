@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Subida de imágenes vía Server Action: el default es 1 MB y rompe con fotos > ~1 MB.
     serverActions: {
-      bodySizeLimit: "6mb",
+      // Hasta 5 imágenes × 5 MB en catálogo + fragancias en un mismo envío.
+      bodySizeLimit: "32mb",
     },
   },
   images: {

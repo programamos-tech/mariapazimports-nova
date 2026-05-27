@@ -243,9 +243,9 @@ function SidebarLogo() {
       <Image
         src={storeLogoPath}
         alt={storeBrand}
-        width={280}
-        height={120}
-        className="h-auto w-full max-w-[92px] object-contain object-center sm:max-w-[100px]"
+        width={781}
+        height={217}
+        className="h-auto w-full max-w-[9.5rem] object-contain object-center"
         priority
       />
     </Link>

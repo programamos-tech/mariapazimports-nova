@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { ProductCatalogImagesField } from "@/components/admin/ProductCatalogImagesField";
 import {
   AdminDateInput,
   ProductMoneyInput,
@@ -12,12 +12,7 @@ import {
 import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
 import type { ProductCategoryOption } from "@/components/admin/NewProductForm";
 import { formatCop } from "@/lib/money";
-import {
-  assertProductImageSize,
-  blockSubmitIfImageTooLarge,
-  MAX_PRODUCT_IMAGE_BYTES,
-} from "@/lib/product-image-upload";
-import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
 import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
 import {
   ProductSizeRows,
@@ -51,18 +46,23 @@ type Initial = {
   fragranceRows: FragranceRowInitial[];
 };
 
+type CatalogImageExisting = {
+  path: string;
+  previewUrl: string | null;
+};
+
 type Props = {
   formAction: (formData: FormData) => void;
   categories: ProductCategoryOption[];
   initial: Initial;
-  currentImageUrl: string | null;
+  catalogImagesExisting: CatalogImageExisting[];
 };
 
 export function EditProductForm({
   formAction,
   categories,
   initial,
-  currentImageUrl,
+  catalogImagesExisting,
 }: Props) {
   const [name, setName] = useState(initial.name);
   const [reference, setReference] = useState(initial.reference);
@@ -79,19 +79,6 @@ export function EditProductForm({
     initial.vatPercent == null ? "" : String(initial.vatPercent),
   );
   const [selectedColors, setSelectedColors] = useState(initial.colors);
-  const [fileLabel, setFileLabel] = useState("Ningún archivo seleccionado");
-  /** Vista previa local del archivo elegido (blob:); se revoca al cambiar o desmontar. */
-  const [pickedPreviewUrl, setPickedPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (pickedPreviewUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(pickedPreviewUrl);
-      }
-    };
-  }, [pickedPreviewUrl]);
-
-  const thumbSrc = pickedPreviewUrl ?? currentImageUrl;
 
   const categoryLabel =
     categories.find((c) => c.id === categoryId)?.name ?? "—";
@@ -162,69 +149,10 @@ export function EditProductForm({
                 />
               </div>
 
-              <div>
-                <span className={labelClass}>Imagen (catálogo en línea)</span>
-                <div className="flex flex-wrap items-start gap-4">
-                  {thumbSrc ? (
-                    <div className="relative size-24 shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-950">
-                      {thumbSrc.startsWith("blob:") ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- vista previa local (blob:)
-                        <img
-                          src={thumbSrc}
-                          alt="Vista previa de la imagen seleccionada"
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          src={thumbSrc}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="96px"
-                          unoptimized={shouldUnoptimizeStorageImageUrl(thumbSrc)}
-                        />
-                      )}
-                    </div>
-                  ) : null}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="inline-flex cursor-pointer">
-                        <span className="rounded-lg border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700">
-                          Seleccionar archivo
-                        </span>
-                        <input
-                          name="image"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="sr-only"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) {
-                              setPickedPreviewUrl(null);
-                              setFileLabel("Ningún archivo seleccionado");
-                              return;
-                            }
-                            const msg = assertProductImageSize(f);
-                            if (msg) {
-                              alert(msg);
-                              e.target.value = "";
-                              setPickedPreviewUrl(null);
-                              setFileLabel("Ningún archivo seleccionado");
-                              return;
-                            }
-                            setPickedPreviewUrl(URL.createObjectURL(f));
-                            setFileLabel(f.name);
-                          }}
-                        />
-                      </label>
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">{fileLabel}</span>
-                    </div>
-                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      JPG, PNG o WebP. Máx. {MAX_PRODUCT_IMAGE_BYTES / (1024 * 1024)} MB.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <ProductCatalogImagesField
+                label="Imágenes (catálogo en línea)"
+                initialExisting={catalogImagesExisting}
+              />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>

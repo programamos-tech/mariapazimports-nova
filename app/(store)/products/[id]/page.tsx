@@ -5,6 +5,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
+  fragranceImagesForLabel,
+  normalizeFragranceOptionImages,
+  normalizeProductImagePaths,
+} from "@/lib/product-images";
+import {
   formatSizeOption,
   normalizeSizeOptionsFromRow,
 } from "@/lib/product-size-options";
@@ -28,7 +33,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const { data: product } = await supabase
     .from("products")
     .select(
-      "id,name,description,price_cents,stock_quantity,image_path,fragrance_option_images,size_options,size_value,size_unit,has_expiration,expiration_date,colors,fragrance_options,has_vat,vat_percent,brand,category_id,categories(name)",
+      "id,name,description,price_cents,stock_quantity,image_path,image_paths,fragrance_option_images,size_options,size_value,size_unit,has_expiration,expiration_date,colors,fragrance_options,has_vat,vat_percent,brand,category_id,categories(name)",
     )
     .eq("id", id)
     .eq("is_published", true)
@@ -42,25 +47,29 @@ export default async function ProductDetailPage({ params }: Props) {
       ? String(catRel.name ?? "").trim() || null
       : null;
 
-  const img = storagePublicObjectUrl(product.image_path);
+  const catalogPaths = normalizeProductImagePaths(
+    product.image_path,
+    product.image_paths,
+  );
+  const imageUrls = catalogPaths
+    .map((path) => storagePublicObjectUrl(path))
+    .filter((u): u is string => Boolean(u));
+  const fragranceImgMap = normalizeFragranceOptionImages(
+    product.fragrance_option_images,
+  );
   const fragranceLabelsRaw = Array.isArray(product.fragrance_options)
     ? product.fragrance_options.filter(
         (x): x is string => typeof x === "string" && x.trim().length > 0,
       )
     : [];
   const fragranceLabels = expandFragranceLabels(fragranceLabelsRaw);
-  const rawImgMap = product.fragrance_option_images;
-  const imgMapObj =
-    rawImgMap &&
-    typeof rawImgMap === "object" &&
-    !Array.isArray(rawImgMap)
-      ? (rawImgMap as Record<string, unknown>)
-      : {};
-  const fragranceImageUrls: Record<string, string | null> = {};
+  const fragranceImageUrls: Record<string, string[]> = {};
   for (const label of fragranceLabels) {
-    const v = imgMapObj[label];
-    const path = typeof v === "string" ? v.trim() : "";
-    fragranceImageUrls[label] = path ? storagePublicObjectUrl(path) : null;
+    const paths = fragranceImagesForLabel(fragranceImgMap, label);
+    const urls = paths
+      .map((path) => storagePublicObjectUrl(path))
+      .filter((u): u is string => Boolean(u));
+    if (urls.length > 0) fragranceImageUrls[label] = urls;
   }
   const couponDiscountPercent =
     await fetchStorefrontCouponDiscountPercentForProduct(supabase, product.id);
@@ -147,7 +156,7 @@ export default async function ProductDetailPage({ params }: Props) {
         description={product.description}
         priceCents={product.price_cents}
         stockQuantity={product.stock_quantity}
-        imageUrl={img}
+        imageUrls={imageUrls}
         fragranceImageUrls={fragranceImageUrls}
         sizeLabels={sizeLabels}
         hasExpiration={product.has_expiration}

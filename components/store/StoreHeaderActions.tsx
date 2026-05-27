@@ -32,7 +32,7 @@ export function StoreHeaderActions({
   const { openLogin } = useStoreAuthModals();
 
   return (
-    <div className="flex shrink-0 items-center gap-1 sm:gap-2 md:gap-4">
+    <div className="flex shrink-0 items-center gap-0 sm:gap-1 md:gap-4">
       {guestOpensAuthDrawer ? (
         <button
           type="button"
@@ -58,7 +58,7 @@ export function StoreHeaderActions({
             aria-hidden
           />
           {isLoggedIn && accountFirstName ? (
-            <span className="hidden text-[13px] font-normal tracking-wide text-stone-600 md:inline">
+            <span className="hidden text-[13px] font-normal tracking-wide text-stone-600 xl:inline">
               Hola, {accountFirstName}
             </span>
           ) : null}

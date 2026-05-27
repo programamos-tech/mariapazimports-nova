@@ -83,7 +83,7 @@ export async function GET() {
   const { data: products } = await supabase
     .from("products")
     .select(
-      "id,name,price_cents,image_path,fragrance_option_images,colors,stock_quantity",
+      "id,name,price_cents,image_path,image_paths,fragrance_option_images,colors,stock_quantity",
     )
     .in("id", ids)
     .eq("is_published", true);
@@ -96,6 +96,7 @@ export async function GET() {
         name: string;
         price_cents: number;
         image_path: string | null;
+        image_paths: unknown;
         fragrance_option_images: unknown;
         colors: unknown;
         stock_quantity: number | null;
@@ -122,6 +123,7 @@ export async function GET() {
         p.image_path,
         p.fragrance_option_images,
         frag ?? undefined,
+        p.image_paths,
       ),
       firstColor: firstColorLabel(p.colors),
       lineTotalCents,

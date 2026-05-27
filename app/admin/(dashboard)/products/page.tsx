@@ -6,9 +6,15 @@ import { CategoriesPanel } from "@/components/admin/CategoriesPanel";
 import { ProductFiltersBar } from "@/components/admin/ProductFiltersBar";
 import { ProductTableActions } from "@/components/admin/ProductTableActions";
 import {
+  AdminProductsHighlightProvider,
+  HighlightableProductShell,
+} from "@/components/admin/admin-products-highlight";
+import {
   adminProductsListHref,
+  adminProductsUrlFullyClean,
   adminProductsUrlWithoutFlash,
   parseAdminProductsCategoriesModal,
+  parseAdminProductsHighlightId,
   parseAdminProductsPage,
   parseAdminProductsPerPage,
 } from "@/lib/admin-products-url";
@@ -43,6 +49,8 @@ type Search = {
   error?: string;
   saved?: string;
   uploadError?: string;
+  updated?: string;
+  created?: string;
   page?: string;
   per_page?: string;
 };
@@ -141,7 +149,17 @@ export default async function AdminProductsPage({
   const flashSaved = sp.saved === "1" || sp.saved === "true";
   const flashUploadError =
     sp.uploadError === "1" || sp.uploadError === "true";
+  const highlightProductId = parseAdminProductsHighlightId(spRecord);
+  const flashCreatedId =
+    typeof sp.created === "string" && sp.created.trim() === highlightProductId
+      ? highlightProductId
+      : null;
+  const flashUpdatedId =
+    typeof sp.updated === "string" && sp.updated.trim() === highlightProductId
+      ? highlightProductId
+      : null;
   const cleanProductsHref = adminProductsUrlWithoutFlash(spRecord);
+  const fullyCleanProductsHref = adminProductsUrlFullyClean(spRecord);
 
   const currentPage = parseAdminProductsPage(spRecord);
   const pageSize = parseAdminProductsPerPage(spRecord);
@@ -215,6 +233,7 @@ export default async function AdminProductsPage({
   }
 
   return (
+    <AdminProductsHighlightProvider initialProductId={highlightProductId}>
     <>
     <div className="min-w-0">
       <div className="flex flex-col gap-4 border-b border-zinc-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
@@ -317,7 +336,11 @@ export default async function AdminProductsPage({
         >
           {productRows.map((p) => (
             <li key={p.id} className="min-w-0">
-              <article className={adminProductCardClass}>
+              <HighlightableProductShell
+                productId={p.id}
+                as="article"
+                baseClassName={adminProductCardClass}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <Link
@@ -367,7 +390,7 @@ export default async function AdminProductsPage({
                 <p className="mt-auto pt-4 text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
                   {formatCop(p.price_cents)}
                 </p>
-              </article>
+              </HighlightableProductShell>
             </li>
           ))}
         </ul>
@@ -407,9 +430,11 @@ export default async function AdminProductsPage({
               </thead>
               <tbody className="divide-y divide-zinc-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900">
                 {productRows.map((p) => (
-                  <tr
+                  <HighlightableProductShell
                     key={p.id}
-                    className="bg-white transition-colors hover:bg-zinc-50/80 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
+                    productId={p.id}
+                    as="tr"
+                    baseClassName="bg-white transition-colors hover:bg-zinc-50/80 dark:bg-zinc-900 dark:hover:bg-zinc-800/80"
                   >
                     <td className={tdCell}>
                       <div className="min-w-0">
@@ -466,7 +491,7 @@ export default async function AdminProductsPage({
                   />
                       </div>
                     </td>
-                  </tr>
+                  </HighlightableProductShell>
                 ))}
               </tbody>
             </table>
@@ -486,11 +511,14 @@ export default async function AdminProductsPage({
         </>
       ) : null}
     </div>
-    {flashSaved || flashUploadError ? (
+    {flashSaved || flashUploadError || highlightProductId ? (
       <AdminProductsFlashToast
         saved={flashSaved}
         uploadError={flashUploadError}
+        updatedProductId={flashUpdatedId}
+        createdProductId={flashCreatedId}
         cleanHref={cleanProductsHref}
+        fullyCleanHref={fullyCleanProductsHref}
       />
     ) : null}
 
@@ -504,5 +532,6 @@ export default async function AdminProductsPage({
       </CategoriesModal>
     ) : null}
     </>
+    </AdminProductsHighlightProvider>
   );
 }
