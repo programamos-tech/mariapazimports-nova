@@ -8,8 +8,10 @@ export const STORE_PRODUCT_CARD_IMAGE_BG_CLASS = "bg-stone-100";
 export const STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS =
   "object-cover object-center";
 
+import { revealProductStagger } from "@/lib/store-reveal-timing";
+
 /** Tarjetas visibles al entrar al catálogo: cargar sin lazy. */
-export const STORE_PRODUCT_CARD_EAGER_COUNT = 8;
+export const STORE_PRODUCT_CARD_EAGER_COUNT = 12;
 
 /** `sizes` para grilla 2→4 columnas. */
 export const STORE_PRODUCT_CARD_IMAGE_SIZES =
@@ -17,4 +19,13 @@ export const STORE_PRODUCT_CARD_IMAGE_SIZES =
 
 export function storeProductCardImagePriority(index: number): boolean {
   return index >= 0 && index < STORE_PRODUCT_CARD_EAGER_COUNT;
+}
+
+export function storeProductCardRevealOptions(index: number) {
+  const imagePriority = storeProductCardImagePriority(index);
+  return {
+    imagePriority,
+    revealInitialVisible: imagePriority,
+    revealDelayMs: imagePriority ? 0 : revealProductStagger(index),
+  };
 }

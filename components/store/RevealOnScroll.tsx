@@ -46,14 +46,17 @@ export function RevealOnScroll({
   children,
   className = "",
   delayMs = 0,
+  initialVisible = false,
 }: {
   children: ReactNode;
   className?: string;
   /** Retardo al aparecer (escalonado en grillas). */
   delayMs?: number;
+  /** Sin fade inicial (tarjetas above-the-fold con imagen prioritaria). */
+  initialVisible?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<Phase>("below");
+  const [phase, setPhase] = useState<Phase>(initialVisible ? "visible" : "below");
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useLayoutEffect(() => {

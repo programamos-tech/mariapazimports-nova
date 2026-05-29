@@ -2,9 +2,9 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
-/** Proporción 4:5 alineada con `STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS`. */
-const CARD_IMAGE_WIDTH = 400;
-const CARD_IMAGE_HEIGHT = 500;
+/** Proporción 4:5; ~2× en móvil (50vw) sin exceso de peso. */
+const CARD_IMAGE_WIDTH = 360;
+const CARD_IMAGE_HEIGHT = 450;
 
 const PRESETS: Record<
   ProductImageSize,
@@ -13,7 +13,7 @@ const PRESETS: Record<
   card: {
     width: CARD_IMAGE_WIDTH,
     height: CARD_IMAGE_HEIGHT,
-    quality: 72,
+    quality: 68,
     resize: "cover",
   },
   thumb: { width: 96, height: 96, quality: 72, resize: "contain" },
@@ -23,15 +23,23 @@ const PRESETS: Record<
     quality: 80,
     resize: "contain",
   },
-  banner: { width: 1400, quality: 82 },
+  banner: { width: 1200, quality: 78 },
 };
 
-/** Transformaciones de Storage vía imgproxy (solo en Supabase hospedado). */
+/** Transformaciones de Storage vía imgproxy (Supabase hospedado y CLI local). */
 export function shouldUseStorageImageTransform(src: string | null | undefined): boolean {
   if (!src) return false;
   try {
-    const host = new URL(src).hostname;
-    return host.endsWith(".supabase.co");
+    const u = new URL(src);
+    const host = u.hostname;
+    if (host.endsWith(".supabase.co")) return true;
+    if (
+      (host === "127.0.0.1" || host === "localhost") &&
+      u.pathname.includes("/storage/v1/")
+    ) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }

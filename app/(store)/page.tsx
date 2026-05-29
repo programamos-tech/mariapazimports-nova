@@ -4,11 +4,11 @@ import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
 import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
-import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
+import { storeProductCardRevealOptions } from "@/lib/store-product-card-image";
 import {
   REVEAL_BLOCK_DELAY_MS,
-  revealProductStagger,
 } from "@/lib/store-reveal-timing";
+import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { storeBrand } from "@/lib/brand";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { fetchPublishedBanners } from "@/lib/store-banners";
@@ -67,8 +67,16 @@ export default async function HomePage() {
   const couponPctByProductId =
     await fetchStorefrontCouponDiscountPercentByProductId(supabase);
 
+  const featuredImagePreloads = enrichedFeatured
+    .slice(0, 4)
+    .map((p) => productCardDisplayImages(p.image_path, p.image_paths).primary)
+    .filter((url): url is string => Boolean(url));
+
   return (
     <div>
+      {featuredImagePreloads.map((href) => (
+        <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
+      ))}
       {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
       <section
         className={`w-full ${storeShellXClass} lg:px-0`}
@@ -144,14 +152,17 @@ export default async function HomePage() {
             ) : (
               <>
                 <ul className={`mt-8 ${storeProductGridClass}`}>
-                  {enrichedFeatured.map((p, index) => (
+                  {enrichedFeatured.map((p, index) => {
+                    const reveal = storeProductCardRevealOptions(index);
+                    return (
                     <li key={p.id}>
                       <RevealOnScroll
                         className="h-full"
-                        delayMs={revealProductStagger(index)}
+                        initialVisible={reveal.revealInitialVisible}
+                        delayMs={reveal.revealDelayMs}
                       >
                         <ProductListingCard
-                          imagePriority={storeProductCardImagePriority(index)}
+                          imagePriority={reveal.imagePriority}
                           cartQuantity={cartQtyByProductId[p.id] ?? 0}
                           couponDiscountPercent={
                             couponPctByProductId[p.id] ?? 0
@@ -160,7 +171,8 @@ export default async function HomePage() {
                         />
                       </RevealOnScroll>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
                 <RevealOnScroll
                   delayMs={REVEAL_BLOCK_DELAY_MS}

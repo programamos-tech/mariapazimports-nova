@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         hostname: "**.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/render/image/public/**",
+      },
       // Supabase local (CLI): URLs tipo http://127.0.0.1:<puerto>/storage/v1/object/public/...
       {
         protocol: "http",
@@ -23,8 +28,18 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
+        hostname: "127.0.0.1",
+        pathname: "/storage/v1/render/image/public/**",
+      },
+      {
+        protocol: "http",
         hostname: "localhost",
         pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/storage/v1/render/image/public/**",
       },
       {
         protocol: "https",
