@@ -2,13 +2,27 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
+/** Proporción 4:5 alineada con `STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS`. */
+const CARD_IMAGE_WIDTH = 480;
+const CARD_IMAGE_HEIGHT = 600;
+
 const PRESETS: Record<
   ProductImageSize,
   { width: number; height?: number; quality: number; resize?: "cover" | "contain" | "fill" }
 > = {
-  card: { width: 480, quality: 78 },
+  card: {
+    width: CARD_IMAGE_WIDTH,
+    height: CARD_IMAGE_HEIGHT,
+    quality: 78,
+    resize: "cover",
+  },
   thumb: { width: 96, height: 96, quality: 72, resize: "contain" },
-  hero: { width: 960, quality: 80 },
+  hero: {
+    width: CARD_IMAGE_WIDTH * 2,
+    height: CARD_IMAGE_HEIGHT * 2,
+    quality: 80,
+    resize: "contain",
+  },
   banner: { width: 1400, quality: 82 },
 };
 

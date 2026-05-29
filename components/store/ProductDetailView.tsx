@@ -312,7 +312,7 @@ export function ProductDetailView({
                   alt=""
                   fill
                   loading="lazy"
-                  className="object-cover object-center"
+                  className="object-contain object-center"
                   sizes="80px"
                   unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
                 />

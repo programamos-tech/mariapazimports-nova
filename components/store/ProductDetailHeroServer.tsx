@@ -3,8 +3,13 @@ import {
   productDisplayImageUrl,
   shouldUseUnoptimizedImage,
 } from "@/lib/storage-image-url";
+import {
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS,
+} from "@/lib/store-product-card-image";
 
-/** Hero SSR: mismo marco 4/5 que las tarjetas, sin espacio vacío. */
+/** Hero SSR: producto completo, mismo marco que tarjetas. */
 export function ProductDetailHeroServer({
   src,
   alt,
@@ -15,12 +20,14 @@ export function ProductDetailHeroServer({
   const display = productDisplayImageUrl(src, "hero") ?? src;
 
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden bg-white">
+    <div
+      className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
+    >
       <Image
         src={display}
         alt={alt}
         fill
-        className="object-cover object-center"
+        className={STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS}
         sizes="(max-width: 1024px) 100vw, 50vw"
         priority
         fetchPriority="high"

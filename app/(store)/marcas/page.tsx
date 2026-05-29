@@ -273,7 +273,6 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                           delayMs={revealProductStagger(index)}
                         >
                           <ProductListingCard
-                            accentImageBg={(sIndex + index) % 4 === 3}
                             cartQuantity={cartQtyByProductId[p.id] ?? 0}
                             couponDiscountPercent={
                               couponPctByProductId[p.id] ?? 0
@@ -285,6 +284,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                               description: p.description,
                               price_cents: p.price_cents,
                               image_path: p.image_path,
+                              image_paths: p.image_paths,
                               stock_quantity: p.stock_quantity,
                               size_options: p.size_options,
                               size_value: p.size_value,

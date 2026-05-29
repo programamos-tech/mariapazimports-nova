@@ -90,7 +90,7 @@ export async function fetchPublishedCatalogGroupedByBrand(
   const { data: rows, error } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at",
+      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false });
@@ -107,6 +107,7 @@ export async function fetchPublishedCatalogGroupedByBrand(
       description: row.description as string | null,
       price_cents: row.price_cents as number,
       image_path: row.image_path as string | null,
+      image_paths: row.image_paths,
       stock_quantity: row.stock_quantity as number,
       size_options: row.size_options,
       size_value: row.size_value as number | null,

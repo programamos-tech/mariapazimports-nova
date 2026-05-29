@@ -62,16 +62,16 @@ body {
 @keyframes store-cookies-banner-in {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.97);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 .store-cookies-banner-panel {
-  animation: store-cookies-banner-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: store-cookies-banner-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

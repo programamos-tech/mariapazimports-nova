@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, Minus, Plus } from "lucide-react";
 import {
@@ -14,6 +13,7 @@ import {
 } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
+import { StoreProductCardImage } from "@/components/store/StoreProductCardImage";
 import { storeBrand } from "@/lib/brand";
 import { formatCop } from "@/lib/money";
 import {
@@ -23,13 +23,12 @@ import {
   expandFragranceLabels,
 } from "@/lib/fragrance-options";
 import {
-  prefetchProductHeroImage,
-  productDisplayImageUrl,
-  shouldUseUnoptimizedImage,
-} from "@/lib/storage-image-url";
+  productCardDisplayImages,
+  productPrimaryPublicImageUrl,
+} from "@/lib/product-card-display-images";
 import {
-  storagePublicObjectUrl,
-} from "@/lib/storage-public-url";
+  prefetchProductHeroImage,
+} from "@/lib/storage-image-url";
 
 type Product = {
   id: string;
@@ -37,6 +36,7 @@ type Product = {
   description: string | null;
   price_cents: number;
   image_path: string | null;
+  image_paths?: unknown;
   stock_quantity: number;
   /** Columna opcional en DB; si falta se infiere para la línea de marca. */
   brand?: string | null;
@@ -55,6 +55,9 @@ function productRequiresFragranceChoice(product: Product): boolean {
   return expandFragranceLabels(raw).length > 1;
 }
 
+const CARD_IMAGE_SIZES =
+  "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw";
+
 function showcaseBrandLabel(product: Product): string {
   const b = product.brand?.trim();
   if (b) return b.toUpperCase();
@@ -67,18 +70,21 @@ function showcaseBrandLabel(product: Product): string {
 function ShowcaseProductCard({
   product,
   couponDiscountPercent = 0,
-  accentImageBg = false,
   compact = false,
 }: {
   product: Product;
   couponDiscountPercent?: number;
-  /** Fondo suave tipo bloque de color en algunas columnas (look editorial). */
-  accentImageBg?: boolean;
-  /** Variante más baja para grillas densas (p. ej. home con 8 productos). */
+  /** Variante más compacta para grillas densas. */
   compact?: boolean;
 }) {
-  const img = storagePublicObjectUrl(product.image_path);
-  const cardImg = productDisplayImageUrl(img, "card") ?? img;
+  const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
+    product.image_path,
+    product.image_paths,
+  );
+  const heroImg = productPrimaryPublicImageUrl(
+    product.image_path,
+    product.image_paths,
+  );
   const outOfStock = product.stock_quantity <= 0;
   const pct = Math.max(
     0,
@@ -89,47 +95,24 @@ function ShowcaseProductCard({
     ? storefrontPriceAfterCouponCents(product.price_cents, pct)
     : product.price_cents;
 
-  const imageBgClass = accentImageBg
-    ? "bg-[#fceff3]"
-    : "bg-white";
-
   return (
     <article className="h-full">
       <Link
         href={`/products/${product.id}`}
-        className="group block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
-        onMouseEnter={() => prefetchProductHeroImage(img)}
-        onFocus={() => prefetchProductHeroImage(img)}
+        className="group/image block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
+        onMouseEnter={() => prefetchProductHeroImage(heroImg)}
+        onFocus={() => prefetchProductHeroImage(heroImg)}
       >
-        <div
-          className={`relative w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${
-            compact ? "aspect-square" : "aspect-[4/5]"
-          } ${outOfStock ? "opacity-[0.78]" : ""}`}
-        >
-          {cardImg ? (
-            <Image
-              src={cardImg}
-              alt={product.name}
-              fill
-              sizes={
-                compact
-                  ? "(max-width: 640px) 50vw, 25vw"
-                  : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              }
-              className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
-              unoptimized={shouldUseUnoptimizedImage(cardImg)}
-            />
-          ) : (
-            <span
-              className={`flex size-full items-center justify-center text-stone-200 ${
-                compact ? "text-2xl" : "text-3xl"
-              }`}
-            >
-              ◆
-            </span>
-          )}
-        </div>
+        <StoreProductCardImage
+          src={cardImg}
+          hoverSrc={cardHoverImg}
+          alt={product.name}
+          sizes={CARD_IMAGE_SIZES}
+          outOfStock={outOfStock}
+          placeholderClassName={
+            compact ? "text-2xl text-stone-200" : "text-3xl text-stone-200"
+          }
+        />
         <div className={`text-left ${compact ? "space-y-0.5 pt-2" : "space-y-1.5 pt-4"}`}>
           <p
             className={
@@ -205,22 +188,26 @@ function CatalogProductCard({
   cartQuantity = 0,
   onCartChange,
   couponDiscountPercent = 0,
-  accentImageBg = false,
 }: {
   product: Product;
   cartQuantity?: number;
   onCartChange?: () => void;
   couponDiscountPercent?: number;
-  accentImageBg?: boolean;
 }) {
+  const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
+    product.image_path,
+    product.image_paths,
+  );
+  const heroImg = productPrimaryPublicImageUrl(
+    product.image_path,
+    product.image_paths,
+  );
+  const outOfStock = product.stock_quantity <= 0;
   const router = useRouter();
   const { openCart } = useStoreCartDrawer();
   const [cartPending, startCartTransition] = useTransition();
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(product.id);
-  const img = storagePublicObjectUrl(product.image_path);
-  const cardImg = productDisplayImageUrl(img, "card") ?? img;
-  const outOfStock = product.stock_quantity <= 0;
   const afterCartMutation = () => {
     router.refresh();
     onCartChange?.();
@@ -239,35 +226,23 @@ function CatalogProductCard({
 
   const needsFragranceOnPdp = productRequiresFragranceChoice(product);
 
-  const imageBgClass = accentImageBg ? "bg-[#fceff3]" : "bg-white";
-
   return (
     <article className="flex h-full flex-col">
-      <div
-        className={`relative aspect-[4/5] w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${outOfStock ? "opacity-[0.78]" : ""}`}
-      >
+      <div className="group/image relative shrink-0">
+        <StoreProductCardImage
+          src={cardImg}
+          hoverSrc={cardHoverImg}
+          alt={product.name}
+          sizes={CARD_IMAGE_SIZES}
+          outOfStock={outOfStock}
+        />
         <Link
           href={`/products/${product.id}`}
-          className="group/image absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
-          onMouseEnter={() => prefetchProductHeroImage(img)}
-          onFocus={() => prefetchProductHeroImage(img)}
-        >
-          {cardImg ? (
-            <Image
-              src={cardImg}
-              alt={product.name}
-              fill
-              className="object-cover object-center transition duration-300 group-hover/image:scale-[1.02]"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              loading="lazy"
-              unoptimized={shouldUseUnoptimizedImage(cardImg)}
-            />
-          ) : (
-            <span className="flex size-full items-center justify-center text-4xl text-stone-300">
-              ◆
-            </span>
-          )}
-        </Link>
+          className="absolute inset-0 z-[1] block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
+          onMouseEnter={() => prefetchProductHeroImage(heroImg)}
+          onFocus={() => prefetchProductHeroImage(heroImg)}
+          aria-label={product.name}
+        />
         <button
           type="button"
           onClick={(e) => {
@@ -408,7 +383,6 @@ export function ProductListingCard({
   onCartChange,
   couponDiscountPercent = 0,
   presentation = "default",
-  accentImageBg = false,
   compact = false,
 }: {
   product: Product;
@@ -416,7 +390,6 @@ export function ProductListingCard({
   onCartChange?: () => void;
   couponDiscountPercent?: number;
   presentation?: "default" | "editorial";
-  accentImageBg?: boolean;
   compact?: boolean;
 }) {
   if (presentation === "editorial") {
@@ -424,7 +397,6 @@ export function ProductListingCard({
       <ShowcaseProductCard
         product={product}
         couponDiscountPercent={couponDiscountPercent}
-        accentImageBg={accentImageBg}
         compact={compact}
       />
     );
@@ -436,7 +408,6 @@ export function ProductListingCard({
       cartQuantity={cartQuantity}
       onCartChange={onCartChange}
       couponDiscountPercent={couponDiscountPercent}
-      accentImageBg={accentImageBg}
     />
   );
 }

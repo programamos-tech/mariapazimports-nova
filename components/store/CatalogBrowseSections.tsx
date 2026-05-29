@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { CatalogRowScroller } from "@/components/store/CatalogRowScroller";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
+import { storeProductGridClass } from "@/lib/store-layout";
 import type {
   CatalogBrowseProductRow,
   CatalogBrowseSection,
@@ -42,61 +42,62 @@ export function CatalogBrowseSections({
             ) : null}
           </div>
 
-          <CatalogRowScroller>
+          <ul className={storeProductGridClass}>
             {section.products.map((p, index) => (
-              <CatalogRowProductSlot
+              <CatalogBrowseProductSlot
                 key={p.id}
                 product={p}
                 index={index}
+                sectionIndex={sectionIndex}
                 cartQtyByProductId={cartQtyByProductId}
                 couponPctByProductId={couponPctByProductId}
-                staggerDelayMs={revealCatalogRowStagger(sectionIndex, index)}
               />
             ))}
-          </CatalogRowScroller>
+          </ul>
         </section>
       ))}
     </div>
   );
 }
 
-function CatalogRowProductSlot({
+function CatalogBrowseProductSlot({
   product,
   index,
+  sectionIndex,
   cartQtyByProductId,
   couponPctByProductId,
-  staggerDelayMs,
 }: {
   product: CatalogBrowseProductRow;
   index: number;
+  sectionIndex: number;
   cartQtyByProductId: Record<string, number>;
   couponPctByProductId: Record<string, number>;
-  staggerDelayMs: number;
 }) {
   return (
-    <RevealOnScroll
-      className="w-[42vw] shrink-0 snap-start snap-always sm:w-[min(42vw,220px)] md:w-[210px] lg:w-[230px]"
-      delayMs={staggerDelayMs}
-    >
-      <ProductListingCard
-        presentation="editorial"
-        accentImageBg={index % 4 === 3}
-        cartQuantity={cartQtyByProductId[product.id] ?? 0}
-        couponDiscountPercent={couponPctByProductId[product.id] ?? 0}
-        product={{
-          id: product.id,
-          name: product.name,
-          brand: product.brand,
-          description: product.description,
-          price_cents: product.price_cents,
-          image_path: product.image_path,
-          stock_quantity: product.stock_quantity,
-          size_options: product.size_options,
-          size_value: product.size_value,
-          size_unit: product.size_unit,
-          fragrance_options: product.fragrance_options,
-        }}
-      />
-    </RevealOnScroll>
+    <li>
+      <RevealOnScroll
+        className="h-full"
+        delayMs={revealCatalogRowStagger(sectionIndex, index)}
+      >
+        <ProductListingCard
+          cartQuantity={cartQtyByProductId[product.id] ?? 0}
+          couponDiscountPercent={couponPctByProductId[product.id] ?? 0}
+          product={{
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            description: product.description,
+            price_cents: product.price_cents,
+            image_path: product.image_path,
+            image_paths: product.image_paths,
+            stock_quantity: product.stock_quantity,
+            size_options: product.size_options,
+            size_value: product.size_value,
+            size_unit: product.size_unit,
+            fragrance_options: product.fragrance_options,
+          }}
+        />
+      </RevealOnScroll>
+    </li>
   );
 }

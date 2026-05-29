@@ -150,7 +150,7 @@ function CartDrawerSuggestionsRow({
                       src={img}
                       alt=""
                       fill
-                      className="object-cover object-center"
+                      className="object-contain object-center"
                       sizes="130px"
                       unoptimized={shouldUnoptimizeStorageImageUrl(img)}
                     />
@@ -232,7 +232,7 @@ function DrawerLine({
               src={img}
               alt=""
               fill
-              className="object-cover object-center"
+              className="object-contain object-center"
               sizes="96px"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
             />

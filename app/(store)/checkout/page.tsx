@@ -424,7 +424,7 @@ export default async function CheckoutPage({
                                 src={img}
                                 alt=""
                                 fill
-                                className="object-cover"
+                                className="object-contain object-center"
                                 sizes="112px"
                                 unoptimized={shouldUnoptimizeStorageImageUrl(img)}
                               />

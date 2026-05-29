@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
-import { storeShellClass, storeShellXClass } from "@/lib/store-layout";
+import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
 import {
   REVEAL_BLOCK_DELAY_MS,
   revealProductStagger,
@@ -38,7 +38,7 @@ export default async function HomePage() {
   const { data: homeProducts, error: homeProductsError } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,stock_quantity,fragrance_options,size_options,size_value,size_unit,created_at",
+      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,size_options,size_value,size_unit,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
@@ -133,7 +133,7 @@ export default async function HomePage() {
               </p>
             ) : (
               <>
-                <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
+                <ul className={`mt-8 ${storeProductGridClass}`}>
                   {featuredProducts.map((p, index) => (
                     <li key={p.id}>
                       <RevealOnScroll
@@ -141,7 +141,6 @@ export default async function HomePage() {
                         delayMs={revealProductStagger(index)}
                       >
                         <ProductListingCard
-                          accentImageBg={index % 4 === 3}
                           cartQuantity={cartQtyByProductId[p.id] ?? 0}
                           couponDiscountPercent={
                             couponPctByProductId[p.id] ?? 0
@@ -153,6 +152,7 @@ export default async function HomePage() {
                             description: p.description,
                             price_cents: p.price_cents,
                             image_path: p.image_path,
+                            image_paths: p.image_paths,
                             stock_quantity: p.stock_quantity,
                             fragrance_options: p.fragrance_options,
                             size_options: p.size_options,

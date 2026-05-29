@@ -4,6 +4,11 @@ import Image from "next/image";
 import {
   shouldUseUnoptimizedImage,
 } from "@/lib/storage-image-url";
+import {
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS,
+} from "@/lib/store-product-card-image";
 
 type Props = {
   src: string;
@@ -12,7 +17,7 @@ type Props = {
   fetchPriority?: "high" | "auto";
 };
 
-/** Hero PDP: llena el marco 4/5 sin bandas vacías. */
+/** Hero PDP: producto completo dentro del marco (sin recorte). */
 export function ProductDetailHeroImage({
   src,
   alt,
@@ -22,12 +27,14 @@ export function ProductDetailHeroImage({
   const unopt = shouldUseUnoptimizedImage(src);
 
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden bg-white">
+    <div
+      className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
+    >
       <Image
         src={src}
         alt={alt}
         fill
-        className="object-cover object-center"
+        className={STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS}
         sizes="(max-width: 1024px) 100vw, 50vw"
         priority={priority}
         fetchPriority={fetchPriority}

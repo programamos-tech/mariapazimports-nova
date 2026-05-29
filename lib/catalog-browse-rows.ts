@@ -3,7 +3,7 @@ import { mergeCategoryRowsForFilterMenu } from "@/lib/product-listing-facets";
 import { expandCategoryIdsFromRows } from "@/lib/store-category-group";
 
 const PRODUCT_SELECT =
-  "id,name,brand,description,price_cents,image_path,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at";
+  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at";
 
 /** Incluye `category_id` solo para armar la vitrina en servidor (no se expone al card). */
 const PRODUCT_SELECT_WITH_CATEGORY = `${PRODUCT_SELECT},category_id`;
@@ -17,6 +17,7 @@ export type CatalogBrowseProductRow = {
   description: string | null;
   price_cents: number;
   image_path: string | null;
+  image_paths?: unknown;
   stock_quantity: number;
   size_options?: unknown;
   size_value: number | null;

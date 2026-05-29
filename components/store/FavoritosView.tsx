@@ -44,6 +44,7 @@ type Product = {
   description: string | null;
   price_cents: number;
   image_path: string | null;
+  image_paths?: unknown;
   stock_quantity: number;
   size_value?: number | null;
   size_unit?: string | null;
@@ -180,7 +181,6 @@ export function FavoritosView() {
                 delayMs={revealProductStagger(index)}
               >
                 <ProductListingCard
-                  accentImageBg={index % 4 === 3}
                   cartQuantity={cartQtyByProductId[p.id] ?? 0}
                   couponDiscountPercent={p.coupon_discount_percent ?? 0}
                   product={p}

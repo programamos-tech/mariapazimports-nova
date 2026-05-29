@@ -6,7 +6,7 @@ import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
-import { storeShellClass } from "@/lib/store-layout";
+import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
 import { revealProductStagger } from "@/lib/store-reveal-timing";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import {
@@ -196,20 +196,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     ReturnType<typeof fetchCatalogBrowseSections>
   > | null = null;
 
-  let list: Array<{
-    id: string;
-    name: string;
-    brand: string;
-    description: string | null;
-    price_cents: number;
-    image_path: string | null;
-    stock_quantity: number;
-    size_options?: unknown;
-    size_value: number | null;
-    size_unit: string | null;
-    fragrance_options: string[] | null;
-    created_at: string;
-  }> = [];
+  let list: StoreListingProductRow[] = [];
 
   if (catalogBrowseMode) {
     catalogSections =
@@ -389,7 +376,7 @@ export default async function ProductsPage({ searchParams }: Props) {
             couponPctByProductId={couponPctByProductId}
           />
         ) : showBrowseFlatFallback ? (
-          <ul className="grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
+          <ul className={storeProductGridClass}>
             {browseFlatFallback.map((p, index) => (
               <li key={p.id}>
                 <RevealOnScroll
@@ -397,7 +384,6 @@ export default async function ProductsPage({ searchParams }: Props) {
                   delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
-                    accentImageBg={index % 4 === 3}
                     cartQuantity={cartQtyByProductId[p.id] ?? 0}
                     couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
                     product={{
@@ -407,6 +393,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                       description: p.description,
                       price_cents: p.price_cents,
                       image_path: p.image_path,
+                      image_paths: p.image_paths,
                       stock_quantity: p.stock_quantity,
                       size_options: p.size_options,
                       size_value: p.size_value,
@@ -435,7 +422,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                   : "Aún no hay productos publicados. Cárgalos desde el admin."}
           </p>
         ) : (
-          <ul className="grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
+          <ul className={storeProductGridClass}>
             {list.map((p, index) => (
               <li key={p.id}>
                 <RevealOnScroll
@@ -443,7 +430,6 @@ export default async function ProductsPage({ searchParams }: Props) {
                   delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
-                    accentImageBg={index % 4 === 3}
                     cartQuantity={cartQtyByProductId[p.id] ?? 0}
                     couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
                     product={{
@@ -453,6 +439,7 @@ export default async function ProductsPage({ searchParams }: Props) {
                       description: p.description,
                       price_cents: p.price_cents,
                       image_path: p.image_path,
+                      image_paths: p.image_paths,
                       stock_quantity: p.stock_quantity,
                       size_options: p.size_options,
                       size_value: p.size_value,
