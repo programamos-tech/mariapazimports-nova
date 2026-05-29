@@ -17,8 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: storeBrand,
+  title: {
+    default: storeBrand,
+    template: `%s · ${storeBrand}`,
+  },
   description: storeShortDescription,
+  applicationName: storeBrand,
 };
 
 export default function RootLayout({

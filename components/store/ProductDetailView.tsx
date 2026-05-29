@@ -5,7 +5,7 @@ import { Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
@@ -187,6 +187,37 @@ export function ProductDetailView({
       : descriptionText;
 
   const unopt = shouldUseUnoptimizedImage(heroDisplayUrl);
+  const galleryCount = activeGalleryUrls.length;
+  const canGalleryNav = galleryCount > 1;
+
+  const stepGallery = useCallback(
+    (delta: -1 | 1) => {
+      setGalleryIdx((i) => {
+        const next = i + delta;
+        if (next < 0) return galleryCount - 1;
+        if (next >= galleryCount) return 0;
+        return next;
+      });
+    },
+    [galleryCount],
+  );
+
+  useEffect(() => {
+    if (!canGalleryNav) return;
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable=true]")) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        stepGallery(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        stepGallery(1);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canGalleryNav, stepGallery]);
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
@@ -204,7 +235,7 @@ export function ProductDetailView({
                   : name
               }
               fill
-              className="object-cover object-center"
+              className="object-contain object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority={fragranceIdx === 0 && galleryIdx === 0}
               fetchPriority={fragranceIdx === 0 && galleryIdx === 0 ? "high" : "auto"}
@@ -232,6 +263,26 @@ export function ProductDetailView({
             fill={favorite ? "currentColor" : "none"}
           />
         </button>
+          {canGalleryNav ? (
+            <>
+              <button
+                type="button"
+                onClick={() => stepGallery(-1)}
+                className="absolute left-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:left-4"
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => stepGallery(1)}
+                className="absolute right-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:right-4"
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            </>
+          ) : null}
         </div>
 
         {activeGalleryUrls.length > 1 ? (
@@ -263,7 +314,7 @@ export function ProductDetailView({
                   alt=""
                   fill
                   loading="lazy"
-                  className="object-cover object-center"
+                  className="object-contain object-center"
                   sizes="80px"
                   unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
                 />

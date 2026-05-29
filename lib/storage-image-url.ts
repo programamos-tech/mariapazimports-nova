@@ -5,7 +5,7 @@ const PRESETS: Record<
   { width: number; height?: number; quality: number; resize?: "cover" | "contain" | "fill" }
 > = {
   card: { width: 480, quality: 78 },
-  thumb: { width: 96, height: 96, quality: 72, resize: "cover" },
+  thumb: { width: 96, height: 96, quality: 72, resize: "contain" },
   hero: { width: 960, quality: 80 },
   banner: { width: 1400, quality: 82 },
 };

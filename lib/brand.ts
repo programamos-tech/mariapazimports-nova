@@ -1,6 +1,6 @@
 /** Visible store name; override with NEXT_PUBLIC_STORE_NAME per fork. */
 export const storeBrand =
-  process.env.NEXT_PUBLIC_STORE_NAME ?? "María Paz Importaciones";
+  process.env.NEXT_PUBLIC_STORE_NAME ?? "María Paz Imports";
 
 /** Logo principal en `/public` (tienda y backoffice). */
 export const storeLogoPath = "/logo-maria-paz-imports.png";
