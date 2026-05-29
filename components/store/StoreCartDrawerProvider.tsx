@@ -150,7 +150,7 @@ function CartDrawerSuggestionsRow({
                       src={img}
                       alt=""
                       fill
-                      className="object-cover"
+                      className="object-cover object-center"
                       sizes="130px"
                       unoptimized={shouldUnoptimizeStorageImageUrl(img)}
                     />
@@ -225,14 +225,14 @@ function DrawerLine({
       <div className="flex gap-4">
         <Link
           href={`/products/${item.productId}`}
-          className="relative size-24 shrink-0 bg-[#f0eeeb]"
+          className="relative size-24 shrink-0 overflow-hidden bg-[#f0eeeb]"
         >
           {img ? (
             <Image
               src={img}
               alt=""
               fill
-              className="object-cover"
+              className="object-cover object-center"
               sizes="96px"
               unoptimized={shouldUnoptimizeStorageImageUrl(img)}
             />

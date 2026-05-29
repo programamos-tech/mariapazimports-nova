@@ -5,10 +5,12 @@ import { Heart } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
-import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { storeBrand } from "@/lib/brand";
+import { storeShellClass } from "@/lib/store-layout";
+import { revealProductStagger } from "@/lib/store-reveal-timing";
+import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 
-const shellClass = "mx-auto max-w-7xl px-4 py-10 sm:py-12";
+const shellClass = `${storeShellClass} py-10 sm:py-12`;
 
 const primaryCtaClass =
   "inline-flex items-center justify-center border border-stone-900 bg-stone-900 px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-stone-800";
@@ -175,7 +177,7 @@ export function FavoritosView() {
             <li key={p.id}>
               <RevealOnScroll
                 className="h-full"
-                delayMs={Math.min(index * 65, 400)}
+                delayMs={revealProductStagger(index)}
               >
                 <ProductListingCard
                   accentImageBg={index % 4 === 3}

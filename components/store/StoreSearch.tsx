@@ -84,7 +84,7 @@ function SearchResultsPanel({
                         src={img}
                         alt=""
                         fill
-                        className="object-cover"
+                        className="object-cover object-center"
                         sizes="48px"
                         unoptimized={shouldUnoptimizeStorageImageUrl(img)}
                       />

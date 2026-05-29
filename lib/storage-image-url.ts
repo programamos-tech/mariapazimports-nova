@@ -1,3 +1,5 @@
+import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
 const PRESETS: Record<
@@ -93,8 +95,10 @@ export function prefetchProductHeroImage(src: string | null | undefined): void {
   document.head.appendChild(link);
 }
 
-/** Solo omitir el optimizador si la URL ya viene redimensionada del CDN de Supabase. */
+/** Localhost: sin optimizador de Next. Producción CDN ya redimensionada: tampoco. */
 export function shouldUseUnoptimizedImage(src: string | null | undefined): boolean {
   if (!src) return false;
-  return isTransformedStorageImageUrl(src);
+  return (
+    shouldUnoptimizeStorageImageUrl(src) || isTransformedStorageImageUrl(src)
+  );
 }

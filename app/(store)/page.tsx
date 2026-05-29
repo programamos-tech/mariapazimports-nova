@@ -2,11 +2,17 @@ import Link from "next/link";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
+import { storeShellClass, storeShellXClass } from "@/lib/store-layout";
+import {
+  REVEAL_BLOCK_DELAY_MS,
+  revealProductStagger,
+} from "@/lib/store-reveal-timing";
 import { storeBrand } from "@/lib/brand";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
+import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +38,7 @@ export default async function HomePage() {
   const { data: homeProducts, error: homeProductsError } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,stock_quantity,fragrance_options,created_at",
+      "id,name,brand,description,price_cents,image_path,stock_quantity,fragrance_options,size_options,size_value,size_unit,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
@@ -47,6 +53,7 @@ export default async function HomePage() {
   }
 
   const featuredProducts = homeProducts ?? [];
+  const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
   const couponPctByProductId =
     await fetchStorefrontCouponDiscountPercentByProductId(supabase);
 
@@ -54,7 +61,7 @@ export default async function HomePage() {
     <div>
       {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
       <section
-        className="w-full px-4 sm:px-6 md:px-8 lg:px-0"
+        className={`w-full ${storeShellXClass} lg:px-0`}
         aria-label="Banner principal"
       >
         {heroBanners.length > 0 ? (
@@ -86,12 +93,12 @@ export default async function HomePage() {
 
       {/* Highlights + productos destacados */}
       <section className="border-t border-stone-200/60 bg-white py-8 sm:py-10">
-        <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
+        <div className={storeShellClass}>
           <ul className="grid gap-5 border-y border-stone-200/70 py-5 sm:grid-cols-3 sm:gap-4 sm:py-6">
             {STORE_HIGHLIGHTS.map(({ title, Icon }, i) => (
               <li key={title}>
                 <RevealOnScroll
-                  delayMs={Math.min(i * 100, 240)}
+                  delayMs={Math.min(i * 36, 108)}
                   className="flex flex-col items-center text-center"
                 >
                   <span className="inline-flex size-7 items-center justify-center text-zinc-900">
@@ -126,17 +133,16 @@ export default async function HomePage() {
               </p>
             ) : (
               <>
-                <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-5 lg:gap-x-6">
+                <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
                   {featuredProducts.map((p, index) => (
                     <li key={p.id}>
                       <RevealOnScroll
                         className="h-full"
-                        delayMs={Math.min(index * 40, 200)}
+                        delayMs={revealProductStagger(index)}
                       >
                         <ProductListingCard
-                          presentation="editorial"
-                          compact
                           accentImageBg={index % 4 === 3}
+                          cartQuantity={cartQtyByProductId[p.id] ?? 0}
                           couponDiscountPercent={
                             couponPctByProductId[p.id] ?? 0
                           }
@@ -149,6 +155,9 @@ export default async function HomePage() {
                             image_path: p.image_path,
                             stock_quantity: p.stock_quantity,
                             fragrance_options: p.fragrance_options,
+                            size_options: p.size_options,
+                            size_value: p.size_value,
+                            size_unit: p.size_unit,
                           }}
                         />
                       </RevealOnScroll>
@@ -156,7 +165,7 @@ export default async function HomePage() {
                   ))}
                 </ul>
                 <RevealOnScroll
-                  delayMs={120}
+                  delayMs={REVEAL_BLOCK_DELAY_MS}
                   className="mt-6 flex justify-center sm:mt-7"
                 >
                   <Link

@@ -12,6 +12,9 @@ import { STORE_HEADER_ICON_STROKE } from "@/lib/store-header-icons";
 
 const EDGE_EPS = 4;
 
+/** Reserva inferior = bloque de texto bajo la imagen 4/5 en tarjeta editorial. */
+const CARD_TEXT_RESERVE = "h-[7.5rem]";
+
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -63,49 +66,65 @@ export function CatalogRowScroller({
     });
   };
 
+  const arrowBtnClass =
+    "flex size-9 shrink-0 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:size-10";
+
+  function ArrowRail({
+    dir,
+    canScroll,
+  }: {
+    dir: -1 | 1;
+    canScroll: boolean;
+  }) {
+    const isPrev = dir === -1;
+    return (
+      <div className="flex min-h-0 w-9 shrink-0 flex-col sm:w-10">
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <button
+            type="button"
+            aria-label={isPrev ? "Anteriores" : "Siguientes"}
+            aria-hidden={!canScroll}
+            tabIndex={canScroll ? 0 : -1}
+            disabled={!canScroll}
+            onClick={() => scrollByDir(dir)}
+            className={`${arrowBtnClass} ${
+              canScroll ? "" : "invisible pointer-events-none"
+            }`}
+          >
+            {isPrev ? (
+              <ChevronLeft
+                className="size-5 sm:size-[1.35rem]"
+                strokeWidth={STORE_HEADER_ICON_STROKE}
+                aria-hidden
+              />
+            ) : (
+              <ChevronRight
+                className="size-5 sm:size-[1.35rem]"
+                strokeWidth={STORE_HEADER_ICON_STROKE}
+                aria-hidden
+              />
+            )}
+          </button>
+        </div>
+        <div className={`${CARD_TEXT_RESERVE} shrink-0`} aria-hidden />
+      </div>
+    );
+  }
+
   return (
-    <div className={`relative ${className}`.trim()}>
-      <button
-        type="button"
-        aria-label="Anteriores"
-        aria-hidden={!canLeft}
-        tabIndex={canLeft ? 0 : -1}
-        disabled={!canLeft}
-        onClick={() => scrollByDir(-1)}
-        className={`absolute left-1.5 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:left-2 sm:size-10 ${
-          canLeft ? "" : "invisible pointer-events-none"
-        }`}
-      >
-        <ChevronLeft
-          className="size-5 sm:size-[1.35rem]"
-          strokeWidth={STORE_HEADER_ICON_STROKE}
-          aria-hidden
-        />
-      </button>
-      <button
-        type="button"
-        aria-label="Siguientes"
-        aria-hidden={!canRight}
-        tabIndex={canRight ? 0 : -1}
-        disabled={!canRight}
-        onClick={() => scrollByDir(1)}
-        className={`absolute right-1.5 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:right-2 sm:size-10 ${
-          canRight ? "" : "invisible pointer-events-none"
-        }`}
-      >
-        <ChevronRight
-          className="size-5 sm:size-[1.35rem]"
-          strokeWidth={STORE_HEADER_ICON_STROKE}
-          aria-hidden
-        />
-      </button>
+    <div
+      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-2 sm:gap-3 ${className}`.trim()}
+    >
+      <ArrowRail dir={-1} canScroll={canLeft} />
 
       <div
         ref={ref}
-        className="store-cart-suggestions-scroll flex snap-x snap-mandatory gap-3 overscroll-x-contain scroll-px-1 pb-1 pt-0.5 sm:gap-4 sm:scroll-px-2 lg:gap-5 px-10 sm:px-11"
+        className="store-cart-suggestions-scroll flex min-w-0 snap-x snap-mandatory gap-3 overscroll-x-contain scroll-px-1 pb-1 pt-0.5 sm:gap-4 sm:scroll-px-2 lg:gap-5"
       >
         {children}
       </div>
+
+      <ArrowRail dir={1} canScroll={canRight} />
     </div>
   );
 }

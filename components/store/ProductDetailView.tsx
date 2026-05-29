@@ -24,6 +24,7 @@ import {
 } from "@/lib/storage-image-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
 import { ProductFragrancePicker } from "@/components/store/ProductFragrancePicker";
+import { ProductDetailHeroImage } from "@/components/store/ProductDetailHeroImage";
 
 type Props = {
   productId: string;
@@ -186,7 +187,6 @@ export function ProductDetailView({
       ? `${descriptionText.slice(0, descPreviewLimit).trim()}…`
       : descriptionText;
 
-  const unopt = shouldUseUnoptimizedImage(heroDisplayUrl);
   const galleryCount = activeGalleryUrls.length;
   const canGalleryNav = galleryCount > 1;
 
@@ -223,26 +223,24 @@ export function ProductDetailView({
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
       {/* Imagen */}
       <div className="space-y-3">
-        <div className="relative aspect-square w-full bg-[#f5f5f4]">
+        <div className="relative w-full overflow-hidden bg-white">
           {showSsrHero ? (
             ssrHero
           ) : heroDisplayUrl ? (
-            <Image
+            <ProductDetailHeroImage
               src={heroDisplayUrl}
               alt={
                 selectedFragranceLabel
                   ? `${name} — ${selectedFragranceLabel}`
                   : name
               }
-              fill
-              className="object-contain object-center"
-              sizes="(max-width: 1024px) 100vw, 50vw"
               priority={fragranceIdx === 0 && galleryIdx === 0}
-              fetchPriority={fragranceIdx === 0 && galleryIdx === 0 ? "high" : "auto"}
-              unoptimized={unopt}
+              fetchPriority={
+                fragranceIdx === 0 && galleryIdx === 0 ? "high" : "auto"
+              }
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-6xl text-stone-300">
+            <div className="flex aspect-[4/5] w-full items-center justify-center bg-[#f5f5f4] text-6xl text-stone-300">
               ◆
             </div>
           )}
@@ -303,8 +301,8 @@ export function ProductDetailView({
                 }}
                 className={
                   galleryIdx === i
-                    ? "relative aspect-square w-full overflow-hidden bg-[#f5f5f4] ring-2 ring-stone-900 ring-offset-2"
-                    : "relative aspect-square w-full overflow-hidden bg-[#f5f5f4] ring-1 ring-stone-200 transition hover:ring-stone-400"
+                    ? "relative aspect-square w-full overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-2"
+                    : "relative aspect-square w-full overflow-hidden bg-white ring-1 ring-stone-200 transition hover:ring-stone-400"
                 }
                 aria-label={`Ver imagen ${i + 1} de ${selectedFragranceLabel ?? name}`}
                 aria-current={galleryIdx === i ? "true" : undefined}
@@ -314,7 +312,7 @@ export function ProductDetailView({
                   alt=""
                   fill
                   loading="lazy"
-                  className="object-contain object-center"
+                  className="object-cover object-center"
                   sizes="80px"
                   unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
                 />

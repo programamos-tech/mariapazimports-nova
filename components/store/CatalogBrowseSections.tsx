@@ -6,6 +6,7 @@ import type {
   CatalogBrowseProductRow,
   CatalogBrowseSection,
 } from "@/lib/catalog-browse-rows";
+import { revealCatalogRowStagger } from "@/lib/store-reveal-timing";
 
 export function CatalogBrowseSections({
   sections,
@@ -49,10 +50,7 @@ export function CatalogBrowseSections({
                 index={index}
                 cartQtyByProductId={cartQtyByProductId}
                 couponPctByProductId={couponPctByProductId}
-                staggerDelayMs={Math.min(
-                  sectionIndex * 70 + index * 42,
-                  380,
-                )}
+                staggerDelayMs={revealCatalogRowStagger(sectionIndex, index)}
               />
             ))}
           </CatalogRowScroller>

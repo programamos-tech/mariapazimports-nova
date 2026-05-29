@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { storeBrand, storeTagline } from "@/lib/brand";
+import { storeShellClass } from "@/lib/store-layout";
 
 export const metadata = {
   title: `Quién Soy | ${storeBrand}`,
@@ -7,7 +8,8 @@ export const metadata = {
 
 export default function QuienSoyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <div className={`${storeShellClass} py-12 sm:py-16`}>
+      <div className="max-w-3xl">
       <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
         Quién Soy
       </h1>
@@ -31,6 +33,7 @@ export default function QuienSoyPage() {
       >
         Ver productos
       </Link>
+      </div>
     </div>
   );
 }

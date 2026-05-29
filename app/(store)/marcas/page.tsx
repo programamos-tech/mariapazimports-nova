@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
+import { storeShellClass } from "@/lib/store-layout";
+import { revealProductStagger } from "@/lib/store-reveal-timing";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { storeBrand } from "@/lib/brand";
@@ -184,7 +186,9 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
   return (
     <div className="bg-white">
       <RevealOnScroll className="w-full">
-        <header className="mx-auto max-w-7xl border-b border-stone-100 px-4 pb-6 pt-8 text-center sm:pb-8 sm:pt-10">
+        <header
+          className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
+        >
           <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
             Marcas
           </h1>
@@ -192,7 +196,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
       </RevealOnScroll>
 
       <div className="w-full bg-white">
-        <div className="mx-auto max-w-7xl">
+        <div className={storeShellClass}>
           <ProductsListingControls
             key={controlsKey}
             listingPath="/marcas"
@@ -219,7 +223,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-10 lg:py-12">
+      <div className={`${storeShellClass} py-8 sm:py-10 lg:py-12`}>
         {invalidCategory ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             Esa categoría no existe o fue eliminada.{" "}
@@ -266,7 +270,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                       <li key={p.id}>
                         <RevealOnScroll
                           className="h-full"
-                          delayMs={Math.min(index * 45, 360)}
+                          delayMs={revealProductStagger(index)}
                         >
                           <ProductListingCard
                             accentImageBg={(sIndex + index) % 4 === 3}

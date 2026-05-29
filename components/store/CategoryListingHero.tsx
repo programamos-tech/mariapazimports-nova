@@ -2,6 +2,7 @@ import Image from "next/image";
 import {
   resolveCategoryListingHeroSrc,
 } from "@/lib/category-listing-hero-url";
+import { storeShellXClass } from "@/lib/store-layout";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 type Props = {
@@ -32,7 +33,9 @@ export function CategoryListingHero({ imagePath, title, alt }: Props) {
           unoptimized={shouldUnoptimizeStorageImageUrl(src)}
         />
       </div>
-      <div className="border-b border-stone-200 bg-white px-4 py-5 text-center sm:py-6">
+      <div
+        className={`border-b border-stone-200 bg-white py-5 text-center sm:py-6 ${storeShellXClass}`}
+      >
         <h1 className="text-base font-semibold uppercase tracking-[0.22em] text-stone-900 sm:text-lg md:text-xl">
           {title}
         </h1>

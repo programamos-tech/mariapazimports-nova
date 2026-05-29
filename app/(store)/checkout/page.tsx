@@ -12,6 +12,7 @@ import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
+import { storeShellClass } from "@/lib/store-layout";
 import {
   CheckoutShippingFields,
   type CheckoutSavedAddress,
@@ -143,7 +144,7 @@ function CheckoutBolsaVaciaView({
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-white">
-      <div className="mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6 lg:pb-16 lg:pt-12">
+      <div className={`${storeShellClass} pb-14 pt-10 lg:pb-16 lg:pt-12`}>
         <nav
           aria-label="Migas de pan"
           className="mb-8 text-[11px] uppercase tracking-[0.12em] text-stone-400"
@@ -350,7 +351,7 @@ export default async function CheckoutPage({
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-white">
-      <div className="mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6 lg:pb-16 lg:pt-12">
+      <div className={`${storeShellClass} pb-14 pt-10 lg:pb-16 lg:pt-12`}>
         <nav aria-label="Migas de pan" className="mb-8 text-[11px] uppercase tracking-[0.12em] text-stone-400">
           <ol className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:justify-start">
             <li>

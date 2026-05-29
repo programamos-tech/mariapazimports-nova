@@ -16,6 +16,7 @@ import {
   formatSizeOption,
   normalizeSizeOptionsFromRow,
 } from "@/lib/product-size-options";
+import { storeShellClass } from "@/lib/store-layout";
 import { fetchStorefrontCouponDiscountPercentForProduct } from "@/lib/store-coupons";
 
 export const dynamic = "force-dynamic";
@@ -113,8 +114,10 @@ export default async function ProductDetailPage({ params }: Props) {
           fetchPriority="high"
         />
       ) : null}
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
-      <nav aria-label="Migas de pan" className="mb-8 text-[11px] uppercase tracking-[0.12em] text-stone-400">
+      <div
+        className={`${storeShellClass} pb-10 pt-4 sm:pb-12 sm:pt-5 lg:pb-14 lg:pt-6`}
+      >
+      <nav aria-label="Migas de pan" className="mb-5 text-[11px] uppercase tracking-[0.12em] text-stone-400">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <li>
             <Link href="/" className="transition hover:text-stone-700">

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StoreLogo } from "@/components/store/StoreLogo";
+import { storeShellClass } from "@/lib/store-layout";
 import {
   bereaSignaturePath,
   storeCopyrightHolder,
@@ -26,7 +27,7 @@ export function StoreFooter() {
     <footer className="border-t border-stone-200/90">
       {/* 1 · Columnas de navegación */}
       <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
+        <div className={`${storeShellClass} py-10 sm:py-12 lg:py-14`}>
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12 xl:gap-16">
             <div className="shrink-0 lg:max-w-[11rem] lg:pt-0.5">
               <Link
@@ -140,7 +141,9 @@ export function StoreFooter() {
 
       {/* 2 · Legal */}
       <div className="border-t border-stone-200/90 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div
+          className={`${storeShellClass} flex flex-col gap-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6`}
+        >
           <p className="text-[11px] text-stone-500 sm:text-xs">
             © {year} {storeCopyrightHolder}. Todos los derechos reservados.
           </p>

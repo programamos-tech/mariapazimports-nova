@@ -5,11 +5,10 @@ import { StoreAccountBirthdayBanner } from "@/components/store/StoreAccountBirth
 import { StoreAccountHeroNav } from "@/components/store/StoreAccountHeroNav";
 import { StoreSignOutButton } from "@/components/store/StoreSignOutButton";
 import { STORE_ACCOUNT_HERO_IMAGE } from "@/lib/store-account-hero";
+import { storeShellClass } from "@/lib/store-layout";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const shellClass =
-  "w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10";
-const innerClass = "mx-auto w-full max-w-7xl";
+const shellClass = `${storeShellClass} py-8 sm:py-10`;
 
 function accountHeroFirstName(displayName: string): string {
   const t =
@@ -93,9 +92,7 @@ export default async function CuentaAccountLayout({
     return (
       <div className="min-w-0 overflow-x-hidden bg-white">
         <CuentaAccountHero heroName={heroName} />
-        <div className={shellClass}>
-          <div className={innerClass}>{children}</div>
-        </div>
+        <div className={shellClass}>{children}</div>
       </div>
     );
   }
@@ -127,9 +124,7 @@ export default async function CuentaAccountLayout({
             : null
         }
       />
-      <div className={shellClass}>
-        <div className={innerClass}>{children}</div>
-      </div>
+      <div className={shellClass}>{children}</div>
     </div>
   );
 }

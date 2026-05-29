@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatCop } from "@/lib/money";
+import { storeShellClass } from "@/lib/store-layout";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function CheckoutReturnPage({
 
   if (!orderId) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-10">
+      <div className={`${storeShellClass} max-w-lg space-y-4 py-10`}>
         <h1 className="text-2xl font-semibold text-stone-900">Resultado del pago</h1>
         <p className="text-stone-600">
           Falta el identificador del pedido en la URL.
@@ -79,7 +80,7 @@ export default async function CheckoutReturnPage({
 
   if (!order) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-10">
+      <div className={`${storeShellClass} max-w-lg space-y-4 py-10`}>
         <h1 className="text-2xl font-semibold text-stone-900">Pedido no encontrado</h1>
         <Link
           href="/products"
@@ -94,7 +95,7 @@ export default async function CheckoutReturnPage({
   const status = order.status as string;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-10">
+    <div className={`${storeShellClass} max-w-lg space-y-6 py-10`}>
       <h1 className="text-2xl font-semibold text-stone-900">
         Resultado del pago
       </h1>

@@ -6,6 +6,8 @@ import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
+import { storeShellClass } from "@/lib/store-layout";
+import { revealProductStagger } from "@/lib/store-reveal-timing";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import {
   fetchListingFacets,
@@ -322,7 +324,9 @@ export default async function ProductsPage({ searchParams }: Props) {
 
       {categoryView && categoryName && !showCategoryListingHero ? (
         <RevealOnScroll className="w-full">
-          <header className="mx-auto max-w-7xl border-b border-stone-100 px-4 pb-6 pt-8 text-center sm:pb-8 sm:pt-10">
+          <header
+            className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
+          >
             <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
               {categoryName}
             </h1>
@@ -331,7 +335,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       ) : null}
 
       <div className="w-full bg-white">
-        <div className="mx-auto max-w-7xl">
+        <div className={storeShellClass}>
           <ProductsListingControls
             key={controlsKey}
             lockedCategoryId={categoryFilterId}
@@ -358,7 +362,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       </div>
 
       <div
-        className={`mx-auto max-w-7xl space-y-10 px-5 sm:space-y-12 sm:px-6 md:px-8 lg:py-14 ${
+        className={`${storeShellClass} space-y-10 sm:space-y-12 lg:py-14 ${
           categoryView
             ? "py-8 sm:py-10"
             : "py-10 sm:py-12 lg:py-14"
@@ -390,7 +394,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               <li key={p.id}>
                 <RevealOnScroll
                   className="h-full"
-                  delayMs={Math.min(index * 60, 420)}
+                  delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
                     accentImageBg={index % 4 === 3}
@@ -436,7 +440,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               <li key={p.id}>
                 <RevealOnScroll
                   className="h-full"
-                  delayMs={Math.min(index * 60, 420)}
+                  delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
                     accentImageBg={index % 4 === 3}

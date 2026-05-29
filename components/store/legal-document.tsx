@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { storeShellClass } from "@/lib/store-layout";
 
 export function LegalDocument({
   title,
@@ -10,13 +11,15 @@ export function LegalDocument({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <div className={`${storeShellClass} py-12 sm:py-16`}>
+      <div className="max-w-3xl">
       <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">
         {title}
       </h1>
       <p className="mt-2 text-xs text-stone-500">{updatedLabel}</p>
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-stone-700 sm:text-[15px]">
         {children}
+      </div>
       </div>
     </div>
   );

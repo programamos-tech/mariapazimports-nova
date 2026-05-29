@@ -74,8 +74,9 @@ export function RevealOnScroll({
         setPhase(phaseFromEntry(entry));
       },
       {
-        threshold: [0, 0.08, 0.15, 0.25],
-        rootMargin: "0px 0px -8% 0px",
+        threshold: [0, 0.06, 0.12],
+        /* Dispara un poco antes de entrar al viewport (menos sensación de espera). */
+        rootMargin: "8% 0px 14% 0px",
       },
     );
 
