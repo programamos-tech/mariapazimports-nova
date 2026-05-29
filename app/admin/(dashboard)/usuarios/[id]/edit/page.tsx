@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { notFound } from "next/navigation";
 import {
   EditCollaboratorHeader,
@@ -83,7 +84,7 @@ export default async function AdminEditColaboradorPage({ params, searchParams }:
     initial.display_name?.trim() || initial.login_username?.trim() || "Colaborador";
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <EditCollaboratorHeader name={title} />
       {errorMessage(err) ? (
         <p className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">

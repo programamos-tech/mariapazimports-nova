@@ -1,13 +1,18 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminUpdateStockForm } from "@/components/admin/AdminUpdateStockForm";
 import { adjustProductStock } from "@/app/actions/admin/products";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
+import { fetchVariantStockRowsForAdmin } from "@/lib/product-stock";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 function shortSku(id: string) {
   return id.replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -19,12 +24,17 @@ function breadcrumbSegment(name: string) {
   return `${t.slice(0, 39)}…`;
 }
 
-export default async function AdminProductStockPage({ params }: Props) {
+export default async function AdminProductStockPage({ params, searchParams }: Props) {
   await requireAdminPermission("stock_actualizar");
   const { id } = await params;
+  const sp = await searchParams;
+  const variantError = sp.error === "variant";
   const supabase = await createSupabaseServerClient();
 
-  const { data: product } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+  const [{ data: product }, variantStock] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).maybeSingle(),
+    fetchVariantStockRowsForAdmin(supabase, id),
+  ]);
 
   if (!product) notFound();
 
@@ -43,7 +53,7 @@ export default async function AdminProductStockPage({ params }: Props) {
   const boundAdjust = adjustProductStock.bind(null, id);
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className={adminFormPageClass}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -65,9 +75,15 @@ export default async function AdminProductStockPage({ params }: Props) {
             Actualizar stock
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-            Registra entradas de stock (compras / te llegó mercancía) o ajustes por conteo (corrección
-            después de contar).
+            {variantStock.usesVariants
+              ? "Elegí la presentación y registrá entradas o ajustes por conteo. El total del producto se recalcula solo."
+              : "Registra entradas de stock (compras / te llegó mercancía) o ajustes por conteo (corrección después de contar)."}
           </p>
+          {variantError ? (
+            <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
+              Elegí una presentación antes de actualizar el stock.
+            </p>
+          ) : null}
         </div>
         <Link
           href={`/admin/products/${id}`}
@@ -85,6 +101,7 @@ export default async function AdminProductStockPage({ params }: Props) {
         referenceLabel={referenceLabel}
         stockLocal={stockLocal}
         stockWarehouse={stockWarehouse}
+        variants={variantStock.usesVariants ? variantStock.variants : undefined}
         formAction={boundAdjust}
         returnTo={`/admin/products/${id}`}
       />

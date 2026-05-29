@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { imagePathForProductLine } from "@/lib/product-line-image";
+import {
+  findVariantForCartLine,
+  resolveCartLinePrice,
+  resolveCartLineStock,
+  type CartNormalizeProduct,
+} from "@/lib/store-listing-variant-meta";
 import { getStorefrontCartLines } from "@/lib/storefront-cart";
+import { fetchProductVariantsByProductIds } from "@/lib/product-variants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +15,8 @@ export const dynamic = "force-dynamic";
 export type CartDrawerItem = {
   productId: string;
   quantity: number;
-  fragrance: string | null;
+  variantId: string | null;
+  variantLabel: string | null;
   name: string;
   priceCents: number;
   imagePath: string | null;
@@ -80,13 +88,16 @@ export async function GET() {
   }
 
   const ids = [...new Set(lines.map((l) => l.productId))];
-  const { data: products } = await supabase
-    .from("products")
-    .select(
-      "id,name,price_cents,image_path,image_paths,fragrance_option_images,colors,stock_quantity",
-    )
-    .in("id", ids)
-    .eq("is_published", true);
+  const [{ data: products }, variantMap] = await Promise.all([
+    supabase
+      .from("products")
+      .select(
+        "id,name,price_cents,image_path,image_paths,fragrance_option_images,colors,stock_quantity,variant_axis",
+      )
+      .in("id", ids)
+      .eq("is_published", true),
+    fetchProductVariantsByProductIds(supabase, ids),
+  ]);
 
   const byId = new Map(
     (products ?? []).map((p) => [
@@ -100,6 +111,7 @@ export async function GET() {
         fragrance_option_images: unknown;
         colors: unknown;
         stock_quantity: number | null;
+        variant_axis?: string | null;
       },
     ]),
   );
@@ -110,27 +122,29 @@ export async function GET() {
   for (const line of lines) {
     const p = byId.get(line.productId);
     if (!p) continue;
-    const lineTotalCents = p.price_cents * line.quantity;
+    const variants = variantMap.get(line.productId) ?? [];
+    const variant = findVariantForCartLine(variants, line.variantId);
+    const priceCents = resolveCartLinePrice(p as CartNormalizeProduct, variant);
+    const lineTotalCents = priceCents * line.quantity;
     subtotalCents += lineTotalCents;
-    const frag = line.fragrance?.trim() || null;
+    const variantLabel = variant?.label?.trim() || null;
     items.push({
       productId: line.productId,
       quantity: line.quantity,
-      fragrance: frag,
+      variantId: line.variantId ?? null,
+      variantLabel,
       name: p.name,
-      priceCents: p.price_cents,
+      priceCents,
       imagePath: imagePathForProductLine(
         p.image_path,
         p.fragrance_option_images,
-        frag ?? undefined,
+        variantLabel ?? undefined,
         p.image_paths,
+        variant,
       ),
       firstColor: firstColorLabel(p.colors),
       lineTotalCents,
-      maxStock: Math.max(
-        0,
-        Math.floor(Number(p.stock_quantity ?? 0)),
-      ),
+      maxStock: resolveCartLineStock(p as CartNormalizeProduct, variant),
     });
   }
 

@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { notFound } from "next/navigation";
 import {
   EditCustomerForm,
@@ -38,7 +39,7 @@ export default async function AdminCustomerEditPage({ params, searchParams }: Pr
     .order("sort_order", { ascending: true });
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className={adminFormPageClass}>
       <EditCustomerHeader
         customerId={id}
         customerName={String(customer.name)}

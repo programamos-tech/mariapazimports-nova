@@ -13,11 +13,19 @@ import { formatQuantityInputGrouping } from "@/lib/money";
 type MovementMode = "replace" | "add";
 type StockLoc = "local" | "warehouse";
 
+export type AdminVariantStockOption = {
+  id: string;
+  label: string;
+  stockLocal: number;
+  stockWarehouse: number;
+};
+
 type Props = {
   productName: string;
   referenceLabel: string;
   stockLocal: number;
   stockWarehouse: number;
+  variants?: AdminVariantStockOption[];
   formAction: (formData: FormData) => void;
   returnTo: string;
 };
@@ -31,14 +39,21 @@ export function AdminUpdateStockForm({
   referenceLabel,
   stockLocal,
   stockWarehouse,
+  variants = [],
   formAction,
   returnTo,
 }: Props) {
+  const hasVariants = variants.length > 0;
+  const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [movementMode, setMovementMode] = useState<MovementMode>("replace");
   const [location, setLocation] = useState<StockLoc>("local");
   const [quantity, setQuantity] = useState(0);
 
-  const currentForLoc = location === "local" ? stockLocal : stockWarehouse;
+  const selectedVariant =
+    variants.find((v) => v.id === variantId) ?? variants[0] ?? null;
+  const effectiveLocal = selectedVariant?.stockLocal ?? stockLocal;
+  const effectiveWarehouse = selectedVariant?.stockWarehouse ?? stockWarehouse;
+  const currentForLoc = location === "local" ? effectiveLocal : effectiveWarehouse;
 
   const stockAfter = useMemo(() => {
     if (movementMode === "replace") return quantity;
@@ -70,10 +85,34 @@ export function AdminUpdateStockForm({
       <input type="hidden" name="movement_mode" value={movementMode} />
       <input type="hidden" name="location" value={location} />
       <input type="hidden" name="return_to" value={returnTo} />
+      {hasVariants && selectedVariant ? (
+        <input type="hidden" name="variant_id" value={selectedVariant.id} />
+      ) : null}
 
       <div className="space-y-8">
         <section className={shellMain}>
           <h2 className={sectionTitle}>Producto y movimiento</h2>
+
+          {hasVariants ? (
+            <div className="mt-6">
+              <span className={labelClass}>Presentación (SKU)</span>
+              <select
+                value={variantId}
+                onChange={(e) => setVariantId(e.target.value)}
+                className={`${productInputClass} mt-2 max-w-md`}
+              >
+                {variants.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                El ajuste aplica solo a esta presentación. El total del producto en
+                inventario se recalcula automáticamente.
+              </p>
+            </div>
+          ) : null}
 
           <div className="mt-6">
             <span className={labelClass}>Buscar producto</span>
@@ -173,7 +212,14 @@ export function AdminUpdateStockForm({
           <dl className="mt-5 space-y-4 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500 dark:text-zinc-400">Producto</dt>
-              <dd className="max-w-[65%] text-right text-zinc-900 dark:text-zinc-100">{productName}</dd>
+              <dd className="max-w-[65%] text-right text-zinc-900 dark:text-zinc-100">
+                {productName}
+                {selectedVariant ? (
+                  <span className="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    {selectedVariant.label}
+                  </span>
+                ) : null}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500 dark:text-zinc-400">Tipo</dt>
@@ -203,7 +249,9 @@ export function AdminUpdateStockForm({
         <section className={shellAside}>
           <h2 className={sectionTitle}>Paso final</h2>
           <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            Cuando confirmes, se actualizará el inventario de este producto.
+            {hasVariants
+              ? "Se actualizará el stock de la presentación elegida y el total del producto."
+              : "Cuando confirmes, se actualizará el inventario de este producto."}
           </p>
           <button
             type="submit"

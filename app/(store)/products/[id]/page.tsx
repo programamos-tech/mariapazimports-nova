@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { preload } from "react-dom";
-import { ProductDetailView } from "@/components/store/ProductDetailView";
+import {
+  ProductDetailView,
+  type ProductDetailVariant,
+} from "@/components/store/ProductDetailView";
 import { ProductDetailHeroServer } from "@/components/store/ProductDetailHeroServer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { productDisplayImageUrl } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
-import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
-  fragranceImagesForLabel,
-  normalizeFragranceOptionImages,
   normalizeProductImagePaths,
 } from "@/lib/product-images";
 import {
@@ -18,6 +18,10 @@ import {
 } from "@/lib/product-size-options";
 import { storeShellClass } from "@/lib/store-layout";
 import { fetchStorefrontCouponDiscountPercentForProduct } from "@/lib/store-coupons";
+import {
+  fetchProductVariantsForProduct,
+  parseProductVariantAxis,
+} from "@/lib/product-variants";
 
 export const dynamic = "force-dynamic";
 
@@ -34,16 +38,30 @@ function catalogHref(categoryId: string | null, brand: string | null): string {
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
-  const { data: product } = await supabase
-    .from("products")
-    .select(
-      "id,name,description,price_cents,stock_quantity,image_path,image_paths,fragrance_option_images,size_options,size_value,size_unit,has_expiration,expiration_date,colors,fragrance_options,has_vat,vat_percent,brand,category_id,categories(name)",
-    )
-    .eq("id", id)
-    .eq("is_published", true)
-    .maybeSingle();
+  const [{ data: product }, variantsRaw] = await Promise.all([
+    supabase
+      .from("products")
+      .select(
+        "id,name,description,price_cents,stock_quantity,image_path,image_paths,variant_axis,size_options,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent,brand,category_id,categories(name)",
+      )
+      .eq("id", id)
+      .eq("is_published", true)
+      .maybeSingle(),
+    fetchProductVariantsForProduct(supabase, id),
+  ]);
 
   if (!product) notFound();
+
+  const variantAxis = parseProductVariantAxis(product.variant_axis);
+  const variants: ProductDetailVariant[] = variantsRaw.map((v) => ({
+    id: v.id,
+    label: v.label,
+    priceCents: v.priceCents,
+    stockQuantity: v.stockQuantity,
+    imageUrls: v.imagePaths
+      .map((path) => storagePublicObjectUrl(path))
+      .filter((u): u is string => Boolean(u)),
+  }));
 
   const catRel = product.categories as { name?: string } | null | undefined;
   const categoryName =
@@ -58,23 +76,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const imageUrls = catalogPaths
     .map((path) => storagePublicObjectUrl(path))
     .filter((u): u is string => Boolean(u));
-  const fragranceImgMap = normalizeFragranceOptionImages(
-    product.fragrance_option_images,
-  );
-  const fragranceLabelsRaw = Array.isArray(product.fragrance_options)
-    ? product.fragrance_options.filter(
-        (x): x is string => typeof x === "string" && x.trim().length > 0,
-      )
-    : [];
-  const fragranceLabels = expandFragranceLabels(fragranceLabelsRaw);
-  const fragranceImageUrls: Record<string, string[]> = {};
-  for (const label of fragranceLabels) {
-    const paths = fragranceImagesForLabel(fragranceImgMap, label);
-    const urls = paths
-      .map((path) => storagePublicObjectUrl(path))
-      .filter((u): u is string => Boolean(u));
-    if (urls.length > 0) fragranceImageUrls[label] = urls;
-  }
+
   const couponDiscountPercent =
     await fetchStorefrontCouponDiscountPercentForProduct(supabase, product.id);
 
@@ -91,13 +93,11 @@ export default async function ProductDetailPage({ params }: Props) {
   const categoryId = product.category_id;
 
   const defaultGalleryUrls =
-    fragranceLabels.length > 0
-      ? (fragranceImageUrls[fragranceLabels[0] ?? ""] ?? [])
-      : imageUrls;
+    variants[0]?.imageUrls.length ? variants[0]!.imageUrls : imageUrls;
   const initialHeroSrc = defaultGalleryUrls[0] ?? imageUrls[0] ?? null;
   const initialHeroAlt =
-    fragranceLabels.length > 0 && fragranceLabels[0]
-      ? `${product.name} — ${fragranceLabels[0]}`
+    variants[0]?.label
+      ? `${product.name} — ${variants[0]!.label}`
       : product.name;
   const heroPreloadUrl = productDisplayImageUrl(initialHeroSrc, "hero");
   if (heroPreloadUrl) {
@@ -185,13 +185,13 @@ export default async function ProductDetailPage({ params }: Props) {
         description={product.description}
         priceCents={product.price_cents}
         stockQuantity={product.stock_quantity}
+        variantAxis={variantAxis}
+        variants={variants}
         imageUrls={imageUrls}
-        fragranceImageUrls={fragranceImageUrls}
         sizeLabels={sizeLabels}
         hasExpiration={product.has_expiration}
         expirationDate={product.expiration_date}
         colors={Array.isArray(product.colors) ? product.colors : []}
-        fragranceOptions={fragranceLabels}
         hasVat={product.has_vat}
         vatPercent={product.vat_percent}
         couponDiscountPercent={couponDiscountPercent}

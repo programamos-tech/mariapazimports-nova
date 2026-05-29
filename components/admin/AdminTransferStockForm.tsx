@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ProductQuantityInput,
+  productInputClass,
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
+import type { AdminVariantStockOption } from "@/components/admin/AdminUpdateStockForm";
 import { formatQuantityInputGrouping } from "@/lib/money";
 
 export type TransferDirection = "local_to_warehouse" | "warehouse_to_local";
@@ -15,6 +17,7 @@ type Props = {
   productName: string;
   stockLocal: number;
   stockWarehouse: number;
+  variants?: AdminVariantStockOption[];
   formAction: (formData: FormData) => void;
   returnTo: string;
 };
@@ -27,31 +30,39 @@ export function AdminTransferStockForm({
   productName,
   stockLocal,
   stockWarehouse,
+  variants = [],
   formAction,
   returnTo,
 }: Props) {
+  const hasVariants = variants.length > 0;
+  const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [direction, setDirection] = useState<TransferDirection>("local_to_warehouse");
   const [quantity, setQuantity] = useState(0);
 
+  const selectedVariant =
+    variants.find((v) => v.id === variantId) ?? variants[0] ?? null;
+  const effectiveLocal = selectedVariant?.stockLocal ?? stockLocal;
+  const effectiveWarehouse = selectedVariant?.stockWarehouse ?? stockWarehouse;
+
   const fromLocal = direction === "local_to_warehouse";
-  const available = fromLocal ? stockLocal : stockWarehouse;
+  const available = fromLocal ? effectiveLocal : effectiveWarehouse;
 
   const { afterLocal, afterWh } = useMemo(() => {
     if (quantity <= 0) {
-      return { afterLocal: stockLocal, afterWh: stockWarehouse };
+      return { afterLocal: effectiveLocal, afterWh: effectiveWarehouse };
     }
     const q = Math.min(quantity, available);
     if (fromLocal) {
       return {
-        afterLocal: stockLocal - q,
-        afterWh: stockWarehouse + q,
+        afterLocal: effectiveLocal - q,
+        afterWh: effectiveWarehouse + q,
       };
     }
     return {
-      afterLocal: stockLocal + q,
-      afterWh: stockWarehouse - q,
+      afterLocal: effectiveLocal + q,
+      afterWh: effectiveWarehouse - q,
     };
-  }, [quantity, available, fromLocal, stockLocal, stockWarehouse]);
+  }, [quantity, available, fromLocal, effectiveLocal, effectiveWarehouse]);
 
   const directionSummary = fromLocal
     ? "Local → Bodega · movés desde el mostrador hacia bodega"
@@ -75,13 +86,38 @@ export function AdminTransferStockForm({
     >
       <input type="hidden" name="direction" value={direction} />
       <input type="hidden" name="return_to" value={returnTo} />
+      {hasVariants && selectedVariant ? (
+        <input type="hidden" name="variant_id" value={selectedVariant.id} />
+      ) : null}
 
       <div className="space-y-8">
         <section className={shellMain}>
+          {hasVariants ? (
+            <div className="mb-8">
+              <span className={labelClass}>Presentación (SKU)</span>
+              <select
+                value={variantId}
+                onChange={(e) => setVariantId(e.target.value)}
+                className={`${productInputClass} mt-2 max-w-md`}
+              >
+                {variants.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <div>
             <span className={labelClass}>Producto</span>
             <div className="mt-2 rounded-lg border border-zinc-200/90 bg-white/60 px-3 py-2.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/60 dark:text-zinc-100">
               {productName}
+              {selectedVariant ? (
+                <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">
+                  {selectedVariant.label}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -91,13 +127,13 @@ export function AdminTransferStockForm({
               <div>
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Local</p>
                 <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                  {fmtQty(stockLocal)}
+                  {fmtQty(effectiveLocal)}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Bodega</p>
                 <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                  {fmtQty(stockWarehouse)}
+                  {fmtQty(effectiveWarehouse)}
                 </p>
               </div>
             </div>
@@ -175,7 +211,9 @@ export function AdminTransferStockForm({
         <div className="rounded-xl border border-zinc-200/90 bg-white px-5 py-4 text-xs leading-relaxed text-zinc-600 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:text-zinc-300 dark:shadow-none dark:ring-white/[0.06]">
           <ul className="list-disc space-y-2 pl-4 marker:text-zinc-400 dark:marker:text-zinc-500">
             <li>
-              El total en listado y en la ficha del producto sigue siendo la suma de local + bodega.
+              {hasVariants
+                ? "El traslado aplica a la presentación elegida; el total del producto se recalcula."
+                : "El total en listado y en la ficha del producto sigue siendo la suma de local + bodega."}
             </li>
             <li>
               Esta acción solo mueve unidades entre los dos depósitos; no crea ni elimina productos.

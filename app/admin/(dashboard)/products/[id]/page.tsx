@@ -13,6 +13,8 @@ import {
   unitPriceNetCents,
 } from "@/lib/product-vat-price";
 import { shouldUnoptimizeStorageImageUrl, storagePublicObjectUrl } from "@/lib/storage-public-url";
+import { fetchVariantStockRowsForAdmin } from "@/lib/product-stock";
+import { getVariantPickerTitle, parseProductVariantAxis } from "@/lib/product-variants";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const { data: product } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
 
   if (!product) notFound();
+
+  const variantStock = await fetchVariantStockRowsForAdmin(supabase, id);
 
   const raw = product as Record<string, unknown> & {
     id: string;
@@ -56,6 +60,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     fragrance_options?: string[] | null;
     has_vat?: boolean | null;
     vat_percent?: number | null;
+    variant_axis?: string | null;
   };
 
   let categoryName = "Sin categoría";
@@ -134,7 +139,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
     "rounded-xl border border-zinc-200/70 bg-white/60 p-5 dark:border-zinc-700/80 dark:bg-zinc-950/40";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className={shellCard}>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
@@ -237,6 +242,88 @@ export default async function AdminProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {variantStock.usesVariants ? (
+        <section className={shellCard}>
+          <h2 className={labelClass}>
+            Stock por presentación ({getVariantPickerTitle(parseProductVariantAxis(raw.variant_axis))})
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Cada fila es un SKU. Los totales de arriba son la suma de todas las presentaciones.
+          </p>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 dark:border-zinc-700">
+                  <th className="pb-3 pr-4 font-medium text-zinc-500 dark:text-zinc-400">
+                    Presentación
+                  </th>
+                  <th className="pb-3 pr-4 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                    Local
+                  </th>
+                  <th className="pb-3 pr-4 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                    Bodega
+                  </th>
+                  <th className="pb-3 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {variantStock.variants.map((v) => (
+                  <tr key={v.id}>
+                    <td className="py-3 pr-4 font-medium text-zinc-900 dark:text-zinc-100">
+                      {v.label}
+                    </td>
+                    <td className="py-3 pr-4 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
+                      {fmtUnits(v.stockLocal)}
+                    </td>
+                    <td className="py-3 pr-4 text-right tabular-nums text-zinc-800 dark:text-zinc-200">
+                      {fmtUnits(v.stockWarehouse)}
+                    </td>
+                    <td className="py-3 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                      {fmtUnits(v.stockLocal + v.stockWarehouse)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-zinc-200 dark:border-zinc-700">
+                  <td className="pt-3 pr-4 font-medium text-zinc-700 dark:text-zinc-300">
+                    Total producto
+                  </td>
+                  <td className="pt-3 pr-4 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                    {fmtUnits(stockL)}
+                  </td>
+                  <td className="pt-3 pr-4 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                    {fmtUnits(stockW)}
+                  </td>
+                  <td className="pt-3 text-right tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                    {fmtUnits(stockTotal)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+            Para ajustar o transferir stock de una presentación, usá{" "}
+            <Link
+              href={`/admin/products/${id}/stock`}
+              className="font-medium text-zinc-700 underline decoration-zinc-300 dark:text-zinc-300"
+            >
+              Actualizar stock
+            </Link>{" "}
+            o{" "}
+            <Link
+              href={`/admin/products/${id}/transfer`}
+              className="font-medium text-zinc-700 underline decoration-zinc-300 dark:text-zinc-300"
+            >
+              Transferir
+            </Link>
+            .
+          </p>
+        </section>
+      ) : null}
 
       <section className={shellCard}>
         <h2 className={labelClass}>Valor e ingresos estimados</h2>

@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { NewExpenseForm, NewExpenseHeader } from "@/components/admin/NewExpenseForm";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 
@@ -14,7 +15,7 @@ export default async function AdminNuevoEgresoPage({
     typeof sp.expense_error === "string" ? sp.expense_error : undefined;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
+    <div className={`${adminFormPageClass} space-y-6`}>
       <NewExpenseHeader />
       <NewExpenseForm initialError={expenseErrorCode} />
     </div>

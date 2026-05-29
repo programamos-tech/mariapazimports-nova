@@ -7,9 +7,11 @@ import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { revealProductStagger } from "@/lib/store-reveal-timing";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import {
+  computeListingFacetsFromProductRows,
   fetchListingFacets,
   mergeCategoryRowsForFilterMenu,
 } from "@/lib/product-listing-facets";
@@ -28,6 +30,10 @@ import {
   parseProductsPriceMinParam,
   parseProductsSizesParam,
 } from "@/lib/product-list-query";
+import {
+  enrichListingProductsWithVariants,
+  toProductListingCardProps,
+} from "@/lib/store-listing-variant-meta";
 import {
   fetchPublishedProductsForListing,
   type StoreListingProductRow,
@@ -95,30 +101,50 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const supabase = await createSupabaseServerClient();
 
+  const categoryLookupPromise =
+    categoryId ?
+      supabase
+        .from("categories")
+        .select("name,listing_hero_image_path,listing_hero_alt_text")
+        .eq("id", categoryId)
+        .maybeSingle()
+    : Promise.resolve({ data: null, error: null });
+
+  const categoriesPromise = supabase
+    .from("categories")
+    .select("id,name,sort_order")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  const [categoryLookup, { data: allCategoryRows, error: categoriesReadError }] =
+    await Promise.all([categoryLookupPromise, categoriesPromise]);
+
+  if (categoriesReadError) {
+    console.error(
+      "[products] categories:",
+      categoriesReadError.message,
+      categoriesReadError.code,
+    );
+  }
+
   let categoryName: string | null = null;
   let categoryFilterId: string | null = null;
   let categoryListingHeroPath: string | null = null;
   let categoryListingHeroAlt: string | null = null;
-  if (categoryId) {
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("name,listing_hero_image_path,listing_hero_alt_text")
-      .eq("id", categoryId)
-      .maybeSingle();
-    if (cat?.name) {
-      categoryName = cat.name;
-      categoryFilterId = categoryId;
-      categoryListingHeroPath =
-        typeof cat.listing_hero_image_path === "string" &&
-        cat.listing_hero_image_path.trim()
-          ? cat.listing_hero_image_path.trim()
-          : null;
-      categoryListingHeroAlt =
-        typeof cat.listing_hero_alt_text === "string" &&
-        cat.listing_hero_alt_text.trim()
-          ? cat.listing_hero_alt_text.trim()
-          : null;
-    }
+  const cat = categoryLookup.data;
+  if (cat?.name) {
+    categoryName = cat.name;
+    categoryFilterId = categoryId;
+    categoryListingHeroPath =
+      typeof cat.listing_hero_image_path === "string" &&
+      cat.listing_hero_image_path.trim()
+        ? cat.listing_hero_image_path.trim()
+        : null;
+    categoryListingHeroAlt =
+      typeof cat.listing_hero_alt_text === "string" &&
+      cat.listing_hero_alt_text.trim()
+        ? cat.listing_hero_alt_text.trim()
+        : null;
   }
 
   const categoryHeroResolvedSrc = categoryListingHeroPath
@@ -128,20 +154,6 @@ export default async function ProductsPage({ searchParams }: Props) {
   const showCategoryListingHero = Boolean(
     categoryView && categoryHeroResolvedSrc,
   );
-
-  const { data: allCategoryRows, error: categoriesReadError } = await supabase
-    .from("categories")
-    .select("id,name,sort_order")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
-
-  if (categoriesReadError) {
-    console.error(
-      "[products] categories:",
-      categoriesReadError.message,
-      categoriesReadError.code,
-    );
-  }
 
   const filterCategoryIds = categoryFilterId
     ? []
@@ -168,17 +180,9 @@ export default async function ProductsPage({ searchParams }: Props) {
   }
   if (!facetCategoryIds?.length) facetCategoryIds = null;
 
-  const listingFacets = await fetchListingFacets(supabase, {
-    categoryIds: facetCategoryIds,
-  });
-
   const categoriesForFilterMenu = categoryFilterId
     ? []
     : mergeCategoryRowsForFilterMenu(allCategoryRows ?? []);
-
-  const productsBanners = categoryView
-    ? []
-    : await fetchPublishedBanners(supabase, "products");
 
   const hasListingFilters =
     q.length > 0 ||
@@ -192,31 +196,46 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const catalogBrowseMode = !categoryView && !hasListingFilters;
 
-  let catalogSections: Awaited<
-    ReturnType<typeof fetchCatalogBrowseSections>
-  > | null = null;
+  const [
+    listingFacetsFromQuery,
+    productsBanners,
+    catalogBrowseData,
+    list,
+    cartQtyByProductId,
+    couponPctByProductId,
+  ] = await Promise.all([
+    catalogBrowseMode ?
+      Promise.resolve(null)
+    : fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
+    categoryView ?
+      Promise.resolve([] as Awaited<ReturnType<typeof fetchPublishedBanners>>)
+    : fetchPublishedBanners(supabase, "products"),
+    catalogBrowseMode && allCategoryRows?.length ?
+      fetchCatalogBrowseSections(supabase, allCategoryRows)
+    : Promise.resolve(null),
+    catalogBrowseMode ?
+      Promise.resolve([] as StoreListingProductRow[])
+    : fetchPublishedProductsForListing(supabase, {
+        categoryFilterId,
+        filterCategoryIds,
+        activeBrands,
+        activeColors,
+        activeSizes,
+        priceMin,
+        priceMax,
+        q,
+        sort,
+        allCategoryRows,
+      }),
+    getStorefrontCartQuantityByProductId(),
+    fetchStorefrontCouponDiscountPercentByProductId(supabase),
+  ]);
 
-  let list: StoreListingProductRow[] = [];
-
-  if (catalogBrowseMode) {
-    catalogSections =
-      allCategoryRows?.length ?
-        await fetchCatalogBrowseSections(supabase, allCategoryRows)
-      : [];
-  } else {
-    list = await fetchPublishedProductsForListing(supabase, {
-      categoryFilterId,
-      filterCategoryIds,
-      activeBrands,
-      activeColors,
-      activeSizes,
-      priceMin,
-      priceMax,
-      q,
-      sort,
-      allCategoryRows,
-    });
-  }
+  const catalogSections = catalogBrowseData?.sections ?? null;
+  const listingFacets =
+    catalogBrowseMode && catalogBrowseData ?
+      catalogBrowseData.facets
+    : listingFacetsFromQuery ?? computeListingFacetsFromProductRows([]);
 
   /** Si el modo “por categorías” no devolvió secciones pero hay filas publicadas (p. ej. error al leer categorías), mostrar grid plano. */
   let browseFlatFallback: StoreListingProductRow[] = [];
@@ -258,9 +277,12 @@ export default async function ProductsPage({ searchParams }: Props) {
     !showCatalogBrowseSections &&
     browseFlatFallback.length > 0;
 
-  const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
-  const couponPctByProductId =
-    await fetchStorefrontCouponDiscountPercentByProductId(supabase);
+  const enrichedList = catalogBrowseMode
+    ? []
+    : await enrichListingProductsWithVariants(supabase, list);
+  const enrichedBrowseFlat = showBrowseFlatFallback
+    ? await enrichListingProductsWithVariants(supabase, browseFlatFallback)
+    : [];
 
   const invalidCategory = Boolean(categoryId && !categoryName);
 
@@ -281,7 +303,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   return (
     <div className="bg-white">
       {catalogBrowseMode ? (
-        <RevealOnScroll className="w-full">
+        <div className="w-full">
           <CatalogListingHero
             title="CATÁLOGO"
             banner={
@@ -293,7 +315,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               : null
             }
           />
-        </RevealOnScroll>
+        </div>
       ) : null}
 
       {showCategoryListingHero &&
@@ -384,22 +406,10 @@ export default async function ProductsPage({ searchParams }: Props) {
                   delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
+                    imagePriority={storeProductCardImagePriority(index)}
                     cartQuantity={cartQtyByProductId[p.id] ?? 0}
                     couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={{
-                      id: p.id,
-                      name: p.name,
-                      brand: p.brand,
-                      description: p.description,
-                      price_cents: p.price_cents,
-                      image_path: p.image_path,
-                      image_paths: p.image_paths,
-                      stock_quantity: p.stock_quantity,
-                      size_options: p.size_options,
-                      size_value: p.size_value,
-                      size_unit: p.size_unit,
-                      fragrance_options: p.fragrance_options,
-                    }}
+                    product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
                   />
                 </RevealOnScroll>
               </li>
@@ -423,29 +433,17 @@ export default async function ProductsPage({ searchParams }: Props) {
           </p>
         ) : (
           <ul className={storeProductGridClass}>
-            {list.map((p, index) => (
+            {enrichedList.map((p, index) => (
               <li key={p.id}>
                 <RevealOnScroll
                   className="h-full"
                   delayMs={revealProductStagger(index)}
                 >
                   <ProductListingCard
+                    imagePriority={storeProductCardImagePriority(index)}
                     cartQuantity={cartQtyByProductId[p.id] ?? 0}
                     couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={{
-                      id: p.id,
-                      name: p.name,
-                      brand: p.brand,
-                      description: p.description,
-                      price_cents: p.price_cents,
-                      image_path: p.image_path,
-                      image_paths: p.image_paths,
-                      stock_quantity: p.stock_quantity,
-                      size_options: p.size_options,
-                      size_value: p.size_value,
-                      size_unit: p.size_unit,
-                      fragrance_options: p.fragrance_options,
-                    }}
+                    product={toProductListingCardProps(p)}
                   />
                 </RevealOnScroll>
               </li>

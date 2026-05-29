@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
-import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeProductGridClass } from "@/lib/store-layout";
-import type {
-  CatalogBrowseProductRow,
-  CatalogBrowseSection,
-} from "@/lib/catalog-browse-rows";
-import { revealCatalogRowStagger } from "@/lib/store-reveal-timing";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
+import { toProductListingCardProps } from "@/lib/store-listing-variant-meta";
+import type { CatalogBrowseSection } from "@/lib/catalog-browse-rows";
 
 export function CatalogBrowseSections({
   sections,
@@ -44,60 +41,21 @@ export function CatalogBrowseSections({
 
           <ul className={storeProductGridClass}>
             {section.products.map((p, index) => (
-              <CatalogBrowseProductSlot
-                key={p.id}
-                product={p}
-                index={index}
-                sectionIndex={sectionIndex}
-                cartQtyByProductId={cartQtyByProductId}
-                couponPctByProductId={couponPctByProductId}
-              />
+              <li key={p.id}>
+                <ProductListingCard
+                  imagePriority={
+                    sectionIndex === 0 &&
+                    storeProductCardImagePriority(index)
+                  }
+                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                  product={toProductListingCardProps(p)}
+                />
+              </li>
             ))}
           </ul>
         </section>
       ))}
     </div>
-  );
-}
-
-function CatalogBrowseProductSlot({
-  product,
-  index,
-  sectionIndex,
-  cartQtyByProductId,
-  couponPctByProductId,
-}: {
-  product: CatalogBrowseProductRow;
-  index: number;
-  sectionIndex: number;
-  cartQtyByProductId: Record<string, number>;
-  couponPctByProductId: Record<string, number>;
-}) {
-  return (
-    <li>
-      <RevealOnScroll
-        className="h-full"
-        delayMs={revealCatalogRowStagger(sectionIndex, index)}
-      >
-        <ProductListingCard
-          cartQuantity={cartQtyByProductId[product.id] ?? 0}
-          couponDiscountPercent={couponPctByProductId[product.id] ?? 0}
-          product={{
-            id: product.id,
-            name: product.name,
-            brand: product.brand,
-            description: product.description,
-            price_cents: product.price_cents,
-            image_path: product.image_path,
-            image_paths: product.image_paths,
-            stock_quantity: product.stock_quantity,
-            size_options: product.size_options,
-            size_value: product.size_value,
-            size_unit: product.size_unit,
-            fragrance_options: product.fragrance_options,
-          }}
-        />
-      </RevealOnScroll>
-    </li>
   );
 }

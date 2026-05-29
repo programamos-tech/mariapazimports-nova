@@ -29,6 +29,10 @@ import {
   parseProductsSizesParam,
 } from "@/lib/product-list-query";
 import { fetchPublishedProductsForListing } from "@/lib/store-products-listing-query";
+import {
+  enrichListingProductsWithVariants,
+  toProductListingCardProps,
+} from "@/lib/store-listing-variant-meta";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
@@ -165,7 +169,8 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
         allCategoryRows,
       });
 
-  const sections = groupPublishedProductsByBrand(list);
+  const enrichedList = await enrichListingProductsWithVariants(supabase, list);
+  const sections = groupPublishedProductsByBrand(enrichedList);
 
   const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
   const couponPctByProductId =
@@ -277,20 +282,7 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                             couponDiscountPercent={
                               couponPctByProductId[p.id] ?? 0
                             }
-                            product={{
-                              id: p.id,
-                              name: p.name,
-                              brand: p.brand || section.title,
-                              description: p.description,
-                              price_cents: p.price_cents,
-                              image_path: p.image_path,
-                              image_paths: p.image_paths,
-                              stock_quantity: p.stock_quantity,
-                              size_options: p.size_options,
-                              size_value: p.size_value,
-                              size_unit: p.size_unit,
-                              fragrance_options: p.fragrance_options,
-                            }}
+                            product={toProductListingCardProps(p)}
                           />
                         </RevealOnScroll>
                       </li>

@@ -16,11 +16,18 @@ import {
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
-import { formatCop, parseCopInputDigitsToInt } from "@/lib/money";
+import { formatCop, formatCopInputGrouping, parseCopInputDigitsToInt } from "@/lib/money";
+import {
+  computeLineDiscountCents,
+  type LineDiscountMode,
+} from "@/lib/pos-line-discount";
 import { unitPriceGrossCents } from "@/lib/product-vat-price";
 
 const cardSectionClass =
   "rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
+
+const invoiceLineCardClass =
+  "rounded-xl border border-zinc-200/90 bg-zinc-50/50 p-4 dark:border-zinc-700/90 dark:bg-zinc-950/50 sm:p-5";
 
 type ProductHit = {
   id: string;
@@ -29,8 +36,25 @@ type ProductHit = {
   price_cents: number;
   stock_quantity?: number | null;
   stock_local?: number | null;
+  stock_warehouse?: number | null;
   has_vat?: boolean | null;
   vat_percent?: number | null;
+  variant_axis?: string | null;
+};
+
+type PosVariantHit = {
+  id: string;
+  label: string;
+  priceCents: number;
+  stockLocal: number;
+  stockWarehouse: number;
+};
+
+type PosVariantProfile = {
+  variantAxis: string;
+  variantAxisLabel: string | null;
+  usesVariants: boolean;
+  variants: PosVariantHit[];
 };
 
 type CustomerHit = {
@@ -49,24 +73,71 @@ type CartLine = {
   key: string;
   product: ProductHit;
   quantity: number;
+  catalogUnitPriceCents: number;
+  unitPriceOverrideRaw: string;
+  lineDiscountRaw: string;
+  lineDiscountMode: LineDiscountMode;
+  stockLocal: number;
+  stockWarehouse: number;
+  variantId?: string;
+  variantLabel?: string;
+  variantProfile?: PosVariantProfile;
 };
 
-function lineBaseCents(line: CartLine): number {
-  return Number(line.product.price_cents ?? 0) * line.quantity;
+function lineUnitBaseCents(line: CartLine): number {
+  const raw = line.unitPriceOverrideRaw.trim();
+  if (raw.length > 0) {
+    return Math.max(0, parseCopInputDigitsToInt(raw));
+  }
+  return Math.max(0, Number(line.catalogUnitPriceCents ?? 0));
 }
 
-function unitFinalCents(product: ProductHit): number {
+function defaultUnitPriceInput(cents: number): string {
+  return formatCopInputGrouping(Math.max(0, Math.floor(cents)));
+}
+
+function lineDiscountCents(line: CartLine): number {
+  return computeLineDiscountCents(
+    lineGrossCents(line),
+    line.lineDiscountMode,
+    parseCopInputDigitsToInt(line.lineDiscountRaw),
+  );
+}
+
+function lineBaseCents(line: CartLine): number {
+  return lineUnitBaseCents(line) * line.quantity;
+}
+
+function unitFinalCentsForLine(line: CartLine): number {
   return unitPriceGrossCents(
-    product.price_cents,
-    product.has_vat,
-    product.vat_percent,
+    lineUnitBaseCents(line),
+    line.product.has_vat,
+    line.product.vat_percent,
   );
 }
 
 function lineVatCents(line: CartLine): number {
-  const unitBase = Math.max(0, Number(line.product.price_cents ?? 0));
-  const unitFinal = unitFinalCents(line.product);
+  const unitBase = lineUnitBaseCents(line);
+  const unitFinal = unitFinalCentsForLine(line);
   return (unitFinal - unitBase) * line.quantity;
+}
+
+function lineGrossCents(line: CartLine): number {
+  return lineBaseCents(line) + lineVatCents(line);
+}
+
+function lineTotalCents(line: CartLine): number {
+  return Math.max(0, lineGrossCents(line) - lineDiscountCents(line));
+}
+
+function lineExtraGainPerUnitCents(line: CartLine): number {
+  const effective = lineUnitBaseCents(line);
+  const lista = Math.max(0, Number(line.catalogUnitPriceCents ?? 0));
+  return Math.max(0, effective - lista);
+}
+
+function lineExtraGainCents(line: CartLine): number {
+  return lineExtraGainPerUnitCents(line) * line.quantity;
 }
 
 type PaymentTab = "cash" | "transfer" | "mixed";
@@ -162,6 +233,8 @@ function errorMessage(code: string | undefined): string | null {
       return "Algún producto no es válido o ya no existe.";
     case "stock":
       return "Stock insuficiente en tienda para uno o más productos.";
+    case "variant":
+      return "Seleccioná la presentación de cada producto con variantes.";
     case "db":
       return "No se pudo guardar. Aplica la migración de permisos POS en Supabase (20260515120000_admin_orders_write_pos.sql) e intenta de nuevo.";
     default:
@@ -206,6 +279,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
   const [shipLoading, setShipLoading] = useState(false);
 
   const [lines, setLines] = useState<CartLine[]>([]);
+  const [addingProduct, setAddingProduct] = useState(false);
   const [payment, setPayment] = useState<PaymentTab>("cash");
   const [cashGivenRaw, setCashGivenRaw] = useState("");
   const [transferRef, setTransferRef] = useState("");
@@ -343,9 +417,13 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
 
   const subtotalCents = useMemo(() => {
     let s = 0;
-    for (const line of lines) {
-      s += lineBaseCents(line);
-    }
+    for (const line of lines) s += lineBaseCents(line);
+    return s;
+  }, [lines]);
+
+  const discountCents = useMemo(() => {
+    let s = 0;
+    for (const line of lines) s += lineDiscountCents(line);
     return s;
   }, [lines]);
 
@@ -355,7 +433,17 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     return s;
   }, [lines]);
 
-  const totalCents = subtotalCents + vatCents;
+  const totalCents = useMemo(() => {
+    let s = 0;
+    for (const line of lines) s += lineTotalCents(line);
+    return s;
+  }, [lines]);
+
+  const extraGainCents = useMemo(() => {
+    let s = 0;
+    for (const line of lines) s += lineExtraGainCents(line);
+    return s;
+  }, [lines]);
 
   const cashGivenCents = parseCopInputDigitsToInt(cashGivenRaw);
   const mixedCashCents = parseCopInputDigitsToInt(mixedCashRaw);
@@ -385,32 +473,126 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     !shipLoading &&
     paymentOk;
 
-  function addProduct(p: ProductHit) {
+  function addLine(
+    p: ProductHit,
+    variant: PosVariantHit | null,
+    variantProfile?: PosVariantProfile,
+  ) {
+    const catalogUnitPriceCents = variant
+      ? variant.priceCents
+      : Math.max(0, Number(p.price_cents ?? 0));
+    const stockLocal = variant
+      ? variant.stockLocal
+      : Number(p.stock_local ?? p.stock_quantity ?? 0);
+    const stockWarehouse = variant
+      ? variant.stockWarehouse
+      : Number(p.stock_warehouse ?? 0);
+    const variantId = variant?.id;
+    const variantLabel = variant?.label;
+
     setLines((prev) => {
-      const idx = prev.findIndex((l) => l.product.id === p.id);
-      const stock = Number(p.stock_local ?? p.stock_quantity ?? 0);
+      const idx = prev.findIndex(
+        (l) => l.product.id === p.id && l.variantId === variantId,
+      );
       if (idx >= 0) {
-        const next = [...prev];
-        const q = next[idx].quantity + 1;
-        if (q > stock) return prev;
-        next[idx] = { ...next[idx], quantity: q };
-        return next;
+        const updated = { ...prev[idx]!, quantity: prev[idx]!.quantity + 1 };
+        if (updated.quantity > stockLocal) return prev;
+        const rest = prev.filter((_, i) => i !== idx);
+        return [updated, ...rest];
       }
-      if (stock < 1) return prev;
-      return [...prev, { key: crypto.randomUUID(), product: p, quantity: 1 }];
+      if (stockLocal < 1) return prev;
+      return [
+        {
+          key: crypto.randomUUID(),
+          product: p,
+          quantity: 1,
+          catalogUnitPriceCents,
+          unitPriceOverrideRaw: defaultUnitPriceInput(catalogUnitPriceCents),
+          lineDiscountRaw: "",
+          lineDiscountMode: "money",
+          stockLocal,
+          stockWarehouse,
+          ...(variantId ? { variantId, variantLabel } : {}),
+          ...(variantProfile?.usesVariants ? { variantProfile } : {}),
+        },
+        ...prev,
+      ];
     });
     setProductQuery("");
     setProductHits([]);
+  }
+
+  async function onProductClick(p: ProductHit) {
+    setAddingProduct(true);
+    try {
+      const res = await fetch(`/api/admin/products/${p.id}/pos-variants`);
+      if (!res.ok) return;
+      const profile = (await res.json()) as PosVariantProfile;
+
+      const variant = profile.usesVariants
+        ? profile.variants.find((v) => v.stockLocal > 0) ?? profile.variants[0] ?? null
+        : null;
+
+      if (profile.usesVariants && !variant) return;
+
+      addLine(p, variant, profile.usesVariants ? profile : undefined);
+    } finally {
+      setAddingProduct(false);
+    }
+  }
+
+  function setLineVariant(lineKey: string, variantId: string) {
+    setLines((prev) =>
+      prev.map((line) => {
+        if (line.key !== lineKey) return line;
+        const profile = line.variantProfile;
+        if (!profile?.usesVariants) return line;
+        const variant = profile.variants.find((v) => v.id === variantId);
+        if (!variant) return line;
+        const nextQty =
+          variant.stockLocal < 1
+            ? line.quantity
+            : Math.max(1, Math.min(line.quantity, variant.stockLocal));
+        return {
+          ...line,
+          variantId: variant.id,
+          variantLabel: variant.label,
+          catalogUnitPriceCents: variant.priceCents,
+          unitPriceOverrideRaw: defaultUnitPriceInput(variant.priceCents),
+          lineDiscountRaw: "",
+          lineDiscountMode: "money",
+          stockLocal: variant.stockLocal,
+          stockWarehouse: variant.stockWarehouse,
+          quantity: nextQty,
+        };
+      }),
+    );
   }
 
   function setQty(key: string, q: number) {
     setLines((prev) =>
       prev.map((line) => {
         if (line.key !== key) return line;
-        const stock = Number(line.product.stock_local ?? line.product.stock_quantity ?? 0);
+        const stock = line.stockLocal;
         const next = Math.max(1, Math.min(stock, Math.floor(q)));
         return { ...line, quantity: next };
       }),
+    );
+  }
+
+  function setLineField(
+    lineKey: string,
+    field: "unitPriceOverrideRaw" | "lineDiscountRaw",
+    value: string,
+  ) {
+    setLines((prev) =>
+      prev.map((line) => (line.key === lineKey ? { ...line, [field]: value } : line)),
+    );
+  }
+
+  function setLineDiscountMode(lineKey: string, mode: LineDiscountMode) {
+    setLines((prev) =>
+      prev.map((line) => (line.key === lineKey ? { ...line, lineDiscountMode: mode } : line)),
     );
   }
 
@@ -437,6 +619,10 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
       lines: lines.map((l) => ({
         productId: l.product.id,
         quantity: l.quantity,
+        unitPriceCents: lineUnitBaseCents(l),
+        lineDiscountMode: l.lineDiscountMode,
+        lineDiscountValue: parseCopInputDigitsToInt(l.lineDiscountRaw),
+        ...(l.variantId ? { variantId: l.variantId } : {}),
       })),
       paymentMethod: payment,
       shippingAddress: address,
@@ -483,12 +669,16 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                   ) : (
                     productHits.map((p) => {
                       const stock = Number(p.stock_local ?? p.stock_quantity ?? 0);
+                      const hasVariants =
+                        p.variant_axis != null &&
+                        p.variant_axis !== "none" &&
+                        p.variant_axis !== "";
                       return (
                         <button
                           key={p.id}
                           type="button"
-                          onClick={() => addProduct(p)}
-                          disabled={stock < 1}
+                          onClick={() => void onProductClick(p)}
+                          disabled={stock < 1 || addingProduct}
                           className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition hover:bg-zinc-50/80 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-zinc-800/90"
                         >
                           <span className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -496,7 +686,9 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                           </span>
                           <span className="text-xs text-zinc-500 dark:text-zinc-400">
                             {p.reference ? `${p.reference} · ` : null}
+                            {hasVariants ? "Desde " : null}
                             {formatCop(Number(p.price_cents ?? 0))}
+                            {hasVariants ? " · Varias presentaciones" : null}
                             {stock < 6 ? ` · Stock tienda: ${stock}` : null}
                           </span>
                         </button>
@@ -511,70 +703,198 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
           <section
             className={`${cardSectionClass} order-3 xl:order-none xl:col-start-1 xl:row-start-2`}
           >
-            <h2 className={sectionTitle}>Productos seleccionados</h2>
             {lines.length === 0 ? (
-              <p className="mt-5 text-sm text-zinc-500 dark:text-zinc-400">
-                Agrega productos desde la búsqueda.
-              </p>
+              <>
+                <h2 className={sectionTitle}>Líneas en la factura</h2>
+                <p className="mt-5 text-sm text-zinc-500 dark:text-zinc-400">
+                  Agrega productos desde la búsqueda.
+                </p>
+              </>
             ) : (
-              <ul className="mt-5 divide-y divide-zinc-200/80 dark:divide-zinc-700/90">
-                {lines.map((line) => {
-                  const stock = Number(
-                    line.product.stock_local ?? line.product.stock_quantity ?? 0,
-                  );
-                  const lineSubtotal = lineBaseCents(line);
-                  const lineVat = lineVatCents(line);
-                  const lineTotal = lineSubtotal + lineVat;
-                  return (
-                    <li
-                      key={line.key}
-                      className="flex flex-wrap items-center gap-3 py-4 first:pt-0"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                          {line.product.name}
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {formatCop(Number(line.product.price_cents ?? 0))} c/u
-                          {line.product.has_vat
-                            ? ` · IVA ${String(line.product.vat_percent ?? 0).replace(/\.0+$/, "")}%`
-                            : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                          onClick={() => setQty(line.key, line.quantity - 1)}
-                        >
-                          −
-                        </button>
-                        <span className="w-8 text-center text-sm font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                          {line.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          className="rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                          onClick={() => setQty(line.key, line.quantity + 1)}
-                          disabled={line.quantity >= stock}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <p className="text-sm font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                        {formatCop(lineTotal)}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.key)}
-                        className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
-                      >
-                        Quitar
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className={sectionTitle}>Líneas en la factura</h2>
+                  <span className="rounded-full border border-zinc-200/90 bg-zinc-100/80 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300">
+                    {lines.length} {lines.length === 1 ? "producto" : "productos"}
+                  </span>
+                </div>
+                <ul className="mt-4 space-y-4">
+                  {lines.map((line) => {
+                    const stock = line.stockLocal;
+                    const lineTotal = lineTotalCents(line);
+                    const listaPrice = line.catalogUnitPriceCents;
+                    const unitBase = lineUnitBaseCents(line);
+                    const extraPerUnit = lineExtraGainPerUnitCents(line);
+                    const extraLine = lineExtraGainCents(line);
+                    const priceRaised = extraPerUnit > 0;
+                    return (
+                      <li key={line.key} className={invoiceLineCardClass}>
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                              {line.product.name}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              Ref: {line.product.reference?.trim() || "—"}
+                              {" · "}Bodega: {line.stockWarehouse}
+                              {" · "}Local: {line.stockLocal}
+                            </p>
+                            {line.variantProfile?.usesVariants &&
+                            line.variantProfile.variants.length > 1 ? (
+                              <div className="mt-2 max-w-xs">
+                                <label className={labelClass}>
+                                  {line.variantProfile.variantAxisLabel ?? "Presentación"}
+                                </label>
+                                <select
+                                  value={line.variantId ?? ""}
+                                  onChange={(e) => setLineVariant(line.key, e.target.value)}
+                                  className={`${inputClass} mt-1 py-1.5 text-sm`}
+                                >
+                                  {line.variantProfile.variants.map((v) => (
+                                    <option
+                                      key={v.id}
+                                      value={v.id}
+                                      disabled={v.stockLocal < 1 && v.id !== line.variantId}
+                                    >
+                                      {v.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : line.variantLabel ? (
+                              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+                                {line.variantProfile?.variantAxisLabel ?? "Presentación"}:{" "}
+                                {line.variantLabel}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                              {formatCop(lineTotal)}
+                            </p>
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                              Subtotal línea
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-4 border-t border-zinc-200/70 pt-4 dark:border-zinc-700/80 sm:grid-cols-2">
+                          <div>
+                            <label className={labelClass}>Precio cliente final</label>
+                            <input
+                              value={line.unitPriceOverrideRaw}
+                              onChange={(e) =>
+                                setLineField(line.key, "unitPriceOverrideRaw", e.target.value)
+                              }
+                              inputMode="numeric"
+                              className={`${inputClass} mt-1`}
+                            />
+                            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                              <span>Precio cliente final: {formatCop(unitBase)}</span>
+                              {priceRaised ? (
+                                <>
+                                  <span>· Lista {formatCop(listaPrice)}</span>
+                                  <span
+                                    className="inline-flex items-center rounded-md border border-emerald-200/90 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-emerald-800 dark:border-emerald-700/70 dark:bg-emerald-950/70 dark:text-emerald-300"
+                                    title={`+${formatCop(extraPerUnit)} por unidad × ${line.quantity}`}
+                                  >
+                                    +{formatCop(extraLine)}
+                                  </span>
+                                </>
+                              ) : null}
+                            </p>
+                          </div>
+                          <div>
+                            <label className={labelClass}>Descuento</label>
+                            <div className="mt-1 flex items-stretch gap-2">
+                              <div className="flex shrink-0 overflow-hidden rounded-lg border border-zinc-200/90 dark:border-zinc-700">
+                                <button
+                                  type="button"
+                                  onClick={() => setLineDiscountMode(line.key, "money")}
+                                  className={[
+                                    "px-3 py-2 text-sm font-semibold transition",
+                                    line.lineDiscountMode === "money"
+                                      ? "bg-violet-600 text-white dark:bg-violet-500"
+                                      : "bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900",
+                                  ].join(" ")}
+                                  aria-pressed={line.lineDiscountMode === "money"}
+                                >
+                                  $
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setLineDiscountMode(line.key, "percent")}
+                                  className={[
+                                    "border-l border-zinc-200/90 px-3 py-2 text-sm font-semibold transition dark:border-zinc-700",
+                                    line.lineDiscountMode === "percent"
+                                      ? "bg-violet-600 text-white dark:bg-violet-500"
+                                      : "bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900",
+                                  ].join(" ")}
+                                  aria-pressed={line.lineDiscountMode === "percent"}
+                                >
+                                  %
+                                </button>
+                              </div>
+                              <input
+                                value={line.lineDiscountRaw}
+                                onChange={(e) =>
+                                  setLineField(line.key, "lineDiscountRaw", e.target.value)
+                                }
+                                inputMode="numeric"
+                                placeholder="0"
+                                title={
+                                  line.lineDiscountMode === "percent" &&
+                                  parseCopInputDigitsToInt(line.lineDiscountRaw) > 0
+                                    ? `${parseCopInputDigitsToInt(line.lineDiscountRaw)}% = −${formatCop(lineDiscountCents(line))}`
+                                    : undefined
+                                }
+                                className={`${inputClass} min-w-0 flex-1`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-zinc-200/70 pt-4 dark:border-zinc-700/80">
+                          <div>
+                            <label className={labelClass}>Cantidad</label>
+                            <div className="mt-1 flex items-center gap-1">
+                              <button
+                                type="button"
+                                className="rounded-lg border border-zinc-300/90 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                onClick={() => setQty(line.key, line.quantity - 1)}
+                              >
+                                −
+                              </button>
+                              <span className="min-w-[2.5rem] rounded-lg border border-zinc-200/90 bg-white px-2 py-1.5 text-center text-sm font-medium tabular-nums text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100">
+                                {line.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                className="rounded-lg border border-zinc-300/90 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                onClick={() => setQty(line.key, line.quantity + 1)}
+                                disabled={line.quantity >= stock}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeLine(line.key)}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 transition hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            aria-label={`Quitar ${line.product.name}`}
+                          >
+                            <span className="text-base leading-none" aria-hidden>
+                              ×
+                            </span>
+                            Quitar
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
             )}
           </section>
 
@@ -810,6 +1130,22 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       {formatCop(vatCents)}
                     </dd>
                   </div>
+                  {discountCents > 0 ? (
+                    <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
+                      <dt className="text-zinc-500 dark:text-zinc-400">Descuentos</dt>
+                      <dd className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                        −{formatCop(discountCents)}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {extraGainCents > 0 ? (
+                    <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
+                      <dt className="text-zinc-500 dark:text-zinc-400">Ganancia adicional</dt>
+                      <dd className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                        +{formatCop(extraGainCents)}
+                      </dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
                     <dt className="text-zinc-600 dark:text-zinc-400">Total</dt>
                     <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">

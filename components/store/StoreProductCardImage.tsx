@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useCallback, useState } from "react";
 import { shouldUseUnoptimizedImage } from "@/lib/storage-image-url";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
@@ -15,12 +16,14 @@ type Props = {
   sizes: string;
   outOfStock?: boolean;
   placeholderClassName?: string;
+  /** Primera fila del catálogo: evita lazy y prioriza descarga. */
+  priority?: boolean;
 };
 
 const IMAGE_FADE =
   "transition-opacity duration-300 ease-out motion-reduce:transition-none";
 
-/** Imagen de tarjeta de catálogo: aspecto 4:5; hover muestra segunda imagen si existe. */
+/** Imagen de tarjeta de catálogo: aspecto 4:5; hover carga la 2.ª foto solo al pasar el mouse. */
 export function StoreProductCardImage({
   src,
   hoverSrc,
@@ -28,12 +31,19 @@ export function StoreProductCardImage({
   sizes,
   outOfStock = false,
   placeholderClassName = "text-3xl text-stone-200",
+  priority = false,
 }: Props) {
-  const hasHover = Boolean(hoverSrc);
+  const [hoverActive, setHoverActive] = useState(false);
+
+  const activateHover = useCallback(() => {
+    if (hoverSrc) setHoverActive(true);
+  }, [hoverSrc]);
 
   return (
     <div
-      className={`relative w-full shrink-0 overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS} transition-colors duration-300 ${outOfStock ? "opacity-[0.78]" : ""}`}
+      className={`group/image relative w-full shrink-0 overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS} transition-colors duration-300 ${outOfStock ? "opacity-[0.78]" : ""}`}
+      onMouseEnter={activateHover}
+      onFocus={activateHover}
     >
       {src ? (
         <>
@@ -43,22 +53,23 @@ export function StoreProductCardImage({
             fill
             sizes={sizes}
             className={`${STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS} ${IMAGE_FADE} ${
-              hasHover
-                ? "group-hover/image:opacity-0 group-focus-within/image:opacity-0"
-                : ""
+              hoverActive && hoverSrc ? "opacity-0" : "opacity-100"
             }`}
-            loading="lazy"
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             unoptimized={shouldUseUnoptimizedImage(src)}
           />
-          {hoverSrc ? (
+          {hoverActive && hoverSrc ? (
             <Image
               src={hoverSrc}
               alt=""
               aria-hidden
               fill
               sizes={sizes}
-              className={`${STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS} ${IMAGE_FADE} opacity-0 group-hover/image:opacity-100 group-focus-within/image:opacity-100`}
+              className={`${STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS} ${IMAGE_FADE}`}
               loading="lazy"
+              fetchPriority="low"
               unoptimized={shouldUseUnoptimizedImage(hoverSrc)}
             />
           ) : null}

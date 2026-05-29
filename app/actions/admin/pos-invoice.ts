@@ -1,6 +1,17 @@
 "use server";
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
+import {
+  deductStockForOrderItem,
+  fetchProductVariantStockContext,
+  restoreVariantStockSnapshots,
+  snapshotVariantStockForProduct,
+} from "@/lib/product-stock";
+import { findVariantById } from "@/lib/product-variants";
+import {
+  computeLineDiscountCents,
+  type LineDiscountMode,
+} from "@/lib/pos-line-discount";
 import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -8,10 +19,30 @@ import { redirect } from "next/navigation";
 
 export type PosInvoicePayload = {
   customerId: string;
-  lines: { productId: string; quantity: number }[];
+  lines: {
+    productId: string;
+    variantId?: string | null;
+    quantity: number;
+    unitPriceCents?: number;
+    lineDiscountMode?: LineDiscountMode;
+    lineDiscountValue?: number;
+    lineDiscountCents?: number;
+  }[];
   paymentMethod: "cash" | "transfer" | "mixed";
   shippingAddress: string | null;
   shippingPhone: string | null;
+};
+
+type ResolvedPosLine = {
+  productId: string;
+  variantId: string | null;
+  variantLabel: string | null;
+  quantity: number;
+  unitBaseCents: number;
+  lineDiscountCents: number;
+  lineTotalCents: number;
+  storedUnitPriceCents: number;
+  productName: string;
 };
 
 function redirectError(code: string): never {
@@ -56,7 +87,21 @@ export async function createPosInvoiceAction(formData: FormData) {
   const lines = linesRaw
     .map((row) => ({
       productId: String((row as { productId?: string }).productId ?? "").trim(),
+      variantId: String((row as { variantId?: string }).variantId ?? "").trim() || null,
       quantity: Math.floor(Number((row as { quantity?: number }).quantity)),
+      unitPriceCents: Math.max(
+        0,
+        Math.floor(Number((row as { unitPriceCents?: number }).unitPriceCents ?? 0)),
+      ),
+      lineDiscountMode: (
+        (row as { lineDiscountMode?: string }).lineDiscountMode === "percent"
+          ? "percent"
+          : "money"
+      ) as LineDiscountMode,
+      lineDiscountValue: Math.max(
+        0,
+        Math.floor(Number((row as { lineDiscountValue?: number }).lineDiscountValue ?? 0)),
+      ),
     }))
     .filter((r) => r.productId && r.quantity > 0);
 
@@ -89,27 +134,75 @@ export async function createPosInvoiceAction(formData: FormData) {
   const productRows = products;
   const productById = new Map(productRows.map((p) => [p.id as string, p]));
 
-  const qtyByProduct = new Map<string, number>();
-  for (const l of lines) {
-    qtyByProduct.set(l.productId, (qtyByProduct.get(l.productId) ?? 0) + l.quantity);
+  const resolvedLines: ResolvedPosLine[] = [];
+  for (const line of lines) {
+    const p = productById.get(line.productId);
+    if (!p) redirectError("products");
+
+    const hasVat = Boolean(p.has_vat);
+    const vatPercent = Math.max(0, Number(p.vat_percent ?? 0));
+    const parentPrice = Math.max(0, Math.floor(Number(p.price_cents ?? 0)));
+
+    const { usesVariants, variants } = await fetchProductVariantStockContext(
+      supabase,
+      line.productId,
+    );
+
+    let variantId = line.variantId;
+    let variantLabel: string | null = null;
+    let catalogUnitBase = parentPrice;
+    let stockLocal = Number(p.stock_local ?? 0);
+
+    if (usesVariants) {
+      const chosen = findVariantById(variants, variantId);
+      const effective =
+        chosen ?? (variants.length === 1 ? variants[0]! : null);
+      if (!effective) redirectError("variant");
+      variantId = effective.id;
+      variantLabel = effective.label;
+      catalogUnitBase = effective.priceCents;
+      stockLocal = effective.stockLocal;
+    } else if (variantId) {
+      redirectError("validation");
+    }
+
+    if (stockLocal < line.quantity) redirectError("stock");
+
+    const unitBase =
+      line.unitPriceCents > 0 ? line.unitPriceCents : catalogUnitBase;
+    const unitFinal = unitFinalCents(unitBase, hasVat, vatPercent);
+    const lineGross = unitFinal * line.quantity;
+    const lineDiscount = computeLineDiscountCents(
+      lineGross,
+      line.lineDiscountMode,
+      line.lineDiscountValue,
+    );
+    const lineTotal = Math.max(0, lineGross - lineDiscount);
+    const storedUnitPrice =
+      line.quantity > 0 ? Math.round(lineTotal / line.quantity) : unitFinal;
+
+    resolvedLines.push({
+      productId: line.productId,
+      variantId,
+      variantLabel,
+      quantity: line.quantity,
+      unitBaseCents: unitBase,
+      lineDiscountCents: lineDiscount,
+      lineTotalCents: lineTotal,
+      storedUnitPriceCents: storedUnitPrice,
+      productName: String(p.name ?? "Producto"),
+    });
   }
 
   let subtotalCents = 0;
-  let vatCents = 0;
+  let discountCents = 0;
   let totalCents = 0;
-  for (const [pid, qty] of qtyByProduct) {
-    const p = productById.get(pid);
-    if (!p) redirectError("products");
-    const price = Math.max(0, Math.floor(Number(p.price_cents ?? 0)));
-    const hasVat = Boolean(p.has_vat);
-    const vatPercent = Math.max(0, Number(p.vat_percent ?? 0));
-    const unitFinal = unitFinalCents(price, hasVat, vatPercent);
-    const stock = Number(p.stock_local ?? 0);
-    if (stock < qty) redirectError("stock");
-    subtotalCents += price * qty;
-    totalCents += unitFinal * qty;
+  for (const line of resolvedLines) {
+    subtotalCents += line.unitBaseCents * line.quantity;
+    discountCents += line.lineDiscountCents;
+    totalCents += line.lineTotalCents;
   }
-  vatCents = Math.max(0, totalCents - subtotalCents);
+  const vatCents = Math.max(0, totalCents + discountCents - subtotalCents);
 
   if (!Number.isFinite(totalCents) || totalCents < 0) redirectError("validation");
 
@@ -154,22 +247,15 @@ export async function createPosInvoiceAction(formData: FormData) {
 
   const orderId = String(orderRow.id);
 
-  const itemRows = lines.map((l) => {
-    const p = productById.get(l.productId)!;
-    const base = Math.max(0, Math.floor(Number(p.price_cents ?? 0)));
-    const unitFinal = unitFinalCents(
-      base,
-      Boolean(p.has_vat),
-      Math.max(0, Number(p.vat_percent ?? 0)),
-    );
-    return {
-      order_id: orderId,
-      product_id: l.productId,
-      quantity: l.quantity,
-      unit_price_cents: unitFinal,
-      product_name_snapshot: String(p.name ?? "Producto"),
-    };
-  });
+  const itemRows = resolvedLines.map((line) => ({
+    order_id: orderId,
+    product_id: line.productId,
+    quantity: line.quantity,
+    unit_price_cents: line.storedUnitPriceCents,
+    product_name_snapshot: line.productName,
+    variant_id: line.variantId,
+    variant_label_snapshot: line.variantLabel,
+  }));
 
   const { error: iErr } = await supabase.from("order_items").insert(itemRows);
 
@@ -179,22 +265,61 @@ export async function createPosInvoiceAction(formData: FormData) {
   }
 
   const stockRollback: { id: string; prev: number }[] = [];
-  for (const [pid, qty] of qtyByProduct) {
-    const p = productById.get(pid)!;
+  const variantRollbacks: {
+    productId: string;
+    snapshots: Awaited<ReturnType<typeof snapshotVariantStockForProduct>>;
+  }[] = [];
+  const variantProductsSnapshotted = new Set<string>();
+
+  for (const line of resolvedLines) {
+    const p = productById.get(line.productId)!;
+    const { usesVariants } = await fetchProductVariantStockContext(
+      supabase,
+      line.productId,
+    );
+
+    if (usesVariants) {
+      if (!variantProductsSnapshotted.has(line.productId)) {
+        const snapshots = await snapshotVariantStockForProduct(supabase, line.productId);
+        variantRollbacks.push({ productId: line.productId, snapshots });
+        variantProductsSnapshotted.add(line.productId);
+      }
+      const ok = await deductStockForOrderItem(
+        supabase,
+        line.productId,
+        line.variantId,
+        line.quantity,
+      );
+      if (!ok) {
+        for (const rb of variantRollbacks) {
+          await restoreVariantStockSnapshots(supabase, rb.productId, rb.snapshots);
+        }
+        for (const r of stockRollback) {
+          await supabase.from("products").update({ stock_local: r.prev }).eq("id", r.id);
+        }
+        await supabase.from("orders").delete().eq("id", orderId);
+        redirectError("stock");
+      }
+      continue;
+    }
+
     const prev = Number(p.stock_local ?? 0);
-    const next = Math.max(0, prev - qty);
+    const next = Math.max(0, prev - line.quantity);
     const { error: uErr } = await supabase
       .from("products")
       .update({ stock_local: next })
-      .eq("id", pid);
+      .eq("id", line.productId);
     if (uErr) {
+      for (const rb of variantRollbacks) {
+        await restoreVariantStockSnapshots(supabase, rb.productId, rb.snapshots);
+      }
       for (const r of stockRollback) {
         await supabase.from("products").update({ stock_local: r.prev }).eq("id", r.id);
       }
       await supabase.from("orders").delete().eq("id", orderId);
       redirectError("db");
     }
-    stockRollback.push({ id: pid, prev });
+    stockRollback.push({ id: line.productId, prev });
   }
 
   const totalFormatted = new Intl.NumberFormat("es-CO", {
@@ -213,9 +338,10 @@ export async function createPosInvoiceAction(formData: FormData) {
       customer_id: customerId,
       subtotal_cents: subtotalCents,
       vat_cents: vatCents,
+      discount_cents: discountCents,
       total_cents: totalCents,
       payment_method: paymentMethod,
-      line_items: lines.length,
+      line_items: resolvedLines.length,
     },
   });
   revalidatePath("/admin/actividades");

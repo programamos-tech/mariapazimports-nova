@@ -3,8 +3,16 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { startCheckout } from "@/app/actions/checkout";
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
-import { getCart, normalizeCartForCheckout } from "@/lib/cart";
+import { getCart } from "@/lib/cart";
 import { formatCop } from "@/lib/money";
+import {
+  findVariantForCartLine,
+  resolveCartLinePrice,
+  resolveCartLineStock,
+  type CartNormalizeProduct,
+} from "@/lib/store-listing-variant-meta";
+import { getStorefrontCartLines } from "@/lib/storefront-cart";
+import { fetchProductVariantsByProductIds } from "@/lib/product-variants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { imagePathForProductLine } from "@/lib/product-line-image";
@@ -238,7 +246,7 @@ export default async function CheckoutPage({
   const unpublishedProduct =
     typeof sp.product === "string" ? sp.product : undefined;
 
-  const cart = await getCart();
+  const cart = await getStorefrontCartLines();
   if (!cart.length) {
     return (
       <CheckoutBolsaVaciaView
@@ -326,16 +334,20 @@ export default async function CheckoutPage({
 
   const supabase = createSupabaseServiceClient();
   const ids = [...new Set(cart.map((l) => l.productId))];
-  const { data: products } = await supabase
-    .from("products")
-    .select(
-      "id,name,price_cents,image_path,image_paths,fragrance_option_images,is_published,stock_quantity,colors",
-    )
-    .in("id", ids);
+  const [{ data: products }, variantMap] = await Promise.all([
+    supabase
+      .from("products")
+      .select(
+        "id,name,price_cents,image_path,image_paths,fragrance_option_images,is_published,stock_quantity,variant_axis,colors",
+      )
+      .in("id", ids),
+    fetchProductVariantsByProductIds(supabase, ids),
+  ]);
 
   const byId = new Map((products ?? []).map((p) => [p.id, p]));
-  const displayCart = normalizeCartForCheckout(cart, byId);
-  const cartAdjusted = JSON.stringify(cart) !== JSON.stringify(displayCart);
+  const displayCart = cart;
+  const rawCart = await getCart();
+  const cartAdjusted = JSON.stringify(rawCart) !== JSON.stringify(displayCart);
 
   if (!displayCart.length) {
     return <CheckoutBolsaVaciaView infoReason="invalid_lines" />;
@@ -343,8 +355,11 @@ export default async function CheckoutPage({
 
   const rows = displayCart.map((line) => {
     const p = byId.get(line.productId)!;
-    const sub = p.price_cents * line.quantity;
-    return { line, p, sub };
+    const variants = variantMap.get(line.productId) ?? [];
+    const variant = findVariantForCartLine(variants, line.variantId);
+    const unitPrice = resolveCartLinePrice(p as CartNormalizeProduct, variant);
+    const sub = unitPrice * line.quantity;
+    return { line, p, sub, variant, unitPrice };
   });
 
   const total = rows.reduce((acc, r) => acc + r.sub, 0);
@@ -390,28 +405,29 @@ export default async function CheckoutPage({
             <div className="min-w-0 space-y-14">
               <section>
                 <ul className="divide-y divide-stone-200">
-                  {rows.map(({ line, p, sub }) => {
+                  {rows.map(({ line, p, sub, variant, unitPrice }) => {
                     const row = p as typeof p & {
                       colors?: unknown;
                       fragrance_option_images?: unknown;
                     };
-                    const frag = line.fragrance?.trim() || null;
+                    const variantLabel = variant?.label?.trim() || null;
                     const linePath = imagePathForProductLine(
                       p.image_path,
                       row.fragrance_option_images,
-                      frag ?? undefined,
+                      variantLabel ?? undefined,
                       (p as { image_paths?: unknown }).image_paths,
+                      variant,
                     );
                     const img = storagePublicObjectUrl(linePath);
-                    const maxStock = Math.max(
-                      0,
-                      Math.floor(Number(p.stock_quantity ?? 0)),
+                    const maxStock = resolveCartLineStock(
+                      p as CartNormalizeProduct,
+                      variant,
                     );
                     const color = firstColorLabel(row.colors);
 
                     return (
                       <li
-                        key={`${p.id}-${frag ?? ""}`}
+                        key={`${p.id}-${line.variantId ?? ""}`}
                         className="flex flex-col gap-6 py-10 first:pt-0 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
                       >
                         <div className="flex min-w-0 flex-1 gap-5 sm:gap-8">
@@ -442,12 +458,12 @@ export default async function CheckoutPage({
                               {p.name}
                             </Link>
                             <ul className="mt-3 space-y-1 text-[13px] text-stone-600">
-                              {frag ? (
+                              {variantLabel ? (
                                 <li>
                                   <span className="text-stone-500">
-                                    Fragancia / tono:
+                                    Presentación:
                                   </span>{" "}
-                                  {frag}
+                                  {variantLabel}
                                 </li>
                               ) : null}
                               {color ? (
@@ -467,7 +483,7 @@ export default async function CheckoutPage({
                               productId={p.id}
                               quantity={line.quantity}
                               maxStock={maxStock}
-                              fragrance={frag}
+                              variantId={line.variantId ?? null}
                             />
                           </div>
                         </div>

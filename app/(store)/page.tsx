@@ -2,7 +2,9 @@ import Link from "next/link";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
+import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
 import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import {
   REVEAL_BLOCK_DELAY_MS,
   revealProductStagger,
@@ -13,6 +15,10 @@ import { fetchPublishedBanners } from "@/lib/store-banners";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
+import {
+  enrichListingProductsWithVariants,
+  toProductListingCardProps,
+} from "@/lib/store-listing-variant-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +44,7 @@ export default async function HomePage() {
   const { data: homeProducts, error: homeProductsError } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,size_options,size_value,size_unit,created_at",
+      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,size_options,size_value,size_unit,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
@@ -53,6 +59,10 @@ export default async function HomePage() {
   }
 
   const featuredProducts = homeProducts ?? [];
+  const enrichedFeatured = await enrichListingProductsWithVariants(
+    supabase,
+    featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
+  );
   const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
   const couponPctByProductId =
     await fetchStorefrontCouponDiscountPercentByProductId(supabase);
@@ -134,31 +144,19 @@ export default async function HomePage() {
             ) : (
               <>
                 <ul className={`mt-8 ${storeProductGridClass}`}>
-                  {featuredProducts.map((p, index) => (
+                  {enrichedFeatured.map((p, index) => (
                     <li key={p.id}>
                       <RevealOnScroll
                         className="h-full"
                         delayMs={revealProductStagger(index)}
                       >
                         <ProductListingCard
+                          imagePriority={storeProductCardImagePriority(index)}
                           cartQuantity={cartQtyByProductId[p.id] ?? 0}
                           couponDiscountPercent={
                             couponPctByProductId[p.id] ?? 0
                           }
-                          product={{
-                            id: p.id,
-                            name: p.name,
-                            brand: p.brand,
-                            description: p.description,
-                            price_cents: p.price_cents,
-                            image_path: p.image_path,
-                            image_paths: p.image_paths,
-                            stock_quantity: p.stock_quantity,
-                            fragrance_options: p.fragrance_options,
-                            size_options: p.size_options,
-                            size_value: p.size_value,
-                            size_unit: p.size_unit,
-                          }}
+                          product={toProductListingCardProps(p)}
                         />
                       </RevealOnScroll>
                     </li>
@@ -168,12 +166,11 @@ export default async function HomePage() {
                   delayMs={REVEAL_BLOCK_DELAY_MS}
                   className="mt-6 flex justify-center sm:mt-7"
                 >
-                  <Link
-                    href="/products"
+                  <ViewAllProductsLink
                     className="inline-flex border border-stone-900 bg-white px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
                   >
                     Ver todos los productos
-                  </Link>
+                  </ViewAllProductsLink>
                 </RevealOnScroll>
               </>
             )}

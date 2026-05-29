@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { createProduct } from "@/app/actions/admin/products";
 import { ProductCatalogImagesField } from "@/components/admin/ProductCatalogImagesField";
 import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
@@ -14,10 +14,10 @@ import {
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
 import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
-import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
-import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
-import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
-import { ProductSizeRows } from "@/components/admin/ProductSizeRows";
+import {
+  ProductVariantRows,
+  type VariantFormTotals,
+} from "@/components/admin/ProductVariantRows";
 
 export type ProductCategoryOption = { id: string; name: string };
 
@@ -45,9 +45,27 @@ export function NewProductForm({
   const [expirationDate, setExpirationDate] = useState("");
   const [hasVat, setHasVat] = useState(false);
   const [vatPercent, setVatPercent] = useState("");
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [stockManagedByVariants, setStockManagedByVariants] = useState(false);
+  const [variantStockLocal, setVariantStockLocal] = useState(0);
+  const [variantStockWarehouse, setVariantStockWarehouse] = useState(0);
+  const [variantMinPriceCents, setVariantMinPriceCents] = useState(0);
+  const [variantMinCostCents, setVariantMinCostCents] = useState(0);
 
-  const totalStock = stockLocal + stockWarehouse;
+  const handleVariantTotalsChange = useCallback((totals: VariantFormTotals) => {
+    setStockManagedByVariants(totals.usesVariants);
+    setVariantStockLocal(totals.stockLocal);
+    setVariantStockWarehouse(totals.stockWarehouse);
+    setVariantMinPriceCents(totals.minPriceCents);
+    setVariantMinCostCents(totals.minCostCents);
+  }, []);
+
+  const effectiveStockLocal = stockManagedByVariants ? variantStockLocal : stockLocal;
+  const effectiveStockWarehouse = stockManagedByVariants
+    ? variantStockWarehouse
+    : stockWarehouse;
+  const effectivePriceCents = stockManagedByVariants ? variantMinPriceCents : priceCents;
+  const effectiveCostCents = stockManagedByVariants ? variantMinCostCents : costCents;
+  const totalStock = effectiveStockLocal + effectiveStockWarehouse;
   const fmtStock = (n: number) =>
     n <= 0 ? "0" : formatQuantityInputGrouping(n);
   const categoryLabel =
@@ -147,55 +165,7 @@ export function NewProductForm({
                   </select>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <ProductSizeRows
-                    initialRows={[{ value: "", unit: "ml" }]}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className={labelClass}>
-                    Colores (opcional)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {PRODUCT_COLOR_OPTIONS.map((color) => {
-                      const checked = selectedColors.includes(color);
-                      return (
-                        <label
-                          key={color}
-                          className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
-                            checked
-                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240] dark:border-emerald-700/80 dark:bg-emerald-950/45 dark:text-emerald-100"
-                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-500"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            name="colors"
-                            value={color}
-                            checked={checked}
-                            onChange={(e) =>
-                              setSelectedColors((prev) =>
-                                e.target.checked
-                                  ? [...prev, color]
-                                  : prev.filter((c) => c !== color),
-                              )
-                            }
-                            className="sr-only"
-                          />
-                          <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
-                          {color}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              <ProductFragranceRows
-                initialRows={
-                  [{ label: "", existingImagePath: null, previewUrl: null }] satisfies FragranceRowInitial[]
-                }
-              />
+              <ProductVariantRows onVariantTotalsChange={handleVariantTotalsChange} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                   <input
@@ -263,7 +233,15 @@ export function NewProductForm({
 
           <section className={cardClass}>
             <h2 className={sectionTitle}>Control de stock</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {stockManagedByVariants ? (
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Total calculado automáticamente desde las presentaciones. Indica el stock
+                en cada fila de arriba.
+              </p>
+            ) : null}
+            <div
+              className={`mt-5 grid gap-4 sm:grid-cols-2${stockManagedByVariants ? " pointer-events-none opacity-75" : ""}`}
+            >
               <div>
                 <label htmlFor="np-sl" className={labelClass}>
                   Stock en local (mostrador)
@@ -271,8 +249,9 @@ export function NewProductForm({
                 <ProductQuantityInput
                   id="np-sl"
                   name="stock_local"
-                  value={stockLocal}
+                  value={effectiveStockLocal}
                   onChange={setStockLocal}
+                  disabled={stockManagedByVariants}
                 />
               </div>
               <div>
@@ -282,8 +261,9 @@ export function NewProductForm({
                 <ProductQuantityInput
                   id="np-sw"
                   name="stock_warehouse"
-                  value={stockWarehouse}
+                  value={effectiveStockWarehouse}
                   onChange={setStockWarehouse}
+                  disabled={stockManagedByVariants}
                 />
               </div>
             </div>
@@ -295,14 +275,23 @@ export function NewProductForm({
               (local + bodega)
             </div>
             <div className="mt-4 space-y-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              <p>
-                El stock en local refleja las unidades disponibles en el mostrador; la
-                bodega es tu inventario central.
-              </p>
-              <p>
-                Puedes ajustar cantidades después desde la lista de productos. La asignación
-                a estantes se habilita cuando hay stock en bodega.
-              </p>
+              {stockManagedByVariants ? (
+                <p>
+                  Cada presentación tiene su propio stock. Aquí ves la suma de todas las
+                  filas con etiqueta.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    El stock en local refleja las unidades disponibles en el mostrador; la
+                    bodega es tu inventario central.
+                  </p>
+                  <p>
+                    Puedes ajustar cantidades después desde la lista de productos. La
+                    asignación a estantes se habilita cuando hay stock en bodega.
+                  </p>
+                </>
+              )}
             </div>
           </section>
         </div>
@@ -310,32 +299,49 @@ export function NewProductForm({
         <div className="space-y-6 xl:sticky xl:top-24 xl:col-span-1 xl:self-start">
           <section className={cardClass}>
             <h2 className={sectionTitle}>Información financiera</h2>
-            <div className="mt-5 space-y-4">
+            {stockManagedByVariants ? (
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Con presentaciones, indica costo y precio en cada fila de arriba. Aquí ves el
+                valor mínimo de venta (como en la tienda: «Desde $X»).
+              </p>
+            ) : null}
+            <div
+              className={`mt-5 space-y-4${stockManagedByVariants ? " pointer-events-none opacity-75" : ""}`}
+            >
               <div>
                 <label className={labelClass}>
-                  Costo de compra <span className="text-red-600 dark:text-red-400">*</span>
+                  Costo de compra{" "}
+                  {!stockManagedByVariants ? (
+                    <span className="text-red-600 dark:text-red-400">*</span>
+                  ) : null}
                 </label>
                 <ProductMoneyInput
                   name="cost_cents"
-                  value={costCents}
+                  value={effectiveCostCents}
                   onChange={setCostCents}
-                  required
+                  required={!stockManagedByVariants}
+                  disabled={stockManagedByVariants}
                 />
               </div>
               <div>
                 <label className={labelClass}>
-                  Precio de venta <span className="text-red-600 dark:text-red-400">*</span>
+                  Precio de venta{" "}
+                  {!stockManagedByVariants ? (
+                    <span className="text-red-600 dark:text-red-400">*</span>
+                  ) : null}
                 </label>
                 <ProductMoneyInput
                   name="price_cents"
-                  value={priceCents}
+                  value={effectivePriceCents}
                   onChange={setPriceCents}
-                  required
+                  required={!stockManagedByVariants}
+                  disabled={stockManagedByVariants}
                 />
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Este producto no podrá ser vendido por menos del valor de precio de venta
-                configurado en la tienda.
+                {stockManagedByVariants
+                  ? "El precio mostrado en listados será el mínimo entre todas las presentaciones."
+                  : "Este producto no podrá ser vendido por menos del valor de precio de venta configurado en la tienda."}
               </p>
             </div>
           </section>
@@ -368,13 +374,13 @@ export function NewProductForm({
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500 dark:text-zinc-400">Stock local</dt>
                   <dd className="tabular-nums text-zinc-900 dark:text-zinc-100">
-                    {fmtStock(stockLocal)} unidades
+                    {fmtStock(effectiveStockLocal)} unidades
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-zinc-500 dark:text-zinc-400">Stock bodega</dt>
                   <dd className="tabular-nums text-zinc-900 dark:text-zinc-100">
-                    {fmtStock(stockWarehouse)} unidades
+                    {fmtStock(effectiveStockWarehouse)} unidades
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/80">
@@ -387,22 +393,26 @@ export function NewProductForm({
             </div>
 
             <div className="mt-5 border-t border-zinc-200/70 pt-5 dark:border-zinc-800">
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Precio de venta</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {stockManagedByVariants ? "Precio desde" : "Precio de venta"}
+              </p>
               <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                {formatCop(priceCents)}
+                {stockManagedByVariants && effectivePriceCents > 0
+                  ? `Desde ${formatCop(effectivePriceCents)}`
+                  : formatCop(effectivePriceCents)}
               </p>
             </div>
 
             <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm dark:border-zinc-800">
               <li className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                <span>Costo</span>
+                <span>{stockManagedByVariants ? "Costo mínimo" : "Costo"}</span>
                 <span className="tabular-nums text-zinc-900 dark:text-zinc-100">
-                  {formatCop(costCents)}
+                  {formatCop(effectiveCostCents)}
                 </span>
               </li>
               <li className="flex justify-between font-medium text-zinc-900 dark:text-zinc-100">
-                <span>Precio venta</span>
-                <span className="tabular-nums">{formatCop(priceCents)}</span>
+                <span>{stockManagedByVariants ? "Precio desde" : "Precio venta"}</span>
+                <span className="tabular-nums">{formatCop(effectivePriceCents)}</span>
               </li>
             </ul>
 

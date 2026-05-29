@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { NewProductForm, NewProductHeader } from "@/components/admin/NewProductForm";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -21,7 +22,7 @@ export default async function NewProductPage({
   const cats = categories ?? [];
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <NewProductHeader />
 
       {error ? (

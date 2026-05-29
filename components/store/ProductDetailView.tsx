@@ -23,8 +23,21 @@ import {
   shouldUseUnoptimizedImage,
 } from "@/lib/storage-image-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
-import { ProductFragrancePicker } from "@/components/store/ProductFragrancePicker";
+import { ProductVariantPicker } from "@/components/store/ProductVariantPicker";
 import { ProductDetailHeroImage } from "@/components/store/ProductDetailHeroImage";
+import type { ProductVariantAxis } from "@/lib/product-variants";
+import {
+  getVariantPickerTitle,
+  hasStorefrontVariants,
+} from "@/lib/product-variants";
+
+export type ProductDetailVariant = {
+  id: string;
+  label: string;
+  priceCents: number;
+  stockQuantity: number;
+  imageUrls: string[];
+};
 
 type Props = {
   productId: string;
@@ -32,16 +45,15 @@ type Props = {
   description: string | null;
   priceCents: number;
   stockQuantity: number;
+  variantAxis: ProductVariantAxis;
+  variants: ProductDetailVariant[];
   /** Galería del catálogo (primera = portada en listados). */
   imageUrls: string[];
-  /** URLs por etiqueta de fragancia (misma clave que `fragrance_options`). */
-  fragranceImageUrls: Record<string, string[]>;
-  /** Presentaciones normalizadas (ej. `177 ml`, `400 ml`). */
+  /** Presentaciones informativas (texto en detalles). */
   sizeLabels: string[];
   hasExpiration: boolean | null;
   expirationDate: string | null;
   colors: string[];
-  fragranceOptions: string[];
   hasVat: boolean | null;
   vatPercent: number | null;
   couponDiscountPercent?: number;
@@ -87,13 +99,13 @@ export function ProductDetailView({
   description,
   priceCents,
   stockQuantity,
+  variantAxis,
+  variants,
   imageUrls,
-  fragranceImageUrls,
   sizeLabels,
   hasExpiration,
   expirationDate,
   colors,
-  fragranceOptions,
   hasVat,
   vatPercent,
   couponDiscountPercent = 0,
@@ -104,14 +116,18 @@ export function ProductDetailView({
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(productId);
   const [colorIdx, setColorIdx] = useState(0);
-  const [fragranceIdx, setFragranceIdx] = useState(0);
+  const [variantIdx, setVariantIdx] = useState(0);
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [descExpanded, setDescExpanded] = useState(false);
 
+  const selectedVariant = variants[variantIdx] ?? variants[0] ?? null;
+  const effectivePriceCents = selectedVariant?.priceCents ?? priceCents;
+  const effectiveStock = selectedVariant?.stockQuantity ?? stockQuantity;
+
   const reviews = pseudoReviewCount(productId);
-  const outOfStock = stockQuantity <= 0;
-  const maxQty = Math.max(0, Math.floor(stockQuantity));
+  const outOfStock = effectiveStock <= 0;
+  const maxQty = Math.max(0, Math.floor(effectiveStock));
   const safeQty =
     outOfStock || maxQty < 1 ? 1 : Math.min(Math.max(1, qty), maxQty);
 
@@ -121,38 +137,32 @@ export function ProductDetailView({
   );
   const hasCouponPrice = pct > 0;
   const displayPriceCents = hasCouponPrice
-    ? storefrontPriceAfterCouponCents(priceCents, pct)
-    : priceCents;
+    ? storefrontPriceAfterCouponCents(effectivePriceCents, pct)
+    : effectivePriceCents;
 
   const sizeLabel =
     sizeLabels.length > 0 ? sizeLabels.join(" · ") : null;
 
-  const netCents = unitPriceNetCents(priceCents);
-  const grossCents = unitPriceGrossCents(priceCents, hasVat, vatPercent);
+  const netCents = unitPriceNetCents(effectivePriceCents);
+  const grossCents = unitPriceGrossCents(effectivePriceCents, hasVat, vatPercent);
   const vatPctLabel = String(vatPercent ?? 0).replace(/\.0+$/, "");
 
   const colorOptions = colors.filter((c) => c.trim().length > 0);
-  const fragranceLabels = fragranceOptions.filter((c) => c.trim().length > 0);
+  const variantLabels = variants.map((v) => v.label).filter(Boolean);
   const selectedColorLabel =
     colorOptions.length > 0 ? colorOptions[colorIdx] ?? colorOptions[0] : null;
 
-  const showFragrancePicker = fragranceLabels.length > 1;
+  const showVariantPicker = hasStorefrontVariants(variantAxis, variants);
+  const variantPickerTitle = getVariantPickerTitle(variantAxis);
 
   const activeGalleryUrls = useMemo(() => {
-    if (fragranceLabels.length === 0) {
-      return imageUrls;
-    }
-    const label =
-      fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? null;
-    if (!label) return [];
-    const forFragrance = fragranceImageUrls[label];
-    if (forFragrance?.length) return forFragrance;
-    return [];
-  }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrls]);
+    if (selectedVariant?.imageUrls.length) return selectedVariant.imageUrls;
+    return imageUrls;
+  }, [selectedVariant, imageUrls]);
 
   const heroImageUrl = activeGalleryUrls[galleryIdx] ?? activeGalleryUrls[0] ?? null;
   const heroDisplayUrl = productDisplayImageUrl(heroImageUrl, "hero");
-  const useClientHero = fragranceIdx !== 0 || galleryIdx !== 0;
+  const useClientHero = variantIdx !== 0 || galleryIdx !== 0;
   const showSsrHero = Boolean(ssrHero) && !useClientHero;
 
   useEffect(() => {
@@ -164,18 +174,14 @@ export function ProductDetailView({
     img.src = optimized;
   }, [activeGalleryUrls, galleryIdx]);
 
-  const onFragranceChange = (idx: number) => {
-    setFragranceIdx(idx);
+  const onVariantChange = (idx: number) => {
+    setVariantIdx(idx);
     setGalleryIdx(0);
+    setQty(1);
   };
 
-  const selectedFragranceLabel =
-    fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? null;
-
-  const selectedFragranceForCart =
-    fragranceLabels.length > 0
-      ? fragranceLabels[fragranceIdx] ?? fragranceLabels[0] ?? ""
-      : "";
+  const selectedVariantLabel = selectedVariant?.label ?? null;
+  const selectedVariantId = selectedVariant?.id ?? "";
 
   const descriptionText = description?.trim() ?? "";
   const descPreviewLimit = 280;
@@ -230,13 +236,13 @@ export function ProductDetailView({
             <ProductDetailHeroImage
               src={heroDisplayUrl}
               alt={
-                selectedFragranceLabel
-                  ? `${name} — ${selectedFragranceLabel}`
+                selectedVariantLabel
+                  ? `${name} — ${selectedVariantLabel}`
                   : name
               }
-              priority={fragranceIdx === 0 && galleryIdx === 0}
+              priority={variantIdx === 0 && galleryIdx === 0}
               fetchPriority={
-                fragranceIdx === 0 && galleryIdx === 0 ? "high" : "auto"
+                variantIdx === 0 && galleryIdx === 0 ? "high" : "auto"
               }
             />
           ) : (
@@ -304,7 +310,7 @@ export function ProductDetailView({
                     ? "relative aspect-square w-full overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-2"
                     : "relative aspect-square w-full overflow-hidden bg-white ring-1 ring-stone-200 transition hover:ring-stone-400"
                 }
-                aria-label={`Ver imagen ${i + 1} de ${selectedFragranceLabel ?? name}`}
+                aria-label={`Ver imagen ${i + 1} de ${selectedVariantLabel ?? name}`}
                 aria-current={galleryIdx === i ? "true" : undefined}
               >
                 <Image
@@ -339,12 +345,12 @@ export function ProductDetailView({
             {hasCouponPrice ? (
               <>
                 <span className="mr-2 text-base text-stone-400 line-through decoration-stone-300">
-                  {formatCop(priceCents)}
+                  {formatCop(effectivePriceCents)}
                 </span>
                 <span>{formatCop(displayPriceCents)}</span>
               </>
             ) : (
-              formatCop(priceCents)
+              formatCop(effectivePriceCents)
             )}
           </p>
           {hasVat ? (
@@ -373,11 +379,12 @@ export function ProductDetailView({
           <span className="text-sm tabular-nums text-stone-500">({reviews})</span>
         </div>
 
-        {showFragrancePicker ? (
-          <ProductFragrancePicker
-            labels={fragranceLabels}
-            selectedIndex={fragranceIdx}
-            onSelect={onFragranceChange}
+        {showVariantPicker ? (
+          <ProductVariantPicker
+            title={variantPickerTitle}
+            labels={variantLabels}
+            selectedIndex={variantIdx}
+            onSelect={onVariantChange}
           />
         ) : null}
 
@@ -424,8 +431,8 @@ export function ProductDetailView({
             <input type="hidden" name="quantity" value={String(safeQty)} />
             <input
               type="hidden"
-              name="fragrance"
-              value={selectedFragranceForCart}
+              name="variantId"
+              value={selectedVariantId}
             />
 
             <div className="flex max-w-xs items-center justify-between gap-4 border-b border-stone-200 pb-3">
@@ -535,10 +542,10 @@ export function ProductDetailView({
                   {vatPctLabel}% (precio de lista sin IVA; el total con IVA está arriba)
                 </li>
               ) : null}
-              {fragranceLabels.length > 0 ? (
+              {variantLabels.length > 0 ? (
                 <li>
-                  <span className="text-stone-800">Fragancias / tonos:</span>{" "}
-                  {fragranceLabels.join(", ")}
+                  <span className="text-stone-800">{variantPickerTitle}s:</span>{" "}
+                  {variantLabels.join(", ")}
                 </li>
               ) : null}
             </ul>

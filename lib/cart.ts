@@ -3,19 +3,23 @@ import { cookies } from "next/headers";
 export type CartLine = {
   productId: string;
   quantity: number;
-  /** Etiqueta de fragancia elegida en PDP (debe coincidir con `fragrance_options`). */
+  variantId?: string;
+  /** Legacy cookie field (fragancia); migrado a `variantId` al normalizar. */
   fragrance?: string;
 };
 
-export function cartLinesMatchFragrance(
-  a: Pick<CartLine, "productId" | "fragrance">,
-  b: Pick<CartLine, "productId" | "fragrance">,
+export function cartLinesMatch(
+  a: Pick<CartLine, "productId" | "variantId">,
+  b: Pick<CartLine, "productId" | "variantId">,
 ): boolean {
   return (
     a.productId === b.productId &&
-    (a.fragrance ?? "").trim() === (b.fragrance ?? "").trim()
+    (a.variantId ?? "") === (b.variantId ?? "")
   );
 }
+
+/** @deprecated Usar cartLinesMatch */
+export const cartLinesMatchFragrance = cartLinesMatch;
 
 const CART_COOKIE = "tiendas_cart";
 
@@ -36,6 +40,10 @@ export async function getCart(): Promise<CartLine[]> {
       .map((l) => ({
         productId: l.productId,
         quantity: l.quantity,
+        variantId:
+          typeof l.variantId === "string" && l.variantId.trim()
+            ? l.variantId.trim()
+            : undefined,
         fragrance:
           typeof l.fragrance === "string" && l.fragrance.trim()
             ? l.fragrance.trim()
@@ -48,7 +56,12 @@ export async function getCart(): Promise<CartLine[]> {
 
 export async function setCart(lines: CartLine[]) {
   const jar = await cookies();
-  jar.set(CART_COOKIE, JSON.stringify(lines), {
+  const sanitized = lines.map(({ productId, quantity, variantId }) => ({
+    productId,
+    quantity,
+    ...(variantId ? { variantId } : {}),
+  }));
+  jar.set(CART_COOKIE, JSON.stringify(sanitized), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
@@ -56,21 +69,50 @@ export async function setCart(lines: CartLine[]) {
   });
 }
 
-/** Solo productos publicados; cantidad acotada al stock. Sin escritura de cookies (usable en Server Components). */
+export type CartNormalizeProductRow = {
+  is_published: boolean | null;
+  stock_quantity: number | null;
+  variant_axis?: string | null;
+};
+
+export type CartNormalizeVariant = {
+  id: string;
+  stockQuantity: number;
+};
+
+/** Solo productos publicados; cantidad acotada al stock. Preserva `variantId`. */
 export function normalizeCartForCheckout(
   cart: CartLine[],
-  byId: Map<
-    string,
-    { is_published: boolean | null; stock_quantity: number | null }
-  >,
+  byId: Map<string, CartNormalizeProductRow>,
+  variantsByProductId: Map<string, CartNormalizeVariant[]>,
 ): CartLine[] {
   const next: CartLine[] = [];
   for (const line of cart) {
     const p = byId.get(line.productId);
     if (!p || !p.is_published) continue;
-    const stock = Math.max(0, Math.floor(Number(p.stock_quantity ?? 0)));
+
+    const axis = (p.variant_axis ?? "none").toLowerCase();
+    const variants = variantsByProductId.get(line.productId) ?? [];
+    let stock: number;
+
+    if (axis !== "none" && line.variantId) {
+      const v = variants.find((x) => x.id === line.variantId);
+      if (!v) continue;
+      stock = Math.max(0, v.stockQuantity);
+    } else if (axis !== "none" && variants.length > 1) {
+      continue;
+    } else {
+      stock = Math.max(0, Math.floor(Number(p.stock_quantity ?? 0)));
+    }
+
     const q = Math.min(line.quantity, stock);
-    if (q > 0) next.push({ productId: line.productId, quantity: q });
+    if (q > 0) {
+      next.push({
+        productId: line.productId,
+        quantity: q,
+        ...(line.variantId ? { variantId: line.variantId } : {}),
+      });
+    }
   }
   return next;
 }

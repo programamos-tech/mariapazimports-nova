@@ -1,4 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { deductStockForOrderItem } from "@/lib/product-stock";
 import { verifyWompiEventIntegrity } from "@/lib/wompi";
 
 export const runtime = "nodejs";
@@ -112,29 +113,15 @@ export async function POST(request: Request) {
   if (nextStatus === "paid") {
     const { data: items } = await supabase
       .from("order_items")
-      .select("product_id,quantity")
+      .select("product_id,variant_id,quantity")
       .eq("order_id", orderId);
 
     for (const it of items ?? []) {
       const pid = it.product_id as string | null;
       if (!pid) continue;
-      const { data: prod } = await supabase
-        .from("products")
-        .select("stock_warehouse,stock_local")
-        .eq("id", pid)
-        .maybeSingle();
-      let w = Number(prod?.stock_warehouse ?? 0);
-      let l = Number(prod?.stock_local ?? 0);
-      let q = Number(it.quantity) || 0;
-      const takeL = Math.min(l, q);
-      l -= takeL;
-      q -= takeL;
-      const takeW = Math.min(w, q);
-      w -= takeW;
-      await supabase
-        .from("products")
-        .update({ stock_warehouse: Math.max(0, w), stock_local: Math.max(0, l) })
-        .eq("id", pid);
+      const variantId = (it.variant_id as string | null | undefined) ?? null;
+      const q = Number(it.quantity) || 0;
+      await deductStockForOrderItem(supabase, pid, variantId, q);
     }
   }
 

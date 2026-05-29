@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { NewSupplierForm, NewSupplierHeader } from "@/components/admin/NewSupplierForm";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export default async function AdminNuevoProveedorPage({
   const error = typeof sp.error === "string" ? sp.error : undefined;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <NewSupplierHeader />
 
       {error ? (

@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import Link from "next/link";
 import { createCategory } from "@/app/actions/admin/categories";
 
@@ -13,7 +14,7 @@ export default async function NewCategoryPage({
   const error = typeof sp.error === "string" ? sp.error : undefined;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className={`${adminFormPageClass} space-y-6`}>
       <Link
         href="/admin/products?categories=1"
         className="text-sm font-medium text-[#556654] hover:underline"

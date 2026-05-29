@@ -16,6 +16,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+function supabaseStorageOrigin(): string | null {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+const storageOrigin = supabaseStorageOrigin();
+
 export const metadata: Metadata = {
   title: {
     default: storeBrand,
@@ -38,6 +50,12 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {storageOrigin ? (
+          <>
+            <link rel="preconnect" href={storageOrigin} />
+            <link rel="dns-prefetch" href={storageOrigin} />
+          </>
+        ) : null}
         <link
           href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap"
           rel="stylesheet"

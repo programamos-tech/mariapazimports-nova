@@ -10,17 +10,18 @@ type Props = {
   productId: string;
   quantity: number;
   maxStock: number;
-  fragrance?: string | null;
+  variantId?: string | null;
 };
 
 export function CheckoutLineControls({
   productId,
   quantity,
   maxStock,
-  fragrance,
+  variantId,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const vid = variantId?.trim() || undefined;
 
   return (
     <div className="mt-5 space-y-3">
@@ -34,11 +35,9 @@ export function CheckoutLineControls({
           disabled={pending}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(
-                productId,
-                quantity - 1,
-                fragrance ?? undefined,
-              ).then(() => router.refresh());
+              void setLineQuantity(productId, quantity - 1, vid).then(() =>
+                router.refresh(),
+              );
             })
           }
           className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
@@ -54,11 +53,9 @@ export function CheckoutLineControls({
           disabled={pending || quantity >= maxStock}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(
-                productId,
-                quantity + 1,
-                fragrance ?? undefined,
-              ).then(() => router.refresh());
+              void setLineQuantity(productId, quantity + 1, vid).then(() =>
+                router.refresh(),
+              );
             })
           }
           className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
@@ -79,11 +76,9 @@ export function CheckoutLineControls({
           disabled={pending}
           onClick={() =>
             startTransition(() => {
-              void setLineQuantity(
-                productId,
-                0,
-                fragrance ?? undefined,
-              ).then(() => router.refresh());
+              void setLineQuantity(productId, 0, vid).then(() =>
+                router.refresh(),
+              );
             })
           }
           className="text-stone-700 underline decoration-stone-400 underline-offset-4 transition hover:text-red-700 disabled:opacity-40"

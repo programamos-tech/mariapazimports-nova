@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { notFound } from "next/navigation";
 import type { CouponProductPickerHit } from "@/components/admin/CouponProductPicker";
 import {
@@ -57,7 +58,7 @@ export default async function AdminEditCouponPage({
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <EditCouponHeader row={coupon} />
       {errMsg ? (
         <p

@@ -3,8 +3,18 @@
 import { getCart, normalizeCartForCheckout, setCart } from "@/lib/cart";
 import { storeBrand } from "@/lib/brand";
 import { ensureStoreCustomerLinked } from "@/lib/store-customer-service";
+import {
+  findVariantForCartLine,
+  migrateLegacyFragranceToVariantId,
+  resolveCartLinePrice,
+  type CartNormalizeProduct,
+} from "@/lib/store-listing-variant-meta";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import {
+  fetchProductVariantsByProductIds,
+  parseProductVariantAxis,
+} from "@/lib/product-variants";
 import {
   createPaymentLink,
   getWompiEnv,
@@ -87,10 +97,13 @@ export async function startCheckout(formData: FormData) {
 
   const supabase = createSupabaseServiceClient();
   const ids = [...new Set(cart.map((l) => l.productId))];
-  const { data: products, error: pErr } = await supabase
-    .from("products")
-    .select("id,name,price_cents,currency,stock_quantity,is_published")
-    .in("id", ids);
+  const [{ data: products, error: pErr }, variantMap] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id,name,price_cents,currency,stock_quantity,is_published,variant_axis")
+      .in("id", ids),
+    fetchProductVariantsByProductIds(supabase, ids),
+  ]);
 
   if (pErr) {
     if (process.env.NODE_ENV === "development") {
@@ -99,8 +112,38 @@ export async function startCheckout(formData: FormData) {
     redirect("/checkout?error=products");
   }
 
-  const byId = new Map(products.map((p) => [p.id, p]));
-  const normalized = normalizeCartForCheckout(cart, byId);
+  const byId = new Map(
+    (products ?? []).map((p) => [
+      p.id,
+      {
+        is_published: p.is_published,
+        stock_quantity: p.stock_quantity,
+        variant_axis: p.variant_axis,
+      },
+    ]),
+  );
+  const variantStockMap = new Map<string, { id: string; stockQuantity: number }[]>();
+  for (const [pid, variants] of variantMap) {
+    variantStockMap.set(
+      pid,
+      variants.map((v) => ({ id: v.id, stockQuantity: v.stockQuantity })),
+    );
+  }
+
+  const migrated = cart.map((line) => {
+    const p = byId.get(line.productId);
+    if (!p) return line;
+    const axis = parseProductVariantAxis(p.variant_axis);
+    const variants = variantMap.get(line.productId) ?? [];
+    const variantId = migrateLegacyFragranceToVariantId(line, variants, axis);
+    return {
+      productId: line.productId,
+      quantity: line.quantity,
+      ...(variantId ? { variantId } : {}),
+    };
+  });
+
+  const normalized = normalizeCartForCheckout(migrated, byId, variantStockMap);
 
   if (JSON.stringify(cart) !== JSON.stringify(normalized)) {
     await setCart(normalized);
@@ -110,27 +153,38 @@ export async function startCheckout(formData: FormData) {
     redirect("/checkout?error=empty");
   }
 
+  const productById = new Map((products ?? []).map((p) => [p.id, p]));
+
   let total = 0;
   const lines: {
     product_id: string;
     quantity: number;
     unit_price_cents: number;
     product_name_snapshot: string;
+    variant_id: string | null;
+    variant_label_snapshot: string | null;
   }[] = [];
 
   for (const line of normalized) {
-    const p = byId.get(line.productId);
+    const p = productById.get(line.productId);
     if (!p) {
       redirect("/checkout?error=removed");
     }
-    const sub = p.price_cents * line.quantity;
+    const variants = variantMap.get(line.productId) ?? [];
+    const variant = findVariantForCartLine(variants, line.variantId);
+    const unitPrice = resolveCartLinePrice(p as CartNormalizeProduct, variant);
+    const sub = unitPrice * line.quantity;
     total += sub;
-    const frag = line.fragrance?.trim();
+    const variantLabel = variant?.label?.trim() || null;
     lines.push({
       product_id: p.id,
       quantity: line.quantity,
-      unit_price_cents: p.price_cents,
-      product_name_snapshot: frag ? `${p.name} (${frag})` : p.name,
+      unit_price_cents: unitPrice,
+      product_name_snapshot: variantLabel
+        ? `${p.name} (${variantLabel})`
+        : p.name,
+      variant_id: variant?.id ?? null,
+      variant_label_snapshot: variantLabel,
     });
   }
 
@@ -150,9 +204,15 @@ export async function startCheckout(formData: FormData) {
             if (!couponMatch.eligible_product_ids!.has(line.productId)) {
               return sum;
             }
-            const p = byId.get(line.productId);
+            const p = productById.get(line.productId);
             if (!p) return sum;
-            return sum + p.price_cents * line.quantity;
+            const variants = variantMap.get(line.productId) ?? [];
+            const variant = findVariantForCartLine(variants, line.variantId);
+            const unitPrice = resolveCartLinePrice(
+              p as CartNormalizeProduct,
+              variant,
+            );
+            return sum + unitPrice * line.quantity;
           }, 0);
     if (
       couponMatch.eligible_product_ids !== null &&
@@ -168,7 +228,7 @@ export async function startCheckout(formData: FormData) {
   }
   const totalWithDiscount = Math.max(0, total - discount);
 
-  const first = byId.get(normalized[0]!.productId);
+  const first = productById.get(normalized[0]!.productId);
   const currency = first?.currency ?? "COP";
 
   const emailLc = customerEmailForOrder.toLowerCase();
@@ -244,6 +304,8 @@ export async function startCheckout(formData: FormData) {
       quantity: l.quantity,
       unit_price_cents: l.unit_price_cents,
       product_name_snapshot: l.product_name_snapshot,
+      variant_id: l.variant_id,
+      variant_label_snapshot: l.variant_label_snapshot,
     })),
   );
 

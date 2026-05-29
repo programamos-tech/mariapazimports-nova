@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import {
   NewCustomerForm,
   NewCustomerHeader,
@@ -14,7 +15,7 @@ export default async function NewCustomerPage({
   const error = typeof sp.error === "string" ? sp.error : undefined;
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className={adminFormPageClass}>
       <NewCustomerHeader />
 
       {error ? (

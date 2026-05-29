@@ -37,6 +37,8 @@ function FavoritosPageHeader({
   );
 }
 
+import type { StorefrontProductVariantMeta } from "@/lib/product-variants";
+
 type Product = {
   id: string;
   name: string;
@@ -49,6 +51,10 @@ type Product = {
   size_value?: number | null;
   size_unit?: string | null;
   fragrance_options?: string[] | null;
+  variant_axis?: string | null;
+  listingPriceCents?: number;
+  listingStockQuantity?: number;
+  variantMeta?: StorefrontProductVariantMeta;
   coupon_discount_percent?: number;
 };
 

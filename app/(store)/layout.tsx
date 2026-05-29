@@ -1,3 +1,4 @@
+import { StoreScrollToTop } from "@/components/store/StoreScrollToTop";
 import { StoreAuthModalProvider } from "@/components/store/StoreAuthModals";
 import { StoreCookiesBanner } from "@/components/store/StoreCookiesBanner";
 import { StoreFavoritesProvider } from "@/components/store/StoreFavoritesProvider";
@@ -27,6 +28,7 @@ export default async function StoreLayout({
       <StoreCartDrawerProvider>
         <StoreAuthModalProvider>
           <div className="flex min-h-full min-w-0 flex-col overflow-x-clip bg-white text-stone-800">
+            <StoreScrollToTop />
             <StoreHeader />
             {promoBanner ? (
               <StoreWelcomeDiscountBanner dbCoupon={promoBanner} />

@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ProductCatalogImagesField } from "@/components/admin/ProductCatalogImagesField";
 import {
   AdminDateInput,
   ProductMoneyInput,
+  ProductQuantityInput,
   productInputClass as inputClass,
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
-import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
 import type { ProductCategoryOption } from "@/components/admin/NewProductForm";
-import { formatCop } from "@/lib/money";
-import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
-import { ProductFragranceRows } from "@/components/admin/ProductFragranceRows";
 import {
-  ProductSizeRows,
-  type SizeRowState,
-} from "@/components/admin/ProductSizeRows";
-import { PRODUCT_COLOR_OPTIONS, productColorSwatchClass } from "@/lib/product-colors";
+  ProductVariantRows,
+  type VariantFormTotals,
+  type VariantRowInitial,
+} from "@/components/admin/ProductVariantRows";
+import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
+import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
+import type { ProductVariantAxis } from "@/lib/product-variants";
 
 const cardClass =
   "rounded-xl border border-zinc-200 bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -37,13 +37,13 @@ type Initial = {
   stockLocal: number;
   stockWarehouse: number;
   isPublished: boolean;
-  sizeRows: SizeRowState[];
+  variantAxis: ProductVariantAxis;
+  variantRows: VariantRowInitial[];
   hasExpiration: boolean;
   expirationDate: string;
   hasVat: boolean;
   vatPercent: number | null;
   colors: string[];
-  fragranceRows: FragranceRowInitial[];
 };
 
 type CatalogImageExisting = {
@@ -78,7 +78,35 @@ export function EditProductForm({
   const [vatPercent, setVatPercent] = useState(
     initial.vatPercent == null ? "" : String(initial.vatPercent),
   );
-  const [selectedColors, setSelectedColors] = useState(initial.colors);
+  const [stockManagedByVariants, setStockManagedByVariants] = useState(
+    initial.variantAxis !== "none",
+  );
+  const [variantStockLocal, setVariantStockLocal] = useState(initial.stockLocal);
+  const [variantStockWarehouse, setVariantStockWarehouse] = useState(
+    initial.stockWarehouse,
+  );
+  const [variantMinPriceCents, setVariantMinPriceCents] = useState(initial.priceCents);
+  const [variantMinCostCents, setVariantMinCostCents] = useState(initial.costCents);
+
+  const handleVariantTotalsChange = useCallback((totals: VariantFormTotals) => {
+    setStockManagedByVariants(totals.usesVariants);
+    setVariantStockLocal(totals.stockLocal);
+    setVariantStockWarehouse(totals.stockWarehouse);
+    setVariantMinPriceCents(totals.minPriceCents);
+    setVariantMinCostCents(totals.minCostCents);
+  }, []);
+
+  const effectiveStockLocal = stockManagedByVariants
+    ? variantStockLocal
+    : initial.stockLocal;
+  const effectiveStockWarehouse = stockManagedByVariants
+    ? variantStockWarehouse
+    : initial.stockWarehouse;
+  const effectivePriceCents = stockManagedByVariants ? variantMinPriceCents : priceCents;
+  const effectiveCostCents = stockManagedByVariants ? variantMinCostCents : costCents;
+  const totalStock = effectiveStockLocal + effectiveStockWarehouse;
+  const fmtStock = (n: number) =>
+    n <= 0 ? "0" : formatQuantityInputGrouping(n);
 
   const categoryLabel =
     categories.find((c) => c.id === categoryId)?.name ?? "—";
@@ -96,13 +124,15 @@ export function EditProductForm({
       <input
         type="hidden"
         name="stock_local"
-        value={String(initial.stockLocal)}
+        value={String(effectiveStockLocal)}
       />
       <input
         type="hidden"
         name="stock_warehouse"
-        value={String(initial.stockWarehouse)}
+        value={String(effectiveStockWarehouse)}
       />
+      <input type="hidden" name="cost_cents" value={String(effectiveCostCents)} />
+      <input type="hidden" name="price_cents" value={String(effectivePriceCents)} />
 
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="space-y-6 lg:col-span-2">
@@ -187,49 +217,11 @@ export function EditProductForm({
                   </select>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <ProductSizeRows initialRows={initial.sizeRows} />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className={labelClass}>
-                    Colores (opcional)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {PRODUCT_COLOR_OPTIONS.map((color) => {
-                      const checked = selectedColors.includes(color);
-                      return (
-                        <label
-                          key={color}
-                          className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
-                            checked
-                              ? "border-[#3d5240] bg-[#eef3ee] text-[#3d5240] dark:border-emerald-700/80 dark:bg-emerald-950/45 dark:text-emerald-100"
-                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-500"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            name="colors"
-                            value={color}
-                            checked={checked}
-                            onChange={(e) =>
-                              setSelectedColors((prev) =>
-                                e.target.checked
-                                  ? [...prev, color]
-                                  : prev.filter((c) => c !== color),
-                              )
-                            }
-                            className="sr-only"
-                          />
-                          <span className={`size-3 rounded-full ${productColorSwatchClass(color)}`} />
-                          {color}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              <ProductFragranceRows initialRows={initial.fragranceRows} />
+              <ProductVariantRows
+                initialAxis={initial.variantAxis}
+                initialRows={initial.variantRows}
+                onVariantTotalsChange={handleVariantTotalsChange}
+              />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex items-center gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                   <input
@@ -305,37 +297,101 @@ export function EditProductForm({
               </label>
             </div>
           </section>
+
+          {stockManagedByVariants ? (
+            <section className={cardClass}>
+              <h2 className={sectionTitle}>Control de stock</h2>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Total calculado automáticamente desde las presentaciones. Indica el stock
+                en cada fila de arriba.
+              </p>
+              <div className="pointer-events-none mt-5 grid gap-4 opacity-75 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="ep-sl" className={labelClass}>
+                    Stock en local (mostrador)
+                  </label>
+                  <ProductQuantityInput
+                    id="ep-sl"
+                    name="stock_local_display"
+                    value={effectiveStockLocal}
+                    onChange={() => {}}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ep-sw" className={labelClass}>
+                    Stock en bodega
+                  </label>
+                  <ProductQuantityInput
+                    id="ep-sw"
+                    name="stock_warehouse_display"
+                    value={effectiveStockWarehouse}
+                    onChange={() => {}}
+                    disabled
+                  />
+                </div>
+              </div>
+              <div className="mt-4 rounded-lg border border-zinc-200/90 bg-white/60 px-4 py-3 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950/60 dark:text-zinc-200">
+                Total:{" "}
+                <span className="font-medium tabular-nums">
+                  {fmtStock(totalStock)} unidades
+                </span>{" "}
+                (local + bodega)
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                Cada presentación tiene su propio stock. Aquí ves la suma de todas las filas
+                con etiqueta.
+              </p>
+            </section>
+          ) : null}
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-24 lg:col-span-1 lg:self-start">
           <section className={cardClass}>
             <h2 className={sectionTitle}>Información financiera</h2>
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className={labelClass}>
-                  Costo de compra <span className="text-red-600 dark:text-red-400">*</span>
-                </label>
-                <ProductMoneyInput
-                  name="cost_cents"
-                  value={costCents}
-                  onChange={setCostCents}
-                  required
-                />
-              </div>
-              <div>
-                <label className={labelClass}>
-                  Precio de venta <span className="text-red-600 dark:text-red-400">*</span>
-                </label>
-                <ProductMoneyInput
-                  name="price_cents"
-                  value={priceCents}
-                  onChange={setPriceCents}
-                  required
-                />
-              </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Este producto no podrá ser vendido por menos del valor de precio de venta.
+            {stockManagedByVariants ? (
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Con presentaciones, indica costo y precio en cada fila de arriba. Aquí ves el
+                valor mínimo de venta (como en la tienda: «Desde $X»).
               </p>
+            ) : (
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Precio y costo únicos para este producto.
+              </p>
+            )}
+            <div
+              className={`mt-5 space-y-4${stockManagedByVariants ? " pointer-events-none opacity-75" : ""}`}
+            >
+              <div>
+                <label className={labelClass}>
+                  Costo de compra{" "}
+                  {!stockManagedByVariants ? (
+                    <span className="text-red-600 dark:text-red-400">*</span>
+                  ) : null}
+                </label>
+                <ProductMoneyInput
+                  name={stockManagedByVariants ? "cost_cents_display" : "cost_cents"}
+                  value={effectiveCostCents}
+                  onChange={setCostCents}
+                  required={!stockManagedByVariants}
+                  disabled={stockManagedByVariants}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Precio de venta{" "}
+                  {!stockManagedByVariants ? (
+                    <span className="text-red-600 dark:text-red-400">*</span>
+                  ) : null}
+                </label>
+                <ProductMoneyInput
+                  name={stockManagedByVariants ? "price_cents_display" : "price_cents"}
+                  value={effectivePriceCents}
+                  onChange={setPriceCents}
+                  required={!stockManagedByVariants}
+                  disabled={stockManagedByVariants}
+                />
+              </div>
             </div>
           </section>
 
@@ -368,22 +424,26 @@ export function EditProductForm({
             </div>
 
             <div className="mt-5 border-t border-zinc-200/70 pt-5 dark:border-zinc-800">
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Precio de venta</p>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {stockManagedByVariants ? "Precio desde" : "Precio de venta"}
+              </p>
               <p className="mt-1 text-2xl font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
-                {formatCop(priceCents)}
+                {stockManagedByVariants && effectivePriceCents > 0
+                  ? `Desde ${formatCop(effectivePriceCents)}`
+                  : formatCop(effectivePriceCents)}
               </p>
             </div>
 
             <ul className="mt-4 space-y-1.5 border-t border-zinc-200/70 pt-4 text-sm dark:border-zinc-800">
               <li className="flex justify-between text-zinc-600 dark:text-zinc-400">
-                <span>Costo</span>
+                <span>{stockManagedByVariants ? "Costo mínimo" : "Costo"}</span>
                 <span className="tabular-nums text-zinc-900 dark:text-zinc-100">
-                  {formatCop(costCents)}
+                  {formatCop(effectiveCostCents)}
                 </span>
               </li>
               <li className="flex justify-between font-medium text-zinc-900 dark:text-zinc-100">
-                <span>Precio venta</span>
-                <span className="tabular-nums">{formatCop(priceCents)}</span>
+                <span>{stockManagedByVariants ? "Precio desde" : "Precio venta"}</span>
+                <span className="tabular-nums">{formatCop(effectivePriceCents)}</span>
               </li>
             </ul>
 

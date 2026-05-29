@@ -20,6 +20,101 @@ export type ListingFacets = {
   priceMax: number;
 };
 
+const EMPTY_LISTING_FACETS: ListingFacets = {
+  brands: [],
+  colors: [],
+  sizes: [],
+  priceMin: 0,
+  priceMax: 0,
+};
+
+type FacetProductRow = {
+  brand?: unknown;
+  colors?: unknown;
+  size_options?: unknown;
+  size_value?: unknown;
+  size_unit?: unknown;
+  price_cents?: unknown;
+};
+
+/** Facetas derivadas de filas de producto (evita una segunda query en /products). */
+export function computeListingFacetsFromProductRows(
+  data: FacetProductRow[],
+): ListingFacets {
+  if (!data.length) return EMPTY_LISTING_FACETS;
+
+  const brandSeen = new Set<string>();
+  const brands: string[] = [];
+  const colorSeen = new Set<string>();
+  const colors: string[] = [];
+  const sizeSeen = new Set<string>();
+  const sizes: SizeFacetOption[] = [];
+  let priceMin = Number.POSITIVE_INFINITY;
+  let priceMax = 0;
+
+  for (const row of data) {
+    const price = Math.max(0, Math.floor(Number(row.price_cents ?? 0)));
+    if (price > 0) {
+      priceMin = Math.min(priceMin, price);
+      priceMax = Math.max(priceMax, price);
+    }
+
+    const b = typeof row.brand === "string" ? row.brand.trim() : "";
+    if (b && b.length <= 160) {
+      const bk = b.toLowerCase();
+      if (!brandSeen.has(bk)) {
+        brandSeen.add(bk);
+        brands.push(b);
+      }
+    }
+
+    const arr = Array.isArray(row.colors) ? row.colors : [];
+    for (const c of arr) {
+      if (typeof c !== "string") continue;
+      const t = c.trim();
+      if (!t || t.length > 64) continue;
+      const ck = t.toLowerCase();
+      if (colorSeen.has(ck)) continue;
+      colorSeen.add(ck);
+      colors.push(t);
+    }
+
+    const optRows = normalizeSizeOptionsFromRow({
+      size_options: row.size_options,
+      size_value: row.size_value as number | null | undefined,
+      size_unit: row.size_unit as string | null | undefined,
+    });
+    for (const opt of optRows) {
+      const su = opt.unit.trim().toLowerCase();
+      if (!["ml", "l", "g", "kg", "oz", "unidad"].includes(su)) continue;
+      const v = Number(Number(opt.value).toFixed(2));
+      if (v <= 0) continue;
+      const key = `${v}:${su}`;
+      if (sizeSeen.has(key)) continue;
+      sizeSeen.add(key);
+      const numLabel = String(v).replace(/\.0+$/, "");
+      sizes.push({
+        key,
+        label: `${numLabel} ${su}`,
+        value: v,
+        unit: su,
+      });
+    }
+  }
+
+  brands.sort((a, b) => a.localeCompare(b, "es"));
+  colors.sort((a, b) => a.localeCompare(b, "es"));
+  sizes.sort((a, b) => a.label.localeCompare(b.label, "es"));
+
+  return {
+    brands,
+    colors,
+    sizes,
+    priceMin: Number.isFinite(priceMin) ? priceMin : 0,
+    priceMax,
+  };
+}
+
 /** Categorías fusionadas para checklist en el catálogo completo. */
 export function mergeCategoryRowsForFilterMenu(
   rows: { id: string; name: string; sort_order: number }[],
@@ -63,83 +158,8 @@ export async function fetchListingFacets(
   }
   const { data, error } = await q;
   if (error || !data?.length) {
-    return {
-      brands: [],
-      colors: [],
-      sizes: [],
-      priceMin: 0,
-      priceMax: 0,
-    };
+    return EMPTY_LISTING_FACETS;
   }
 
-  const brandSeen = new Set<string>();
-  const brands: string[] = [];
-  const colorSeen = new Set<string>();
-  const colors: string[] = [];
-  const sizeSeen = new Set<string>();
-  const sizes: SizeFacetOption[] = [];
-  let priceMin = Number.POSITIVE_INFINITY;
-  let priceMax = 0;
-
-  for (const row of data) {
-    const price = Math.max(0, Math.floor(Number(row.price_cents ?? 0)));
-    if (price > 0) {
-      priceMin = Math.min(priceMin, price);
-      priceMax = Math.max(priceMax, price);
-    }
-
-    const b = typeof row.brand === "string" ? row.brand.trim() : "";
-    if (b && b.length <= 160) {
-      const bk = b.toLowerCase();
-      if (!brandSeen.has(bk)) {
-        brandSeen.add(bk);
-        brands.push(b);
-      }
-    }
-
-    const arr = Array.isArray(row.colors) ? row.colors : [];
-    for (const c of arr) {
-      if (typeof c !== "string") continue;
-      const t = c.trim();
-      if (!t || t.length > 64) continue;
-      const ck = t.toLowerCase();
-      if (colorSeen.has(ck)) continue;
-      colorSeen.add(ck);
-      colors.push(t);
-    }
-
-    const optRows = normalizeSizeOptionsFromRow({
-      size_options: row.size_options,
-      size_value: row.size_value,
-      size_unit: row.size_unit,
-    });
-    for (const opt of optRows) {
-      const su = opt.unit.trim().toLowerCase();
-      if (!["ml", "l", "g", "kg", "oz", "unidad"].includes(su)) continue;
-      const v = Number(Number(opt.value).toFixed(2));
-      if (v <= 0) continue;
-      const key = `${v}:${su}`;
-      if (sizeSeen.has(key)) continue;
-      sizeSeen.add(key);
-      const numLabel = String(v).replace(/\.0+$/, "");
-      sizes.push({
-        key,
-        label: `${numLabel} ${su}`,
-        value: v,
-        unit: su,
-      });
-    }
-  }
-
-  brands.sort((a, b) => a.localeCompare(b, "es"));
-  colors.sort((a, b) => a.localeCompare(b, "es"));
-  sizes.sort((a, b) => a.label.localeCompare(b.label, "es"));
-
-  return {
-    brands,
-    colors,
-    sizes,
-    priceMin: Number.isFinite(priceMin) ? priceMin : 0,
-    priceMax,
-  };
+  return computeListingFacetsFromProductRows(data);
 }

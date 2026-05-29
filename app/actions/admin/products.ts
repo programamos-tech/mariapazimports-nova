@@ -7,9 +7,20 @@ import {
   primaryImagePath,
 } from "@/lib/product-images";
 import {
+  parseVariantAxisFromForm,
+  parseVariantRowsFromFormData,
+  syncProductVariantsFromForm,
+} from "@/lib/admin-product-variants";
+import {
   legacySizeFromOptions,
   parseSizeOptionsFromFormData,
 } from "@/lib/product-size-options";
+import type { ProductVariantAxis } from "@/lib/product-variants";
+import {
+  adjustVariantStockLocation,
+  fetchProductVariantStockContext,
+  transferVariantStock,
+} from "@/lib/product-stock";
 import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -255,7 +266,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|image_paths|has_vat|vat_percent/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|image_paths|has_vat|vat_percent|variant_axis/i.test(m)
   ) {
     return true;
   }
@@ -282,6 +293,78 @@ function safeStockAdjustReturnTo(raw: string): string {
   if (s === "/admin/products") return s;
   if (/^\/admin\/products\/[0-9a-f-]{36}(\/(stock|transfer))?$/i.test(s)) return s;
   return "/admin/products";
+}
+
+function legacyOptionsFromVariants(
+  variantAxis: ProductVariantAxis,
+  labels: string[],
+) {
+  if (variantAxis === "fragrance" || variantAxis === "tone") {
+    return { fragrance_options: labels, size_options: [] as { value: number; unit: string }[] };
+  }
+  if (variantAxis === "size") {
+    const size_options = labels
+      .map((label) => {
+        const m = label.trim().match(/^([\d.,]+)\s*(\S+)$/);
+        if (!m) return null;
+        const value = Number(m[1]!.replace(",", "."));
+        const unit = m[2]!.toLowerCase();
+        if (!Number.isFinite(value) || value <= 0 || !unit) return null;
+        return { value, unit };
+      })
+      .filter((x): x is { value: number; unit: string } => x !== null);
+    const { size_value, size_unit } = legacySizeFromOptions(size_options);
+    return {
+      fragrance_options: [] as string[],
+      size_options,
+      size_value,
+      size_unit,
+    };
+  }
+  return {
+    fragrance_options: [] as string[],
+    size_options: [] as { value: number; unit: string }[],
+  };
+}
+
+async function applyVariantSyncFromForm(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  productId: string,
+  formData: FormData,
+  variantAxis: ProductVariantAxis,
+  fallbackPriceCents: number,
+  fallbackCostCents: number,
+  fallbackStockWh: number,
+  fallbackStockLoc: number,
+) {
+  const sync = await syncProductVariantsFromForm(
+    supabase,
+    productId,
+    formData,
+    variantAxis,
+  );
+  const parsed = parseVariantRowsFromFormData(formData);
+  const labels = parsed.map((r) => r.label);
+  const legacy = legacyOptionsFromVariants(variantAxis, labels);
+
+  const patch: Record<string, unknown> = {
+    variant_axis: variantAxis,
+    ...legacy,
+  };
+
+  if (variantAxis !== "none" && parsed.length > 0) {
+    patch.price_cents = sync.minPriceCents || fallbackPriceCents;
+    patch.cost_cents = sync.minCostCents || fallbackCostCents;
+    patch.stock_warehouse = sync.totalStockWh;
+    patch.stock_local = sync.totalStockLoc;
+  } else {
+    patch.price_cents = fallbackPriceCents;
+    patch.cost_cents = fallbackCostCents;
+    patch.stock_warehouse = fallbackStockWh;
+    patch.stock_local = fallbackStockLoc;
+  }
+
+  await supabase.from("products").update(patch).eq("id", productId);
 }
 
 function isRlsError(err: { message?: string; code?: string } | null) {
@@ -343,6 +426,7 @@ export async function createProduct(formData: FormData) {
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
   const fragrance_options = parseFragranceOptionsFromFormData(formData);
+  const variantAxis = parseVariantAxisFromForm(formData);
 
   if (!name) {
     redirect("/admin/products/new?error=name");
@@ -369,6 +453,7 @@ export async function createProduct(formData: FormData) {
     colors,
     fragrance_options,
     fragrance_option_images: {} as Record<string, string>,
+    variant_axis: variantAxis,
   };
 
   const extendedRow = {
@@ -462,6 +547,17 @@ export async function createProduct(formData: FormData) {
   }
   await supabase.from("products").update(imagePatch).eq("id", id);
 
+  await applyVariantSyncFromForm(
+    supabase,
+    id,
+    formData,
+    variantAxis,
+    price_cents,
+    cost_cents,
+    stockWarehouse,
+    stockLocal,
+  );
+
   if (catalogUploadError) {
     revalidatePath("/products");
     revalidatePath("/admin/products");
@@ -504,6 +600,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const vat_percent = has_vat ? parseVatPercent(formData.get("vat_percent")) : null;
   const colors = parseColorsFromFormData(formData);
   const fragrance_options = parseFragranceOptionsFromFormData(formData);
+  const variantAxis = parseVariantAxisFromForm(formData);
 
   if (!name) {
     redirect(`/admin/products/${productId}/edit?error=name`);
@@ -541,6 +638,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     fragrance_option_images,
     image_paths: imagePaths,
     image_path: primaryImagePath(imagePaths),
+    variant_axis: variantAxis,
   };
 
   const extendedUpdate = {
@@ -591,6 +689,17 @@ export async function updateProduct(productId: string, formData: FormData) {
     }
     redirect(`/admin/products/${productId}/edit?error=db`);
   }
+
+  await applyVariantSyncFromForm(
+    supabase,
+    productId,
+    formData,
+    variantAxis,
+    price_cents,
+    cost_cents,
+    stockWarehouse,
+    stockLocal,
+  );
 
   await logAdminActivity(supabase, {
     actorId: user.id,
@@ -647,62 +756,114 @@ export async function adjustProductStock(productId: string, formData: FormData) 
   const qty = parseNonNegInt(
     formData.get("quantity") ?? formData.get("new_quantity"),
   );
-
-  const { data: row, error: fetchErr } = await supabase
-    .from("products")
-    .select("stock_local, stock_warehouse")
-    .eq("id", productId)
-    .maybeSingle();
-
-  if (fetchErr || !row) {
-    console.error("adjustProductStock fetch", fetchErr);
-    redirect("/admin/products?error=stock");
-  }
-
-  const curLocal = Math.max(0, Math.floor(Number(row.stock_local ?? 0)));
-  const curWh = Math.max(0, Math.floor(Number(row.stock_warehouse ?? 0)));
-
-  let nextLocal = curLocal;
-  let nextWh = curWh;
-
+  const variantIdRaw = String(formData.get("variant_id") ?? "").trim();
   const isWarehouse = location === "warehouse";
   const isAdd = movementMode === "add";
+  const loc = isWarehouse ? ("warehouse" as const) : ("local" as const);
+  const mode = isAdd ? ("add" as const) : ("replace" as const);
 
-  if (isWarehouse) {
-    nextWh = isAdd ? curWh + qty : qty;
+  const { usesVariants, variants } = await fetchProductVariantStockContext(
+    supabase,
+    productId,
+  );
+
+  if (usesVariants) {
+    const variantId =
+      variantIdRaw ||
+      (variants.length === 1 ? variants[0]!.id : "");
+    if (!variantId || !variants.some((v) => v.id === variantId)) {
+      redirect(`/admin/products/${productId}/stock?error=variant`);
+    }
+
+    const before = variants.find((v) => v.id === variantId)!;
+    const result = await adjustVariantStockLocation(
+      supabase,
+      variantId,
+      loc,
+      mode,
+      qty,
+    );
+    if (!result.ok) redirect("/admin/products?error=stock");
+
+    const { variants: afterVariants } = await fetchProductVariantStockContext(
+      supabase,
+      productId,
+    );
+    const after = afterVariants.find((v) => v.id === variantId);
+
+    await logAdminActivity(supabase, {
+      actorId: user.id,
+      actionType: "stock_adjusted",
+      entityType: "product",
+      entityId: productId,
+      summary: `Stock ${isWarehouse ? "bodega" : "local"} · ${before.label} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
+      metadata: {
+        variant_id: variantId,
+        variant_label: before.label,
+        location: isWarehouse ? "warehouse" : "local",
+        movement_mode: movementMode,
+        quantity: qty,
+        previous_local: before.stockLocal,
+        previous_warehouse: before.stockWarehouse,
+        next_local: after?.stockLocal ?? 0,
+        next_warehouse: after?.stockWarehouse ?? 0,
+      },
+    });
   } else {
-    nextLocal = isAdd ? curLocal + qty : qty;
+    const { data: row, error: fetchErr } = await supabase
+      .from("products")
+      .select("stock_local, stock_warehouse")
+      .eq("id", productId)
+      .maybeSingle();
+
+    if (fetchErr || !row) {
+      console.error("adjustProductStock fetch", fetchErr);
+      redirect("/admin/products?error=stock");
+    }
+
+    const curLocal = Math.max(0, Math.floor(Number(row.stock_local ?? 0)));
+    const curWh = Math.max(0, Math.floor(Number(row.stock_warehouse ?? 0)));
+
+    let nextLocal = curLocal;
+    let nextWh = curWh;
+
+    if (isWarehouse) {
+      nextWh = isAdd ? curWh + qty : qty;
+    } else {
+      nextLocal = isAdd ? curLocal + qty : qty;
+    }
+
+    nextLocal = Math.min(Math.max(0, nextLocal), Number.MAX_SAFE_INTEGER);
+    nextWh = Math.min(Math.max(0, nextWh), Number.MAX_SAFE_INTEGER);
+
+    const { error } = await supabase
+      .from("products")
+      .update({
+        stock_local: nextLocal,
+        stock_warehouse: nextWh,
+      })
+      .eq("id", productId);
+
+    if (error) redirect("/admin/products?error=stock");
+
+    await logAdminActivity(supabase, {
+      actorId: user.id,
+      actionType: "stock_adjusted",
+      entityType: "product",
+      entityId: productId,
+      summary: `Stock ${isWarehouse ? "depósito" : "tienda"} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
+      metadata: {
+        location: isWarehouse ? "warehouse" : "local",
+        movement_mode: movementMode,
+        quantity: qty,
+        previous_local: curLocal,
+        previous_warehouse: curWh,
+        next_local: nextLocal,
+        next_warehouse: nextWh,
+      },
+    });
   }
 
-  nextLocal = Math.min(Math.max(0, nextLocal), Number.MAX_SAFE_INTEGER);
-  nextWh = Math.min(Math.max(0, nextWh), Number.MAX_SAFE_INTEGER);
-
-  const { error } = await supabase
-    .from("products")
-    .update({
-      stock_local: nextLocal,
-      stock_warehouse: nextWh,
-    })
-    .eq("id", productId);
-
-  if (error) redirect("/admin/products?error=stock");
-
-  await logAdminActivity(supabase, {
-    actorId: user.id,
-    actionType: "stock_adjusted",
-    entityType: "product",
-    entityId: productId,
-    summary: `Stock ${isWarehouse ? "depósito" : "tienda"} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
-    metadata: {
-      location: isWarehouse ? "warehouse" : "local",
-      movement_mode: movementMode,
-      quantity: qty,
-      previous_local: curLocal,
-      previous_warehouse: curWh,
-      next_local: nextLocal,
-      next_warehouse: nextWh,
-    },
-  });
   revalidatePath("/admin/actividades");
 
   const returnTo = safeStockAdjustReturnTo(String(formData.get("return_to") ?? ""));
@@ -726,64 +887,118 @@ export async function transferProductStock(productId: string, formData: FormData
 
   const direction = String(formData.get("direction") ?? "local_to_warehouse");
   const qty = parseNonNegInt(formData.get("quantity"));
-
-  const { data: row, error: fetchErr } = await supabase
-    .from("products")
-    .select("stock_local, stock_warehouse")
-    .eq("id", productId)
-    .maybeSingle();
-
-  if (fetchErr || !row) {
-    console.error("transferProductStock fetch", fetchErr);
-    redirect("/admin/products?error=stock");
-  }
-
-  const curLocal = Math.max(0, Math.floor(Number(row.stock_local ?? 0)));
-  const curWh = Math.max(0, Math.floor(Number(row.stock_warehouse ?? 0)));
-
-  const fromLocal = direction === "local_to_warehouse";
-  const available = fromLocal ? curLocal : curWh;
+  const variantIdRaw = String(formData.get("variant_id") ?? "").trim();
+  const transferDir =
+    direction === "warehouse_to_local"
+      ? ("warehouse_to_local" as const)
+      : ("local_to_warehouse" as const);
 
   const transferPage = `/admin/products/${productId}/transfer`;
-  if (qty < 1 || qty > available) {
-    redirect(`${transferPage}?error=transfer`);
-  }
+  const { usesVariants, variants } = await fetchProductVariantStockContext(
+    supabase,
+    productId,
+  );
 
-  let nextLocal = curLocal;
-  let nextWh = curWh;
-  if (fromLocal) {
-    nextLocal = curLocal - qty;
-    nextWh = curWh + qty;
+  if (usesVariants) {
+    const variantId =
+      variantIdRaw ||
+      (variants.length === 1 ? variants[0]!.id : "");
+    if (!variantId || !variants.some((v) => v.id === variantId)) {
+      redirect(`${transferPage}?error=variant`);
+    }
+
+    const before = variants.find((v) => v.id === variantId)!;
+    const result = await transferVariantStock(
+      supabase,
+      variantId,
+      transferDir,
+      qty,
+    );
+    if (!result.ok) redirect(`${transferPage}?error=transfer`);
+
+    const { variants: afterVariants } = await fetchProductVariantStockContext(
+      supabase,
+      productId,
+    );
+    const after = afterVariants.find((v) => v.id === variantId);
+    const fromLocal = transferDir === "local_to_warehouse";
+
+    await logAdminActivity(supabase, {
+      actorId: user.id,
+      actionType: "stock_transferred",
+      entityType: "product",
+      entityId: productId,
+      summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${before.label} · ${qty} u.`,
+      metadata: {
+        variant_id: variantId,
+        variant_label: before.label,
+        direction,
+        quantity: qty,
+        previous_local: before.stockLocal,
+        previous_warehouse: before.stockWarehouse,
+        next_local: after?.stockLocal ?? 0,
+        next_warehouse: after?.stockWarehouse ?? 0,
+      },
+    });
   } else {
-    nextWh = curWh - qty;
-    nextLocal = curLocal + qty;
+    const { data: row, error: fetchErr } = await supabase
+      .from("products")
+      .select("stock_local, stock_warehouse")
+      .eq("id", productId)
+      .maybeSingle();
+
+    if (fetchErr || !row) {
+      console.error("transferProductStock fetch", fetchErr);
+      redirect("/admin/products?error=stock");
+    }
+
+    const curLocal = Math.max(0, Math.floor(Number(row.stock_local ?? 0)));
+    const curWh = Math.max(0, Math.floor(Number(row.stock_warehouse ?? 0)));
+
+    const fromLocal = transferDir === "local_to_warehouse";
+    const available = fromLocal ? curLocal : curWh;
+
+    if (qty < 1 || qty > available) {
+      redirect(`${transferPage}?error=transfer`);
+    }
+
+    let nextLocal = curLocal;
+    let nextWh = curWh;
+    if (fromLocal) {
+      nextLocal = curLocal - qty;
+      nextWh = curWh + qty;
+    } else {
+      nextWh = curWh - qty;
+      nextLocal = curLocal + qty;
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({
+        stock_local: nextLocal,
+        stock_warehouse: nextWh,
+      })
+      .eq("id", productId);
+
+    if (error) redirect(`${transferPage}?error=transfer`);
+
+    await logAdminActivity(supabase, {
+      actorId: user.id,
+      actionType: "stock_transferred",
+      entityType: "product",
+      entityId: productId,
+      summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${qty} u.`,
+      metadata: {
+        direction,
+        quantity: qty,
+        previous_local: curLocal,
+        previous_warehouse: curWh,
+        next_local: nextLocal,
+        next_warehouse: nextWh,
+      },
+    });
   }
 
-  const { error } = await supabase
-    .from("products")
-    .update({
-      stock_local: nextLocal,
-      stock_warehouse: nextWh,
-    })
-    .eq("id", productId);
-
-  if (error) redirect(`${transferPage}?error=transfer`);
-
-  await logAdminActivity(supabase, {
-    actorId: user.id,
-    actionType: "stock_transferred",
-    entityType: "product",
-    entityId: productId,
-    summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${qty} u.`,
-    metadata: {
-      direction,
-      quantity: qty,
-      previous_local: curLocal,
-      previous_warehouse: curWh,
-      next_local: nextLocal,
-      next_warehouse: nextWh,
-    },
-  });
   revalidatePath("/admin/actividades");
 
   const returnTo = safeStockAdjustReturnTo(String(formData.get("return_to") ?? ""));

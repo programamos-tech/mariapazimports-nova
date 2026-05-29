@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
+import {
+  enrichListingProductsWithVariants,
+  toProductListingCardProps,
+} from "@/lib/store-listing-variant-meta";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -38,7 +42,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options",
+      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at",
     )
     .eq("is_published", true)
     .in("id", ids);
@@ -50,13 +54,17 @@ export async function GET(request: Request) {
   const byId = new Map((data ?? []).map((p) => [p.id as string, p]));
   const couponPctByProductId =
     await fetchStorefrontCouponDiscountPercentByProductId(supabase);
-  const products = ids
+  const ordered = ids
     .map((id) => byId.get(id))
-    .filter((p): p is NonNullable<typeof p> => p != null)
-    .map((p) => ({
-      ...p,
-      coupon_discount_percent: couponPctByProductId[p.id as string] ?? 0,
-    }));
+    .filter((p): p is NonNullable<typeof p> => p != null);
+  const enriched = await enrichListingProductsWithVariants(
+    supabase,
+    ordered as Parameters<typeof enrichListingProductsWithVariants>[1],
+  );
+  const products = enriched.map((p) => ({
+    ...toProductListingCardProps(p),
+    coupon_discount_percent: couponPctByProductId[p.id] ?? 0,
+  }));
 
   return NextResponse.json({ products });
 }

@@ -1,16 +1,18 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EditProductForm } from "@/components/admin/EditProductForm";
 import { ProductDeleteConfirmForm } from "@/components/admin/ProductDeleteConfirmForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateProduct } from "@/app/actions/admin/products";
-import type { FragranceRowInitial } from "@/components/admin/ProductFragranceRows";
-import type { SizeRowState } from "@/components/admin/ProductSizeRows";
-import { normalizeSizeOptionsFromRow, SIZE_UNITS } from "@/lib/product-size-options";
+import type { VariantRowInitial } from "@/components/admin/ProductVariantRows";
 import {
   normalizeProductImagePaths,
-  parseFragranceImagePaths,
 } from "@/lib/product-images";
+import {
+  fetchProductVariantsForProduct,
+  parseProductVariantAxis,
+} from "@/lib/product-variants";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 
@@ -45,45 +47,39 @@ type ProductRow = {
   fragrance_option_images?: Record<string, unknown> | null;
   has_vat?: boolean | null;
   vat_percent?: number | null;
+  variant_axis?: string | null;
 };
 
-function fragranceRowsForEditForm(p: ProductRow): FragranceRowInitial[] {
-  const imgMap =
-    p.fragrance_option_images &&
-    typeof p.fragrance_option_images === "object" &&
-    !Array.isArray(p.fragrance_option_images)
-      ? (p.fragrance_option_images as Record<string, unknown>)
-      : {};
-  const lines = Array.isArray(p.fragrance_options)
-    ? p.fragrance_options.filter(
-        (x): x is string => typeof x === "string" && x.trim().length > 0,
-      )
-    : [];
-  if (lines.length === 0) {
-    return [{ label: "", existingImagePaths: [], previewUrls: [] }];
-  }
-  return lines.map((label) => {
-    const paths = parseFragranceImagePaths(imgMap[label]);
+async function variantRowsForEditForm(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  productId: string,
+): Promise<{ axis: ReturnType<typeof parseProductVariantAxis>; rows: VariantRowInitial[] }> {
+  const { data: product } = await supabase
+    .from("products")
+    .select("variant_axis")
+    .eq("id", productId)
+    .maybeSingle();
+  const axis = parseProductVariantAxis(product?.variant_axis);
+  const variants = await fetchProductVariantsForProduct(supabase, productId);
+  if (variants.length === 0) {
     return {
-      label,
-      existingImagePaths: paths,
-      previewUrls: paths.map((path) => storagePublicObjectUrl(path)),
+      axis,
+      rows: [{ label: "", costCents: 0, priceCents: 0, stockWarehouse: 0, stockLocal: 0 }],
     };
-  });
-}
-
-function sizeRowsForEditForm(p: ProductRow): SizeRowState[] {
-  const opts = normalizeSizeOptionsFromRow(p);
-  if (opts.length === 0) return [{ value: "", unit: "ml" }];
-  return opts.map((o) => {
-    const u = o.unit.trim().toLowerCase();
-    const unit = (
-      SIZE_UNITS as readonly string[]
-    ).includes(u)
-      ? (u as SizeRowState["unit"])
-      : "unidad";
-    return { value: String(o.value), unit };
-  });
+  }
+  return {
+    axis,
+    rows: variants.map((v) => ({
+      id: v.id,
+      label: v.label,
+      costCents: v.costCents,
+      priceCents: v.priceCents,
+      stockWarehouse: v.stockWarehouse,
+      stockLocal: v.stockLocal,
+      existingImagePaths: v.imagePaths,
+      previewUrls: v.imagePaths.map((path) => storagePublicObjectUrl(path)),
+    })),
+  };
 }
 
 function breadcrumbSegment(name: string) {
@@ -99,13 +95,14 @@ export default async function EditProductPage({ params, searchParams }: Props) {
   const error = typeof sp.error === "string" ? sp.error : undefined;
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: product }, { data: categories }] = await Promise.all([
+  const [{ data: product }, { data: categories }, variantForm] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("categories")
       .select("id,name")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
+    variantRowsForEditForm(supabase, id),
   ]);
 
   if (!product) notFound();
@@ -122,7 +119,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
   const boundUpdate = updateProduct.bind(null, id);
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className={adminFormPageClass}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -192,13 +189,13 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           stockLocal: p.stock_local ?? 0,
           stockWarehouse: p.stock_warehouse ?? 0,
           isPublished: p.is_published === true,
-          sizeRows: sizeRowsForEditForm(p),
+          variantAxis: variantForm.axis,
+          variantRows: variantForm.rows,
           hasExpiration: p.has_expiration === true,
           expirationDate: p.expiration_date ?? "",
           hasVat: p.has_vat === true,
           vatPercent: p.vat_percent ?? null,
           colors: Array.isArray(p.colors) ? p.colors : [],
-          fragranceRows: fragranceRowsForEditForm(p),
         }}
       />
 

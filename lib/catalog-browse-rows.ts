@@ -1,12 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { mergeCategoryRowsForFilterMenu } from "@/lib/product-listing-facets";
+import { computeListingFacetsFromProductRows, mergeCategoryRowsForFilterMenu, type ListingFacets } from "@/lib/product-listing-facets";
+import type { ListingProductWithVariantMeta } from "@/lib/store-listing-variant-meta";
+import { enrichListingProductsWithVariants } from "@/lib/store-listing-variant-meta";
 import { expandCategoryIdsFromRows } from "@/lib/store-category-group";
 
 const PRODUCT_SELECT =
-  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at";
+  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at";
 
 /** Incluye `category_id` solo para armar la vitrina en servidor (no se expone al card). */
-const PRODUCT_SELECT_WITH_CATEGORY = `${PRODUCT_SELECT},category_id`;
+const PRODUCT_SELECT_WITH_CATEGORY = `${PRODUCT_SELECT},category_id,colors`;
 
 export const CATALOG_ROW_PREVIEW_LIMIT = 12;
 
@@ -23,13 +25,14 @@ export type CatalogBrowseProductRow = {
   size_value: number | null;
   size_unit: string | null;
   fragrance_options: string[] | null;
+  variant_axis?: string | null;
   created_at: string;
 };
 
 export type CatalogBrowseSection = {
   categoryId: string | null;
   categoryName: string;
-  products: CatalogBrowseProductRow[];
+  products: ListingProductWithVariantMeta[];
   showSeeAll: boolean;
 };
 
@@ -49,8 +52,10 @@ function sortProductsByCreatedAtDesc(a: CatalogBrowseProductRow, b: CatalogBrows
 export async function fetchCatalogBrowseSections(
   supabase: SupabaseClient,
   allCategoryRows: { id: string; name: string; sort_order: number }[],
-): Promise<CatalogBrowseSection[]> {
-  if (!allCategoryRows.length) return [];
+): Promise<{ sections: CatalogBrowseSection[]; facets: ListingFacets }> {
+  if (!allCategoryRows.length) {
+    return { sections: [], facets: computeListingFacetsFromProductRows([]) };
+  }
 
   const merged = mergeCategoryRowsForFilterMenu(allCategoryRows);
   const knownCategoryId = new Set(
@@ -69,11 +74,15 @@ export async function fetchCatalogBrowseSections(
       error.message,
       error.code,
     );
-    return [];
+    return { sections: [], facets: computeListingFacetsFromProductRows([]) };
   }
 
-  type RowWithCat = CatalogBrowseProductRow & { category_id: string | null };
+  type RowWithCat = CatalogBrowseProductRow & {
+    category_id: string | null;
+    colors?: unknown;
+  };
   const rawList = (allRows ?? []) as RowWithCat[];
+  const facets = computeListingFacetsFromProductRows(rawList);
 
   const byCategoryId = new Map<string, CatalogBrowseProductRow[]>();
   const uncategorized: CatalogBrowseProductRow[] = [];
@@ -90,7 +99,12 @@ export async function fetchCatalogBrowseSections(
     byCategoryId.set(key, bucket);
   }
 
-  const sections: CatalogBrowseSection[] = [];
+  const rawSections: {
+    categoryId: string | null;
+    categoryName: string;
+    products: CatalogBrowseProductRow[];
+    showSeeAll: boolean;
+  }[] = [];
 
   for (const cat of merged) {
     const expandedIds = expandCategoryIdsFromRows(allCategoryRows, cat.id);
@@ -112,7 +126,7 @@ export async function fetchCatalogBrowseSections(
     const preview = combined.slice(0, CATALOG_ROW_PREVIEW_LIMIT);
     if (!preview.length) continue;
 
-    sections.push({
+    rawSections.push({
       categoryId: cat.id,
       categoryName: cat.name,
       products: preview,
@@ -123,7 +137,7 @@ export async function fetchCatalogBrowseSections(
   uncategorized.sort(sortProductsByCreatedAtDesc);
   const orphanPreview = uncategorized.slice(0, CATALOG_ROW_PREVIEW_LIMIT);
   if (orphanPreview.length) {
-    sections.push({
+    rawSections.push({
       categoryId: null,
       categoryName: "Sin categoría",
       products: orphanPreview,
@@ -131,5 +145,17 @@ export async function fetchCatalogBrowseSections(
     });
   }
 
-  return sections;
+  const sections: CatalogBrowseSection[] = [];
+  for (const section of rawSections) {
+    const enriched = await enrichListingProductsWithVariants(
+      supabase,
+      section.products,
+    );
+    sections.push({
+      ...section,
+      products: enriched,
+    });
+  }
+
+  return { sections, facets };
 }

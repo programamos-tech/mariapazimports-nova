@@ -20,12 +20,17 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import {
-  expandFragranceLabels,
-} from "@/lib/fragrance-options";
+  getVariantPickerTitle,
+  parseProductVariantAxis,
+  type StorefrontProductVariantMeta,
+} from "@/lib/product-variants";
 import {
   productCardDisplayImages,
   productPrimaryPublicImageUrl,
 } from "@/lib/product-card-display-images";
+import {
+  STORE_PRODUCT_CARD_IMAGE_SIZES,
+} from "@/lib/store-product-card-image";
 import {
   prefetchProductHeroImage,
 } from "@/lib/storage-image-url";
@@ -38,25 +43,42 @@ type Product = {
   image_path: string | null;
   image_paths?: unknown;
   stock_quantity: number;
-  /** Columna opcional en DB; si falta se infiere para la línea de marca. */
   brand?: string | null;
   size_options?: unknown;
   size_value?: number | null;
   size_unit?: string | null;
   fragrance_options?: string[] | null;
+  variant_axis?: string | null;
+  listingPriceCents?: number;
+  listingStockQuantity?: number;
+  variantMeta?: StorefrontProductVariantMeta;
 };
 
-function productRequiresFragranceChoice(product: Product): boolean {
-  const raw = Array.isArray(product.fragrance_options)
-    ? product.fragrance_options.filter(
-        (x): x is string => typeof x === "string" && x.trim().length > 0,
-      )
-    : [];
-  return expandFragranceLabels(raw).length > 1;
+function displayPriceCents(product: Product): number {
+  return product.listingPriceCents ?? product.price_cents;
 }
 
-const CARD_IMAGE_SIZES =
-  "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw";
+function displayStockQuantity(product: Product): number {
+  return product.listingStockQuantity ?? product.stock_quantity;
+}
+
+function productRequiresVariantChoice(product: Product): boolean {
+  if (product.variantMeta?.requiresVariantChoice) return true;
+  const axis = parseProductVariantAxis(product.variant_axis);
+  return axis !== "none" && (product.variantMeta?.variants.length ?? 0) > 1;
+}
+
+function variantChoiceCtaLabel(product: Product): string {
+  const axis = parseProductVariantAxis(product.variant_axis);
+  const title = getVariantPickerTitle(axis);
+  if (title === "Presentación") return "Elegir presentación";
+  if (title === "Fragancia") return "Elegir fragancia";
+  return `Elegir ${title.toLowerCase()}`;
+}
+
+function productShowsFromPrice(product: Product): boolean {
+  return productRequiresVariantChoice(product);
+}
 
 function showcaseBrandLabel(product: Product): string {
   const b = product.brand?.trim();
@@ -71,11 +93,13 @@ function ShowcaseProductCard({
   product,
   couponDiscountPercent = 0,
   compact = false,
+  imagePriority = false,
 }: {
   product: Product;
   couponDiscountPercent?: number;
   /** Variante más compacta para grillas densas. */
   compact?: boolean;
+  imagePriority?: boolean;
 }) {
   const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
     product.image_path,
@@ -85,15 +109,17 @@ function ShowcaseProductCard({
     product.image_path,
     product.image_paths,
   );
-  const outOfStock = product.stock_quantity <= 0;
+  const outOfStock = displayStockQuantity(product) <= 0;
+  const cardPrice = displayPriceCents(product);
   const pct = Math.max(
     0,
     Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
   );
   const hasCouponPrice = pct > 0;
   const priceAfterCoupon = hasCouponPrice
-    ? storefrontPriceAfterCouponCents(product.price_cents, pct)
-    : product.price_cents;
+    ? storefrontPriceAfterCouponCents(cardPrice, pct)
+    : cardPrice;
+  const fromPrice = productShowsFromPrice(product);
 
   return (
     <article className="h-full">
@@ -107,7 +133,8 @@ function ShowcaseProductCard({
           src={cardImg}
           hoverSrc={cardHoverImg}
           alt={product.name}
-          sizes={CARD_IMAGE_SIZES}
+          sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
+          priority={imagePriority}
           outOfStock={outOfStock}
           placeholderClassName={
             compact ? "text-2xl text-stone-200" : "text-3xl text-stone-200"
@@ -142,7 +169,8 @@ function ShowcaseProductCard({
                       : "text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300"
                   }
                 >
-                  {formatCop(product.price_cents)}
+                  {fromPrice ? "Desde " : ""}
+                  {formatCop(cardPrice)}
                 </p>
                 <p
                   className={
@@ -151,6 +179,7 @@ function ShowcaseProductCard({
                       : "text-[13px] font-medium tabular-nums text-stone-900"
                   }
                 >
+                  {fromPrice ? "Desde " : ""}
                   {formatCop(priceAfterCoupon)}
                 </p>
               </>
@@ -162,7 +191,8 @@ function ShowcaseProductCard({
                     : "text-[13px] font-medium tabular-nums text-stone-900"
                 }
               >
-                {formatCop(product.price_cents)}
+                {fromPrice ? "Desde " : ""}
+                {formatCop(cardPrice)}
               </p>
             )}
           </div>
@@ -188,11 +218,13 @@ function CatalogProductCard({
   cartQuantity = 0,
   onCartChange,
   couponDiscountPercent = 0,
+  imagePriority = false,
 }: {
   product: Product;
   cartQuantity?: number;
   onCartChange?: () => void;
   couponDiscountPercent?: number;
+  imagePriority?: boolean;
 }) {
   const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
     product.image_path,
@@ -202,7 +234,7 @@ function CatalogProductCard({
     product.image_path,
     product.image_paths,
   );
-  const outOfStock = product.stock_quantity <= 0;
+  const outOfStock = displayStockQuantity(product) <= 0;
   const router = useRouter();
   const { openCart } = useStoreCartDrawer();
   const [cartPending, startCartTransition] = useTransition();
@@ -214,26 +246,31 @@ function CatalogProductCard({
   };
 
   const inCart = cartQuantity > 0;
-  const maxQty = Math.max(0, Math.floor(product.stock_quantity));
+  const cardPrice = displayPriceCents(product);
+  const cardStock = displayStockQuantity(product);
+  const maxQty = Math.max(0, Math.floor(cardStock));
   const pct = Math.max(
     0,
     Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
   );
   const hasCouponPrice = pct > 0;
   const priceAfterCoupon = hasCouponPrice
-    ? storefrontPriceAfterCouponCents(product.price_cents, pct)
-    : product.price_cents;
+    ? storefrontPriceAfterCouponCents(cardPrice, pct)
+    : cardPrice;
+  const fromPrice = productShowsFromPrice(product);
 
-  const needsFragranceOnPdp = productRequiresFragranceChoice(product);
+  const needsVariantOnPdp = productRequiresVariantChoice(product);
+  const variantCta = variantChoiceCtaLabel(product);
 
   return (
     <article className="flex h-full flex-col">
-      <div className="group/image relative shrink-0">
+      <div className="relative shrink-0">
         <StoreProductCardImage
           src={cardImg}
           hoverSrc={cardHoverImg}
           alt={product.name}
-          sizes={CARD_IMAGE_SIZES}
+          sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
+          priority={imagePriority}
           outOfStock={outOfStock}
         />
         <Link
@@ -284,9 +321,11 @@ function CatalogProductCard({
           {hasCouponPrice ? (
             <>
               <p className="text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300">
-                {formatCop(product.price_cents)}
+                {fromPrice ? "Desde " : ""}
+                {formatCop(cardPrice)}
               </p>
               <p className="text-[13px] font-medium tabular-nums text-stone-900">
+                {fromPrice ? "Desde " : ""}
                 {formatCop(priceAfterCoupon)}
               </p>
               <p className="text-[9px] font-medium uppercase leading-tight tracking-[0.08em] text-stone-500">
@@ -295,7 +334,8 @@ function CatalogProductCard({
             </>
           ) : (
             <p className="text-[13px] font-medium tabular-nums text-stone-900">
-              {formatCop(product.price_cents)}
+              {fromPrice ? "Desde " : ""}
+              {formatCop(cardPrice)}
             </p>
           )}
         </div>
@@ -304,12 +344,12 @@ function CatalogProductCard({
           <p className="mt-4 text-center text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400">
             Agotado
           </p>
-        ) : needsFragranceOnPdp ? (
+        ) : needsVariantOnPdp ? (
           <Link
             href={`/products/${product.id}`}
             className="mt-auto block border border-stone-900 bg-white py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
           >
-            Elegir fragancia
+            {variantCta}
           </Link>
         ) : inCart ? (
           <div
@@ -384,6 +424,7 @@ export function ProductListingCard({
   couponDiscountPercent = 0,
   presentation = "default",
   compact = false,
+  imagePriority = false,
 }: {
   product: Product;
   cartQuantity?: number;
@@ -391,6 +432,7 @@ export function ProductListingCard({
   couponDiscountPercent?: number;
   presentation?: "default" | "editorial";
   compact?: boolean;
+  imagePriority?: boolean;
 }) {
   if (presentation === "editorial") {
     return (
@@ -398,6 +440,7 @@ export function ProductListingCard({
         product={product}
         couponDiscountPercent={couponDiscountPercent}
         compact={compact}
+        imagePriority={imagePriority}
       />
     );
   }
@@ -408,6 +451,7 @@ export function ProductListingCard({
       cartQuantity={cartQuantity}
       onCartChange={onCartChange}
       couponDiscountPercent={couponDiscountPercent}
+      imagePriority={imagePriority}
     />
   );
 }

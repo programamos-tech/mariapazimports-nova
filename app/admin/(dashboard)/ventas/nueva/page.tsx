@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import { NewInvoiceForm, NewInvoiceHeader } from "@/components/admin/NewInvoiceForm";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 
@@ -13,7 +14,7 @@ export default async function AdminNuevaFacturaPage({ searchParams }: Props) {
   const initialError = typeof sp.error === "string" ? sp.error : undefined;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <NewInvoiceHeader />
       <NewInvoiceForm initialError={initialError} />
     </div>

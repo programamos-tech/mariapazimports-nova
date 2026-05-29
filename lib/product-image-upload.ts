@@ -36,7 +36,9 @@ export function blockSubmitIfImageTooLarge(form: HTMLFormElement): boolean {
     candidates.push(main);
   }
   form
-    .querySelectorAll<HTMLInputElement>('input[type="file"][name^="fragrance_option_image_"]')
+    .querySelectorAll<HTMLInputElement>(
+      'input[type="file"][name^="fragrance_option_image_"], input[type="file"][name^="variant_option_image_"]',
+    )
     .forEach((el) => candidates.push(el));
   return checkFileInputs(candidates);
 }

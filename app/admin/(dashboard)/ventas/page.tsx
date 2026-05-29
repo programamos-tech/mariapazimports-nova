@@ -97,7 +97,7 @@ export default async function AdminVentasPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl md:text-3xl">

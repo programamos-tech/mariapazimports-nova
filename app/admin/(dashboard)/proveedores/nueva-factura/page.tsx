@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import {
   SupplierNewInvoiceForm,
   SupplierNewInvoiceHeader,
@@ -20,7 +21,7 @@ export default async function AdminNuevaFacturaProveedorPage({
   const issueDateDefault = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <SupplierNewInvoiceHeader />
 
       {error ? (

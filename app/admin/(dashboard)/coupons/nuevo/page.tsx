@@ -1,3 +1,4 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import {
   NewCouponForm,
   NewCouponHeader,
@@ -17,7 +18,7 @@ export default async function AdminNuevoCuponPage({
   const errMsg = storeCouponAdminErrorMessage(couponError);
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl">
+    <div className={adminFormPageClass}>
       <NewCouponHeader />
       {errMsg ? (
         <p

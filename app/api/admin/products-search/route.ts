@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,reference,price_cents,cost_cents,stock_quantity,stock_local,has_vat,vat_percent",
+      "id,name,reference,price_cents,cost_cents,stock_quantity,stock_local,stock_warehouse,has_vat,vat_percent,variant_axis",
     )
     .or(`name.ilike.${pattern},reference.ilike.${pattern}`)
     .order("name")

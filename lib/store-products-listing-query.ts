@@ -27,6 +27,7 @@ export type StoreListingProductRow = {
   size_value: number | null;
   size_unit: string | null;
   fragrance_options: string[] | null;
+  variant_axis?: string | null;
   created_at: string;
 };
 
@@ -67,7 +68,7 @@ export async function fetchPublishedProductsForListing(
   let query = supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,created_at",
+      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at",
     )
     .eq("is_published", true);
 

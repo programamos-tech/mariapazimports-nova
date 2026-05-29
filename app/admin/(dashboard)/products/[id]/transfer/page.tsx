@@ -1,8 +1,10 @@
+import { adminFormPageClass } from "@/lib/admin-page-layout";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminTransferStockForm } from "@/components/admin/AdminTransferStockForm";
 import { transferProductStock } from "@/app/actions/admin/products";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
+import { fetchVariantStockRowsForAdmin } from "@/lib/product-stock";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +25,13 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
   const { id } = await params;
   const sp = await searchParams;
   const err = sp.error === "transfer";
+  const variantErr = sp.error === "variant";
 
   const supabase = await createSupabaseServerClient();
-  const { data: product } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+  const [{ data: product }, variantStock] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).maybeSingle(),
+    fetchVariantStockRowsForAdmin(supabase, id),
+  ]);
 
   if (!product) notFound();
 
@@ -36,7 +42,7 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
   const boundTransfer = transferProductStock.bind(null, id);
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className={adminFormPageClass}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -66,6 +72,11 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
               el origen.
             </p>
           ) : null}
+          {variantErr ? (
+            <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">
+              Elegí una presentación antes de transferir stock.
+            </p>
+          ) : null}
         </div>
         <Link
           href={`/admin/products/${id}`}
@@ -82,6 +93,7 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
         productName={p.name}
         stockLocal={stockLocal}
         stockWarehouse={stockWarehouse}
+        variants={variantStock.usesVariants ? variantStock.variants : undefined}
         formAction={boundTransfer}
         returnTo={`/admin/products/${id}`}
       />
