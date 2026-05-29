@@ -72,7 +72,7 @@ export function CatalogRowScroller({
         tabIndex={canLeft ? 0 : -1}
         disabled={!canLeft}
         onClick={() => scrollByDir(-1)}
-        className={`absolute left-0 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:size-10 ${
+        className={`absolute left-1.5 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:left-2 sm:size-10 ${
           canLeft ? "" : "invisible pointer-events-none"
         }`}
       >
@@ -89,7 +89,7 @@ export function CatalogRowScroller({
         tabIndex={canRight ? 0 : -1}
         disabled={!canRight}
         onClick={() => scrollByDir(1)}
-        className={`absolute right-0 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:size-10 ${
+        className={`absolute right-1.5 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200/90 bg-white/95 text-stone-700 shadow-sm transition hover:bg-white hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 sm:right-2 sm:size-10 ${
           canRight ? "" : "invisible pointer-events-none"
         }`}
       >
@@ -102,7 +102,7 @@ export function CatalogRowScroller({
 
       <div
         ref={ref}
-        className="store-cart-suggestions-scroll flex snap-x snap-mandatory gap-4 overscroll-x-contain pb-1 pt-0.5 sm:gap-4 lg:gap-5 px-11 sm:px-12"
+        className="store-cart-suggestions-scroll flex snap-x snap-mandatory gap-3 overscroll-x-contain scroll-px-1 pb-1 pt-0.5 sm:gap-4 sm:scroll-px-2 lg:gap-5 px-10 sm:px-11"
       >
         {children}
       </div>

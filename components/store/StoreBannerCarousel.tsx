@@ -11,7 +11,11 @@ import {
   useState,
   type TransitionEvent,
 } from "react";
-import { shouldUnoptimizeStorageImageUrl, storagePublicObjectUrl } from "@/lib/storage-public-url";
+import { storagePublicObjectUrl } from "@/lib/storage-public-url";
+import {
+  productDisplayImageUrl,
+  shouldUseUnoptimizedImage,
+} from "@/lib/storage-image-url";
 
 export type StoreBannerSlide = {
   id: string;
@@ -197,7 +201,10 @@ export function StoreBannerCarousel({
           onTransitionEnd={n > 1 ? onTrackTransitionEnd : undefined}
         >
           {panels.map(({ slide, isClone }, i) => {
-            const url = storagePublicObjectUrl(slide.image_path)!;
+            const url = productDisplayImageUrl(
+              storagePublicObjectUrl(slide.image_path),
+              "banner",
+            )!;
             const alt = slide.alt_text?.trim() || defaultAlt;
             const href = slide.href?.trim();
 
@@ -208,7 +215,7 @@ export function StoreBannerCarousel({
                 fill
                 className="object-cover"
                 sizes={sizes}
-                unoptimized={shouldUnoptimizeStorageImageUrl(url)}
+                unoptimized={shouldUseUnoptimizedImage(url)}
                 priority={i === 0}
               />
             );
@@ -243,7 +250,7 @@ export function StoreBannerCarousel({
           <button
             type="button"
             onClick={() => go(-1)}
-            className="absolute left-2 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white"
+            className="absolute left-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:left-4"
             aria-label="Anterior"
           >
             ‹
@@ -251,7 +258,7 @@ export function StoreBannerCarousel({
           <button
             type="button"
             onClick={() => go(1)}
-            className="absolute right-2 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white"
+            className="absolute right-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:right-4"
             aria-label="Siguiente"
           >
             ›

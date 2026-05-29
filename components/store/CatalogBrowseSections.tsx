@@ -41,7 +41,7 @@ export function CatalogBrowseSections({
             ) : null}
           </div>
 
-          <CatalogRowScroller className="-mx-4 sm:-mx-6 lg:-mx-10">
+          <CatalogRowScroller>
             {section.products.map((p, index) => (
               <CatalogRowProductSlot
                 key={p.id}
@@ -77,7 +77,7 @@ function CatalogRowProductSlot({
 }) {
   return (
     <RevealOnScroll
-      className="w-[44vw] shrink-0 snap-start snap-always sm:w-[min(46vw,240px)] md:w-[220px] lg:w-[240px]"
+      className="w-[42vw] shrink-0 snap-start snap-always sm:w-[min(42vw,220px)] md:w-[210px] lg:w-[230px]"
       delayMs={staggerDelayMs}
     >
       <ProductListingCard

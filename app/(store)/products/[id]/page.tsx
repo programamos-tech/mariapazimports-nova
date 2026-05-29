@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { preload } from "react-dom";
 import { ProductDetailView } from "@/components/store/ProductDetailView";
+import { ProductDetailHeroServer } from "@/components/store/ProductDetailHeroServer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { productDisplayImageUrl } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
@@ -86,8 +89,31 @@ export default async function ProductDetailPage({ params }: Props) {
       : null;
   const categoryId = product.category_id;
 
+  const defaultGalleryUrls =
+    fragranceLabels.length > 0
+      ? (fragranceImageUrls[fragranceLabels[0] ?? ""] ?? [])
+      : imageUrls;
+  const initialHeroSrc = defaultGalleryUrls[0] ?? imageUrls[0] ?? null;
+  const initialHeroAlt =
+    fragranceLabels.length > 0 && fragranceLabels[0]
+      ? `${product.name} — ${fragranceLabels[0]}`
+      : product.name;
+  const heroPreloadUrl = productDisplayImageUrl(initialHeroSrc, "hero");
+  if (heroPreloadUrl) {
+    preload(heroPreloadUrl, { as: "image", fetchPriority: "high" });
+  }
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
+    <>
+      {heroPreloadUrl ? (
+        <link
+          rel="preload"
+          as="image"
+          href={heroPreloadUrl}
+          fetchPriority="high"
+        />
+      ) : null}
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:py-12 lg:py-14">
       <nav aria-label="Migas de pan" className="mb-8 text-[11px] uppercase tracking-[0.12em] text-stone-400">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <li>
@@ -166,7 +192,12 @@ export default async function ProductDetailPage({ params }: Props) {
         hasVat={product.has_vat}
         vatPercent={product.vat_percent}
         couponDiscountPercent={couponDiscountPercent}
-      />
-    </div>
+      >
+        {initialHeroSrc ? (
+          <ProductDetailHeroServer src={initialHeroSrc} alt={initialHeroAlt} />
+        ) : null}
+      </ProductDetailView>
+      </div>
+    </>
   );
 }

@@ -19,9 +19,15 @@ import { formatCop } from "@/lib/money";
 import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
-import { expandFragranceLabels } from "@/lib/fragrance-options";
 import {
-  shouldUnoptimizeStorageImageUrl,
+  expandFragranceLabels,
+} from "@/lib/fragrance-options";
+import {
+  prefetchProductHeroImage,
+  productDisplayImageUrl,
+  shouldUseUnoptimizedImage,
+} from "@/lib/storage-image-url";
+import {
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
 
@@ -62,13 +68,17 @@ function ShowcaseProductCard({
   product,
   couponDiscountPercent = 0,
   accentImageBg = false,
+  compact = false,
 }: {
   product: Product;
   couponDiscountPercent?: number;
   /** Fondo suave tipo bloque de color en algunas columnas (look editorial). */
   accentImageBg?: boolean;
+  /** Variante más baja para grillas densas (p. ej. home con 8 productos). */
+  compact?: boolean;
 }) {
   const img = storagePublicObjectUrl(product.image_path);
+  const cardImg = productDisplayImageUrl(img, "card") ?? img;
   const outOfStock = product.stock_quantity <= 0;
   const pct = Math.max(
     0,
@@ -88,52 +98,99 @@ function ShowcaseProductCard({
       <Link
         href={`/products/${product.id}`}
         className="group block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
+        onMouseEnter={() => prefetchProductHeroImage(img)}
+        onFocus={() => prefetchProductHeroImage(img)}
       >
         <div
-          className={`relative aspect-[4/5] w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${
-            outOfStock ? "opacity-[0.78]" : ""
-          }`}
+          className={`relative w-full shrink-0 overflow-hidden ${imageBgClass} transition-colors duration-300 ${
+            compact ? "aspect-square" : "aspect-[4/5]"
+          } ${outOfStock ? "opacity-[0.78]" : ""}`}
         >
-          {img ? (
+          {cardImg ? (
             <Image
-              src={img}
+              src={cardImg}
               alt={product.name}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes={
+                compact
+                  ? "(max-width: 640px) 50vw, 25vw"
+                  : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              }
               className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
-              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+              loading="lazy"
+              unoptimized={shouldUseUnoptimizedImage(cardImg)}
             />
           ) : (
-            <span className="flex size-full items-center justify-center text-3xl text-stone-200">
+            <span
+              className={`flex size-full items-center justify-center text-stone-200 ${
+                compact ? "text-2xl" : "text-3xl"
+              }`}
+            >
               ◆
             </span>
           )}
         </div>
-        <div className="space-y-1.5 pt-4 text-left">
-          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+        <div className={`text-left ${compact ? "space-y-0.5 pt-2" : "space-y-1.5 pt-4"}`}>
+          <p
+            className={
+              compact
+                ? "text-[9px] font-medium uppercase tracking-[0.12em] text-stone-400"
+                : "text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400"
+            }
+          >
             {showcaseBrandLabel(product)}
           </p>
-          <p className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 line-clamp-3">
+          <p
+            className={
+              compact
+                ? "text-[11px] font-medium uppercase leading-snug tracking-wide text-stone-900 line-clamp-2"
+                : "text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 line-clamp-3"
+            }
+          >
             {product.name}
           </p>
-          <div className="space-y-0.5 pt-0.5">
+          <div className={compact ? "pt-0" : "space-y-0.5 pt-0.5"}>
             {hasCouponPrice ? (
               <>
-                <p className="text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300">
+                <p
+                  className={
+                    compact
+                      ? "text-[10px] tabular-nums text-stone-400 line-through decoration-stone-300"
+                      : "text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300"
+                  }
+                >
                   {formatCop(product.price_cents)}
                 </p>
-                <p className="text-[13px] font-medium tabular-nums text-stone-900">
+                <p
+                  className={
+                    compact
+                      ? "text-[11px] font-medium tabular-nums text-stone-900"
+                      : "text-[13px] font-medium tabular-nums text-stone-900"
+                  }
+                >
                   {formatCop(priceAfterCoupon)}
                 </p>
               </>
             ) : (
-              <p className="text-[13px] font-medium tabular-nums text-stone-900">
+              <p
+                className={
+                  compact
+                    ? "text-[11px] font-medium tabular-nums text-stone-900"
+                    : "text-[13px] font-medium tabular-nums text-stone-900"
+                }
+              >
                 {formatCop(product.price_cents)}
               </p>
             )}
           </div>
           {outOfStock ? (
-            <p className="pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400">
+            <p
+              className={
+                compact
+                  ? "text-[9px] font-medium uppercase tracking-[0.1em] text-stone-400"
+                  : "pt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-400"
+              }
+            >
               Agotado
             </p>
           ) : null}
@@ -162,6 +219,7 @@ function CatalogProductCard({
   const { has, toggle, ready } = useStoreFavorites();
   const favorite = ready && has(product.id);
   const img = storagePublicObjectUrl(product.image_path);
+  const cardImg = productDisplayImageUrl(img, "card") ?? img;
   const outOfStock = product.stock_quantity <= 0;
   const afterCartMutation = () => {
     router.refresh();
@@ -191,15 +249,18 @@ function CatalogProductCard({
         <Link
           href={`/products/${product.id}`}
           className="group/image absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
+          onMouseEnter={() => prefetchProductHeroImage(img)}
+          onFocus={() => prefetchProductHeroImage(img)}
         >
-          {img ? (
+          {cardImg ? (
             <Image
-              src={img}
+              src={cardImg}
               alt={product.name}
               fill
               className="object-cover object-center transition duration-300 group-hover/image:scale-[1.02]"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+              loading="lazy"
+              unoptimized={shouldUseUnoptimizedImage(cardImg)}
             />
           ) : (
             <span className="flex size-full items-center justify-center text-4xl text-stone-300">
@@ -348,6 +409,7 @@ export function ProductListingCard({
   couponDiscountPercent = 0,
   presentation = "default",
   accentImageBg = false,
+  compact = false,
 }: {
   product: Product;
   cartQuantity?: number;
@@ -355,6 +417,7 @@ export function ProductListingCard({
   couponDiscountPercent?: number;
   presentation?: "default" | "editorial";
   accentImageBg?: boolean;
+  compact?: boolean;
 }) {
   if (presentation === "editorial") {
     return (
@@ -362,6 +425,7 @@ export function ProductListingCard({
         product={product}
         couponDiscountPercent={couponDiscountPercent}
         accentImageBg={accentImageBg}
+        compact={compact}
       />
     );
   }

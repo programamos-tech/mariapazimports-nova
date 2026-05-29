@@ -358,7 +358,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       </div>
 
       <div
-        className={`mx-auto max-w-7xl space-y-10 px-4 sm:space-y-12 lg:py-14 ${
+        className={`mx-auto max-w-7xl space-y-10 px-5 sm:space-y-12 sm:px-6 md:px-8 lg:py-14 ${
           categoryView
             ? "py-8 sm:py-10"
             : "py-10 sm:py-12 lg:py-14"

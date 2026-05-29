@@ -5,7 +5,7 @@ import { Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
@@ -18,7 +18,10 @@ import {
   storefrontPriceAfterCouponCents,
 } from "@/lib/store-coupons";
 import { pseudoReviewCount } from "@/lib/pseudo-review";
-import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import {
+  productDisplayImageUrl,
+  shouldUseUnoptimizedImage,
+} from "@/lib/storage-image-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
 import { ProductFragrancePicker } from "@/components/store/ProductFragrancePicker";
 
@@ -41,6 +44,7 @@ type Props = {
   hasVat: boolean | null;
   vatPercent: number | null;
   couponDiscountPercent?: number;
+  children?: ReactNode;
 };
 
 function AccordionSection({
@@ -92,6 +96,7 @@ export function ProductDetailView({
   hasVat,
   vatPercent,
   couponDiscountPercent = 0,
+  children: ssrHero,
 }: Props) {
   const router = useRouter();
   const { openCart } = useStoreCartDrawer();
@@ -145,6 +150,18 @@ export function ProductDetailView({
   }, [fragranceIdx, fragranceLabels, fragranceImageUrls, imageUrls]);
 
   const heroImageUrl = activeGalleryUrls[galleryIdx] ?? activeGalleryUrls[0] ?? null;
+  const heroDisplayUrl = productDisplayImageUrl(heroImageUrl, "hero");
+  const useClientHero = fragranceIdx !== 0 || galleryIdx !== 0;
+  const showSsrHero = Boolean(ssrHero) && !useClientHero;
+
+  useEffect(() => {
+    const nextUrl = activeGalleryUrls[galleryIdx + 1];
+    if (!nextUrl) return;
+    const optimized = productDisplayImageUrl(nextUrl, "hero");
+    if (!optimized) return;
+    const img = new window.Image();
+    img.src = optimized;
+  }, [activeGalleryUrls, galleryIdx]);
 
   const onFragranceChange = (idx: number) => {
     setFragranceIdx(idx);
@@ -169,17 +186,18 @@ export function ProductDetailView({
       ? `${descriptionText.slice(0, descPreviewLimit).trim()}…`
       : descriptionText;
 
-  const unopt = shouldUnoptimizeStorageImageUrl(heroImageUrl);
+  const unopt = shouldUseUnoptimizedImage(heroDisplayUrl);
 
   return (
     <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
       {/* Imagen */}
       <div className="space-y-3">
         <div className="relative aspect-square w-full bg-[#f5f5f4]">
-          {heroImageUrl ? (
+          {showSsrHero ? (
+            ssrHero
+          ) : heroDisplayUrl ? (
             <Image
-              key={heroImageUrl}
-              src={heroImageUrl}
+              src={heroDisplayUrl}
               alt={
                 selectedFragranceLabel
                   ? `${name} — ${selectedFragranceLabel}`
@@ -188,7 +206,8 @@ export function ProductDetailView({
               fill
               className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
+              priority={fragranceIdx === 0 && galleryIdx === 0}
+              fetchPriority={fragranceIdx === 0 && galleryIdx === 0 ? "high" : "auto"}
               unoptimized={unopt}
             />
           ) : (
@@ -217,11 +236,20 @@ export function ProductDetailView({
 
         {activeGalleryUrls.length > 1 ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-2 sm:gap-2.5">
-            {activeGalleryUrls.map((url, i) => (
+            {activeGalleryUrls.map((url, i) => {
+              const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
+              return (
               <button
                 key={`${url}-${i}`}
                 type="button"
                 onClick={() => setGalleryIdx(i)}
+                onMouseEnter={() => {
+                  const next = productDisplayImageUrl(url, "hero");
+                  if (next) {
+                    const img = new window.Image();
+                    img.src = next;
+                  }
+                }}
                 className={
                   galleryIdx === i
                     ? "relative aspect-square w-full overflow-hidden bg-[#f5f5f4] ring-2 ring-stone-900 ring-offset-2"
@@ -231,15 +259,17 @@ export function ProductDetailView({
                 aria-current={galleryIdx === i ? "true" : undefined}
               >
                 <Image
-                  src={url}
+                  src={thumbUrl}
                   alt=""
                   fill
+                  loading="lazy"
                   className="object-cover object-center"
-                  sizes="(max-width: 1024px) 20vw, 10vw"
-                  unoptimized={shouldUnoptimizeStorageImageUrl(url)}
+                  sizes="80px"
+                  unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
                 />
               </button>
-            ))}
+              );
+            })}
           </div>
         ) : null}
       </div>

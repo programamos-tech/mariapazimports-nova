@@ -52,11 +52,15 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero: solo imágenes desde Admin → Banners (zona hero), ancho completo, sin textos */}
-      <section className="w-full" aria-label="Banner principal">
+      {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
+      <section
+        className="w-full px-4 sm:px-6 md:px-8 lg:px-0"
+        aria-label="Banner principal"
+      >
         {heroBanners.length > 0 ? (
           <StoreBannerCarousel
             variant="hero"
+            className="overflow-hidden rounded-xl sm:rounded-2xl lg:rounded-none"
             slides={heroBanners.map((b) => ({
               id: b.id,
               image_path: b.image_path,
@@ -80,20 +84,20 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Highlights */}
-      <section className="border-t border-stone-200/60 bg-white py-14 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4">
-          <ul className="grid gap-8 border-y border-stone-200/70 py-8 sm:py-10 md:grid-cols-3 md:gap-6">
+      {/* Highlights + productos destacados */}
+      <section className="border-t border-stone-200/60 bg-white py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 md:px-8">
+          <ul className="grid gap-5 border-y border-stone-200/70 py-5 sm:grid-cols-3 sm:gap-4 sm:py-6">
             {STORE_HIGHLIGHTS.map(({ title, Icon }, i) => (
               <li key={title}>
                 <RevealOnScroll
                   delayMs={Math.min(i * 100, 240)}
                   className="flex flex-col items-center text-center"
                 >
-                  <span className="inline-flex size-8 items-center justify-center text-zinc-900">
-                    <Icon className="size-5" strokeWidth={2.2} />
+                  <span className="inline-flex size-7 items-center justify-center text-zinc-900">
+                    <Icon className="size-4" strokeWidth={2.2} />
                   </span>
-                  <p className="mt-3 max-w-[19rem] text-sm leading-tight text-stone-800 sm:text-[15px]">
+                  <p className="mt-2 max-w-[19rem] text-xs leading-snug text-stone-800 sm:text-[13px]">
                     {title}
                   </p>
                 </RevealOnScroll>
@@ -101,36 +105,37 @@ export default async function HomePage() {
             ))}
           </ul>
 
-          <div className="mt-16 pt-14 sm:mt-20 sm:pt-16">
+          <div className="mt-6 sm:mt-8">
             <RevealOnScroll className="mx-auto max-w-3xl text-center">
-              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-stone-400 sm:text-xs">
+              <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
                 Destacado en {storeBrand.split(/\s+/)[0]}
               </p>
-              <h2 className="mt-2 text-2xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-3xl">
+              <h2 className="mt-1 text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
                 Productos destacados
               </h2>
-              <p className="mx-auto mt-3 max-w-lg text-sm font-normal leading-relaxed text-stone-500">
+              <p className="mx-auto mt-1.5 max-w-lg text-xs leading-snug text-stone-500 sm:text-[13px]">
                 Versatilidad y estilo; abrí cada producto para ver detalle y
                 comprar.
               </p>
             </RevealOnScroll>
 
             {featuredProducts.length === 0 ? (
-              <p className="mt-10 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-10 text-center text-sm text-stone-600">
+              <p className="mt-6 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-8 text-center text-sm text-stone-600">
                 Aún no hay productos publicados. Cárgalos desde el admin para que
                 aparezcan aquí.
               </p>
             ) : (
               <>
-                <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-10">
+                <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-5 lg:gap-x-6">
                   {featuredProducts.map((p, index) => (
                     <li key={p.id}>
                       <RevealOnScroll
                         className="h-full"
-                        delayMs={Math.min(index * 70, 420)}
+                        delayMs={Math.min(index * 40, 200)}
                       >
                         <ProductListingCard
                           presentation="editorial"
+                          compact
                           accentImageBg={index % 4 === 3}
                           couponDiscountPercent={
                             couponPctByProductId[p.id] ?? 0
@@ -151,8 +156,8 @@ export default async function HomePage() {
                   ))}
                 </ul>
                 <RevealOnScroll
-                  delayMs={160}
-                  className="mt-12 flex justify-center sm:mt-14"
+                  delayMs={120}
+                  className="mt-6 flex justify-center sm:mt-7"
                 >
                   <Link
                     href="/products"
