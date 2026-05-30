@@ -21,6 +21,10 @@ import {
 } from "@/lib/product-variants";
 import { SIZE_UNITS, type SizeUnit } from "@/lib/product-size-options";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import {
+  STOCK_LOCAL_LABEL,
+  STOCK_WAREHOUSE_LABEL,
+} from "@/lib/stock-locations";
 
 export type VariantRowInitial = {
   id?: string | null;
@@ -413,7 +417,7 @@ export function ProductVariantRows({
                   </div>
                   <div>
                     <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                      Stock bodega
+                      {STOCK_WAREHOUSE_LABEL}
                     </span>
                     <ProductQuantityInput
                       name="variant_stock_warehouse"
@@ -423,7 +427,7 @@ export function ProductVariantRows({
                   </div>
                   <div>
                     <span className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                      Stock local
+                      {STOCK_LOCAL_LABEL}
                     </span>
                     <ProductQuantityInput
                       name="variant_stock_local"

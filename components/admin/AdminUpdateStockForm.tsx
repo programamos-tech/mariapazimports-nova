@@ -9,6 +9,11 @@ import {
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
 import { formatQuantityInputGrouping } from "@/lib/money";
+import {
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_UPDATE_LOCATION_HELP,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
 
 type MovementMode = "replace" | "add";
 type StockLoc = "local" | "warehouse";
@@ -162,18 +167,18 @@ export function AdminUpdateStockForm({
                 className={`${toggleBase} ${location === "local" ? toggleActive : toggleInactive}`}
                 onClick={() => setLocation("local")}
               >
-                Local
+                {STOCK_LOCAL_SHORT_LABEL}
               </button>
               <button
                 type="button"
                 className={`${toggleBase} ${location === "warehouse" ? toggleActive : toggleInactive}`}
                 onClick={() => setLocation("warehouse")}
               >
-                Bodega
+                {STOCK_WAREHOUSE_SHORT_LABEL}
               </button>
             </div>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Indicá si la entrada o el ajuste aplica al stock en local o en bodega.
+              {STOCK_UPDATE_LOCATION_HELP}
             </p>
           </div>
 
@@ -230,7 +235,7 @@ export function AdminUpdateStockForm({
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500 dark:text-zinc-400">Ubicación</dt>
               <dd className="text-right text-zinc-800 dark:text-zinc-200">
-                {location === "local" ? "Local" : "Bodega"}
+                {location === "local" ? STOCK_LOCAL_SHORT_LABEL : STOCK_WAREHOUSE_SHORT_LABEL}
               </dd>
             </div>
             <div className="flex justify-between gap-4 border-t border-zinc-200/70 pt-4 dark:border-zinc-800">

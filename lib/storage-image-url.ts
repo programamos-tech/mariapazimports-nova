@@ -33,6 +33,12 @@ export function shouldUseStorageImageTransform(src: string | null | undefined): 
     const u = new URL(src);
     const host = u.hostname;
     if (host.endsWith(".supabase.co")) return true;
+    const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : null;
+    if (supabaseHost && host === supabaseHost && u.pathname.includes("/storage/v1/")) {
+      return true;
+    }
     if (
       (host === "127.0.0.1" || host === "localhost") &&
       u.pathname.includes("/storage/v1/")

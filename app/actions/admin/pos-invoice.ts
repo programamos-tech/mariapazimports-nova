@@ -12,6 +12,11 @@ import {
   computeLineDiscountCents,
   type LineDiscountMode,
 } from "@/lib/pos-line-discount";
+import {
+  quoteShippingForMunicipality,
+  SHIPPING_METHOD_DELIVERY,
+  SHIPPING_METHOD_PICKUP,
+} from "@/lib/shipping-rates";
 import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -31,6 +36,10 @@ export type PosInvoicePayload = {
   paymentMethod: "cash" | "transfer" | "mixed";
   shippingAddress: string | null;
   shippingPhone: string | null;
+  shippingMethod?: "pickup" | "delivery";
+  shippingDepartmentCode?: string | null;
+  shippingMunicipalityCode?: string | null;
+  shippingCents?: number;
 };
 
 type ResolvedPosLine = {
@@ -204,6 +213,42 @@ export async function createPosInvoiceAction(formData: FormData) {
   }
   const vatCents = Math.max(0, totalCents + discountCents - subtotalCents);
 
+  const shippingMethod =
+    payload.shippingMethod === SHIPPING_METHOD_PICKUP
+      ? SHIPPING_METHOD_PICKUP
+      : SHIPPING_METHOD_DELIVERY;
+  const isPickup = shippingMethod === SHIPPING_METHOD_PICKUP;
+
+  let shippingCents = 0;
+  let shippingDepartmentCode: string | null = null;
+  let shippingMunicipalityCode: string | null = null;
+  let shippingCity: string | null = null;
+
+  if (!isPickup) {
+    shippingMunicipalityCode =
+      payload.shippingMunicipalityCode?.trim() || null;
+    shippingDepartmentCode = payload.shippingDepartmentCode?.trim() || null;
+    if (!shippingMunicipalityCode || !shippingDepartmentCode) {
+      redirectError("shipping");
+    }
+    const quote = await quoteShippingForMunicipality(
+      supabase,
+      shippingMunicipalityCode,
+    );
+    if (!quote || quote.departmentCode !== shippingDepartmentCode) {
+      redirectError("shipping");
+    }
+    const requestedShipping = Math.max(
+      0,
+      Math.floor(Number(payload.shippingCents ?? quote.costCents)),
+    );
+    shippingCents = requestedShipping;
+    shippingCity = quote.label;
+  }
+
+  const productsTotalCents = totalCents;
+  totalCents = productsTotalCents + shippingCents;
+
   if (!Number.isFinite(totalCents) || totalCents < 0) redirectError("validation");
 
   const emailRaw =
@@ -233,6 +278,12 @@ export async function createPosInvoiceAction(formData: FormData) {
       customer_email: customerEmail,
       customer_id: customerId,
       total_cents: totalCents,
+      subtotal_cents: productsTotalCents,
+      shipping_cents: shippingCents,
+      shipping_method: shippingMethod,
+      shipping_department_code: shippingDepartmentCode,
+      shipping_municipality_code: shippingMunicipalityCode,
+      shipping_city: shippingCity,
       currency: "COP",
       wompi_reference: wompiRef,
       shipping_address: shippingAddress,

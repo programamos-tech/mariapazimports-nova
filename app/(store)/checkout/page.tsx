@@ -26,6 +26,11 @@ import {
   type CheckoutSavedAddress,
   type CheckoutShippingInitial,
 } from "@/components/store/CheckoutShippingFields";
+import {
+  CheckoutShippingProvider,
+  CheckoutShippingLocationFields,
+  CheckoutSidebarTotals,
+} from "@/components/store/CheckoutShippingLocationFields";
 import { CheckoutLineControls } from "@/components/store/CheckoutLineControls";
 
 const labelClass =
@@ -69,7 +74,9 @@ function CheckoutErrorBanner({
       {error === "missing_name" && "Ingresa nombre y apellido."}
       {error === "invalid_email" && "Email inválido."}
       {error === "missing_shipping" &&
-        "Completa dirección, ciudad y teléfono de contacto."}
+        "Completa dirección, departamento, municipio y teléfono de contacto."}
+      {error === "shipping_unavailable" &&
+        "El municipio seleccionado no tiene envío disponible. Elige otro destino."}
       {error === "products" &&
         "No se pudieron cargar los productos del pedido. Si persiste, revisa la conexión o prueba más tarde."}
       {error === "unpublished" &&
@@ -92,6 +99,7 @@ function CheckoutErrorBanner({
         "missing_name",
         "invalid_email",
         "missing_shipping",
+        "shipping_unavailable",
         "products",
         "unpublished",
         "coupon_invalid",
@@ -400,6 +408,7 @@ export default async function CheckoutPage({
           unpublishedProduct={unpublishedProduct}
         />
 
+        <CheckoutShippingProvider>
         <form action={startCheckout}>
           <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_min(100%,340px)] lg:items-start xl:gap-16">
             <div className="min-w-0 space-y-14">
@@ -549,16 +558,12 @@ export default async function CheckoutPage({
                         className={inputClass}
                       />
                     </label>
-                    <label className="block sm:col-span-1">
-                      <span className={labelClass}>Ciudad</span>
-                      <input
-                        name="city"
-                        required
-                        autoComplete="address-level2"
-                        placeholder="Escribe aquí…"
-                        className={inputClass}
+                    <div className="sm:col-span-2">
+                      <CheckoutShippingLocationFields
+                        labelClass={labelClass}
+                        selectClass={selectClass}
                       />
-                    </label>
+                    </div>
                     <label className="block sm:col-span-1">
                       <span className={labelClass}>Código postal</span>
                       <input
@@ -666,33 +671,7 @@ export default async function CheckoutPage({
                 </p>
               </details>
 
-              <dl className="space-y-3 text-[13px] text-stone-700">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-stone-600">
-                    Subtotal ({rows.length}{" "}
-                    {rows.length === 1 ? "ítem" : "ítems"})
-                  </dt>
-                  <dd className="shrink-0 font-medium tabular-nums text-stone-900">
-                    {formatCop(total)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-b border-stone-300/70 pb-3">
-                  <dt className="text-stone-600">Envío</dt>
-                  <dd className="shrink-0 text-xs font-medium uppercase tracking-wide text-stone-500">
-                    Por confirmar
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-stone-600">Impuestos</dt>
-                  <dd className="shrink-0 text-xs font-medium uppercase tracking-wide text-stone-500">
-                    Por confirmar
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-stone-400 pt-4 text-[15px] font-semibold text-stone-900">
-                  <dt>Total</dt>
-                  <dd className="tabular-nums">{formatCop(total)}</dd>
-                </div>
-              </dl>
+              <CheckoutSidebarTotals subtotalCents={total} itemCount={rows.length} />
 
               <button type="submit" className={primaryBtnClass}>
                 Finalizar compra
@@ -703,6 +682,7 @@ export default async function CheckoutPage({
             </aside>
           </div>
         </form>
+        </CheckoutShippingProvider>
       </div>
     </div>
   );

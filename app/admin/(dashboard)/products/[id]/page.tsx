@@ -15,6 +15,15 @@ import {
 import { shouldUnoptimizeStorageImageUrl, storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { fetchVariantStockRowsForAdmin } from "@/lib/product-stock";
 import { getVariantPickerTitle, parseProductVariantAxis } from "@/lib/product-variants";
+import {
+  STOCK_LOCAL_LABEL,
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_LOCAL_SUBTITLE,
+  STOCK_TOTAL_SUMMARY,
+  STOCK_WAREHOUSE_LABEL,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+  STOCK_WAREHOUSE_SUBTITLE,
+} from "@/lib/stock-locations";
 
 export const dynamic = "force-dynamic";
 
@@ -208,21 +217,21 @@ export default async function AdminProductDetailPage({ params }: Props) {
               <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                 {fmtUnits(stockTotal)}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Local + bodega</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{STOCK_TOTAL_SUMMARY}</p>
             </div>
             <div>
-              <p className={labelClass}>Stock local</p>
+              <p className={labelClass}>{STOCK_LOCAL_LABEL}</p>
               <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                 {fmtUnits(stockL)}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Punto de venta / mostrador</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{STOCK_LOCAL_SUBTITLE}</p>
             </div>
             <div>
-              <p className={labelClass}>Stock bodega</p>
+              <p className={labelClass}>{STOCK_WAREHOUSE_LABEL}</p>
               <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                 {fmtUnits(stockW)}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Almacén de la sucursal</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{STOCK_WAREHOUSE_SUBTITLE}</p>
             </div>
             <div>
               <p className={labelClass}>Stock reservado</p>
@@ -259,10 +268,10 @@ export default async function AdminProductDetailPage({ params }: Props) {
                     Presentación
                   </th>
                   <th className="pb-3 pr-4 text-right font-medium text-zinc-500 dark:text-zinc-400">
-                    Local
+                    {STOCK_LOCAL_SHORT_LABEL}
                   </th>
                   <th className="pb-3 pr-4 text-right font-medium text-zinc-500 dark:text-zinc-400">
-                    Bodega
+                    {STOCK_WAREHOUSE_SHORT_LABEL}
                   </th>
                   <th className="pb-3 text-right font-medium text-zinc-500 dark:text-zinc-400">
                     Total

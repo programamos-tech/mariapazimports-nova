@@ -21,7 +21,12 @@ import {
   computeLineDiscountCents,
   type LineDiscountMode,
 } from "@/lib/pos-line-discount";
+import { PosShippingMunicipalityPicker } from "@/components/admin/PosShippingMunicipalityPicker";
 import { unitPriceGrossCents } from "@/lib/product-vat-price";
+import {
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
 
 const cardSectionClass =
   "rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -277,6 +282,9 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
   const [shipOptions, setShipOptions] = useState<ShipOption[]>([]);
   const [shipChoice, setShipChoice] = useState<string | null>(null);
   const [shipLoading, setShipLoading] = useState(false);
+  const [shipDepartmentCode, setShipDepartmentCode] = useState("");
+  const [shipMunicipalityCode, setShipMunicipalityCode] = useState("");
+  const [shippingCents, setShippingCents] = useState(0);
 
   const [lines, setLines] = useState<CartLine[]>([]);
   const [addingProduct, setAddingProduct] = useState(false);
@@ -433,11 +441,14 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     return s;
   }, [lines]);
 
-  const totalCents = useMemo(() => {
+  const productsTotalCents = useMemo(() => {
     let s = 0;
     for (const line of lines) s += lineTotalCents(line);
     return s;
   }, [lines]);
+
+  const isPickup = !shipChoice || shipChoice === "pickup";
+  const totalCents = productsTotalCents + (isPickup ? 0 : shippingCents);
 
   const extraGainCents = useMemo(() => {
     let s = 0;
@@ -468,6 +479,7 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
     customer !== null &&
     lines.length > 0 &&
     totalCents > 0 &&
+    (isPickup || (shipDepartmentCode && shipMunicipalityCode)) &&
     shipChoice !== null &&
     shipChoice !== "" &&
     !shipLoading &&
@@ -627,8 +639,22 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
       paymentMethod: payment,
       shippingAddress: address,
       shippingPhone: phone,
+      shippingMethod: isPickup ? "pickup" : "delivery",
+      shippingDepartmentCode: isPickup ? null : shipDepartmentCode || null,
+      shippingMunicipalityCode: isPickup ? null : shipMunicipalityCode || null,
+      shippingCents: isPickup ? 0 : shippingCents,
     });
-  }, [customer, lines, payment, shipChoice, shipOptions]);
+  }, [
+    customer,
+    lines,
+    payment,
+    shipChoice,
+    shipOptions,
+    isPickup,
+    shipDepartmentCode,
+    shipMunicipalityCode,
+    shippingCents,
+  ]);
 
   const banner = errorMessage(initialError);
 
@@ -736,8 +762,8 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                             </p>
                             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                               Ref: {line.product.reference?.trim() || "—"}
-                              {" · "}Bodega: {line.stockWarehouse}
-                              {" · "}Local: {line.stockLocal}
+                              {" · "}{STOCK_WAREHOUSE_SHORT_LABEL}: {line.stockWarehouse}
+                              {" · "}{STOCK_LOCAL_SHORT_LABEL}: {line.stockLocal}
                             </p>
                             {line.variantProfile?.usesVariants &&
                             line.variantProfile.variants.length > 1 ? (
@@ -1013,6 +1039,17 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       </option>
                     ))}
                   </select>
+                  <PosShippingMunicipalityPicker
+                    enabled={Boolean(shipChoice && shipChoice !== "pickup")}
+                    labelClass={labelClass}
+                    inputClass={inputClass}
+                    shippingCents={shippingCents}
+                    onShippingCentsChange={setShippingCents}
+                    departmentCode={shipDepartmentCode}
+                    municipalityCode={shipMunicipalityCode}
+                    onDepartmentCodeChange={setShipDepartmentCode}
+                    onMunicipalityCodeChange={setShipMunicipalityCode}
+                  />
                 </div>
               )}
             </section>
@@ -1146,6 +1183,12 @@ export function NewInvoiceForm({ initialError }: { initialError?: string }) {
                       </dd>
                     </div>
                   ) : null}
+                  <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
+                    <dt className="text-zinc-500 dark:text-zinc-400">Envío</dt>
+                    <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
+                      {formatCop(isPickup ? 0 : shippingCents)}
+                    </dd>
+                  </div>
                   <div className="flex justify-between gap-2 border-t border-zinc-200/80 pt-2 dark:border-zinc-700/90">
                     <dt className="text-zinc-600 dark:text-zinc-400">Total</dt>
                     <dd className="tabular-nums font-medium text-zinc-900 dark:text-zinc-100">

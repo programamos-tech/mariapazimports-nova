@@ -21,6 +21,11 @@ import {
   shouldSkipWompiPayment,
 } from "@/lib/wompi";
 import { findActiveStoreCouponForCheckout } from "@/lib/store-coupons";
+import {
+  quoteShippingForMunicipality,
+  SHIPPING_METHOD_DELIVERY,
+} from "@/lib/shipping-rates";
+import { normalizeMunicipalityCode, normalizeDepartmentCode } from "@/lib/colombia-geo";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -46,12 +51,25 @@ export async function startCheckout(formData: FormData) {
   const shippingCity = String(formData.get("city") ?? "").trim();
   const shippingPostalCode = String(formData.get("zipCode") ?? "").trim();
   const shippingPhone = String(formData.get("mobile") ?? "").trim();
+  const shippingMunicipalityCode =
+    normalizeMunicipalityCode(
+      String(formData.get("shippingMunicipalityCode") ?? "").trim(),
+    ) ?? "";
+  const shippingDepartmentCode =
+    normalizeDepartmentCode(
+      String(formData.get("shippingDepartmentCode") ?? "").trim(),
+    ) ?? "";
   const couponCode = String(formData.get("couponCode") ?? "").trim();
 
   if (!resolvedName) {
     redirect("/checkout?error=missing_name");
   }
-  if (!shippingAddress || !shippingCity || !shippingPhone) {
+  if (
+    !shippingAddress ||
+    !shippingPhone ||
+    !shippingMunicipalityCode ||
+    !shippingDepartmentCode
+  ) {
     redirect("/checkout?error=missing_shipping");
   }
 
@@ -228,6 +246,18 @@ export async function startCheckout(formData: FormData) {
   }
   const totalWithDiscount = Math.max(0, total - discount);
 
+  const shippingQuote = await quoteShippingForMunicipality(
+    supabase,
+    shippingMunicipalityCode,
+  );
+  if (!shippingQuote || shippingQuote.departmentCode !== shippingDepartmentCode) {
+    redirect("/checkout?error=shipping_unavailable");
+  }
+  const shippingCents = shippingQuote.costCents;
+  const orderSubtotalCents = totalWithDiscount;
+  const orderTotalCents = orderSubtotalCents + shippingCents;
+  const resolvedShippingCity = shippingCity || shippingQuote.label;
+
   const first = productById.get(normalized[0]!.productId);
   const currency = first?.currency ?? "COP";
 
@@ -249,7 +279,7 @@ export async function startCheckout(formData: FormData) {
         name: resolvedName,
         phone: shippingPhone,
         shipping_address: shippingAddress,
-        shipping_city: shippingCity,
+        shipping_city: resolvedShippingCity,
         shipping_postal_code: shippingPostalCode || null,
       })
       .eq("id", customerId);
@@ -261,7 +291,7 @@ export async function startCheckout(formData: FormData) {
         email: emailLc,
         phone: shippingPhone,
         shipping_address: shippingAddress,
-        shipping_city: shippingCity,
+        shipping_city: resolvedShippingCity,
         shipping_postal_code: shippingPostalCode || null,
         source: "storefront",
       })
@@ -280,11 +310,16 @@ export async function startCheckout(formData: FormData) {
       customer_id: customerId,
       customer_email: customerEmailForOrder,
       customer_name: resolvedName,
-      total_cents: totalWithDiscount,
+      total_cents: orderTotalCents,
+      subtotal_cents: orderSubtotalCents,
+      shipping_cents: shippingCents,
+      shipping_department_code: shippingDepartmentCode,
+      shipping_municipality_code: shippingMunicipalityCode,
+      shipping_method: SHIPPING_METHOD_DELIVERY,
       currency,
       status: "pending",
       shipping_address: shippingAddress,
-      shipping_city: shippingCity,
+      shipping_city: resolvedShippingCity,
       shipping_postal_code: shippingPostalCode || null,
       shipping_phone: shippingPhone,
     })
@@ -343,7 +378,7 @@ export async function startCheckout(formData: FormData) {
   const link = await createPaymentLink({
     name: `${storeBrand} · Pedido`,
     description: `Pedido ${orderId}`,
-    amountInCents: totalWithDiscount,
+    amountInCents: orderTotalCents,
     currency,
     redirectUrl: returnUrl,
     sku: orderId,

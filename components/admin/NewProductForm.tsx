@@ -18,6 +18,15 @@ import {
   ProductVariantRows,
   type VariantFormTotals,
 } from "@/components/admin/ProductVariantRows";
+import {
+  STOCK_LOCAL_LABEL,
+  STOCK_TOTAL_SUMMARY,
+  STOCK_WAREHOUSE_LABEL,
+  STOCK_CONTROL_HELP_PRIMARY,
+  STOCK_CONTROL_HELP_SECONDARY,
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
 
 export type ProductCategoryOption = { id: string; name: string };
 
@@ -244,7 +253,7 @@ export function NewProductForm({
             >
               <div>
                 <label htmlFor="np-sl" className={labelClass}>
-                  Stock en local (mostrador)
+                  {STOCK_LOCAL_LABEL}
                 </label>
                 <ProductQuantityInput
                   id="np-sl"
@@ -256,7 +265,7 @@ export function NewProductForm({
               </div>
               <div>
                 <label htmlFor="np-sw" className={labelClass}>
-                  Stock en bodega
+                  {STOCK_WAREHOUSE_LABEL}
                 </label>
                 <ProductQuantityInput
                   id="np-sw"
@@ -272,7 +281,7 @@ export function NewProductForm({
               <span className="font-medium tabular-nums">
                 {fmtStock(totalStock)} unidades
               </span>{" "}
-              (local + bodega)
+              ({STOCK_TOTAL_SUMMARY})
             </div>
             <div className="mt-4 space-y-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
               {stockManagedByVariants ? (
@@ -282,14 +291,8 @@ export function NewProductForm({
                 </p>
               ) : (
                 <>
-                  <p>
-                    El stock en local refleja las unidades disponibles en el mostrador; la
-                    bodega es tu inventario central.
-                  </p>
-                  <p>
-                    Puedes ajustar cantidades después desde la lista de productos. La
-                    asignación a estantes se habilita cuando hay stock en bodega.
-                  </p>
+                  <p>{STOCK_CONTROL_HELP_PRIMARY}</p>
+                  <p>{STOCK_CONTROL_HELP_SECONDARY}</p>
                 </>
               )}
             </div>
@@ -372,13 +375,13 @@ export function NewProductForm({
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-zinc-500 dark:text-zinc-400">Stock local</dt>
+                  <dt className="text-zinc-500 dark:text-zinc-400">{STOCK_LOCAL_SHORT_LABEL}</dt>
                   <dd className="tabular-nums text-zinc-900 dark:text-zinc-100">
                     {fmtStock(effectiveStockLocal)} unidades
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-zinc-500 dark:text-zinc-400">Stock bodega</dt>
+                  <dt className="text-zinc-500 dark:text-zinc-400">{STOCK_WAREHOUSE_SHORT_LABEL}</dt>
                   <dd className="tabular-nums text-zinc-900 dark:text-zinc-100">
                     {fmtStock(effectiveStockWarehouse)} unidades
                   </dd>

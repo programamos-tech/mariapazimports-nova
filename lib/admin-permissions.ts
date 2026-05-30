@@ -34,6 +34,8 @@ export const PERMISSION_KEYS = [
   "sucursales_gestionar",
   "actividades_ver",
   "marketing_ver",
+  "envios_ver",
+  "envios_gestionar",
   "ajustes_tienda_ver",
 ] as const;
 
@@ -114,7 +116,11 @@ export const PERMISSION_MODULES: PermissionModule[] = [
   {
     id: "marketing",
     label: "Marketing",
-    items: [{ key: "marketing_ver", label: "Banners y cupones" }],
+    items: [
+      { key: "marketing_ver", label: "Banners y cupones" },
+      { key: "envios_ver", label: "Ver tarifas de envío" },
+      { key: "envios_gestionar", label: "Gestionar tarifas de envío" },
+    ],
   },
   {
     id: "tienda",
@@ -152,6 +158,8 @@ export function defaultPermissionsCashier(): PermissionMap {
   m.inventario_ver = true;
   m.actividades_ver = true;
   m.marketing_ver = false;
+  m.envios_ver = false;
+  m.envios_gestionar = false;
   m.ajustes_tienda_ver = false;
   return m;
 }

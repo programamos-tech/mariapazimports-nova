@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeShellClass } from "@/lib/store-layout";
-import { storeProductCardRevealOptions } from "@/lib/store-product-card-image";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { storeBrand } from "@/lib/brand";
@@ -271,27 +271,21 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                   </RevealOnScroll>
 
                   <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
-                    {section.products.map((p, index) => {
-                      const reveal = storeProductCardRevealOptions(index);
-                      return (
-                      <li key={p.id}>
-                        <RevealOnScroll
-                          className="h-full"
-                          initialVisible={reveal.revealInitialVisible}
-                          delayMs={reveal.revealDelayMs}
-                        >
-                          <ProductListingCard
-                            imagePriority={reveal.imagePriority}
-                            cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                            couponDiscountPercent={
-                              couponPctByProductId[p.id] ?? 0
-                            }
-                            product={toProductListingCardProps(p)}
-                          />
-                        </RevealOnScroll>
+                    {section.products.map((p, index) => (
+                      <li key={p.id} className="h-full">
+                        <ProductListingCard
+                          imagePriority={
+                            sIndex === 0 &&
+                            storeProductCardImagePriority(index)
+                          }
+                          cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                          couponDiscountPercent={
+                            couponPctByProductId[p.id] ?? 0
+                          }
+                          product={toProductListingCardProps(p)}
+                        />
                       </li>
-                      );
-                    })}
+                    ))}
                   </ul>
                 </section>
               ))}

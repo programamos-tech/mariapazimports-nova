@@ -160,6 +160,18 @@ const navSections: {
         ),
       },
       {
+        href: "/admin/envios",
+        label: "Envíos",
+        icon: (
+          <Icon>
+            <path d="M3 7h11v10H3z" />
+            <path d="M14 10h4l3 3v4h-7V10z" />
+            <circle cx="7.5" cy="18" r="1.5" />
+            <circle cx="17.5" cy="18" r="1.5" />
+          </Icon>
+        ),
+      },
+      {
         href: "/admin/settings",
         label: "Ajustes",
         icon: (
@@ -197,6 +209,7 @@ const VENTAS_HREF = "/admin/ventas";
 const ORDERS_HREF = "/admin/orders";
 const CUSTOMERS_HREF = "/admin/customers";
 const COUPONS_HREF = "/admin/coupons";
+const ENVIOS_HREF = "/admin/envios";
 const USUARIOS_HREF = "/admin/usuarios";
 const PROVEEDORES_HREF = "/admin/proveedores";
 const CUENTA_HREF = "/admin/cuenta";
@@ -227,6 +240,9 @@ function navItemActive(
   }
   if (href === COUPONS_HREF) {
     return pathname === COUPONS_HREF || pathname.startsWith(`${COUPONS_HREF}/`);
+  }
+  if (href === ENVIOS_HREF) {
+    return pathname === ENVIOS_HREF || pathname.startsWith(`${ENVIOS_HREF}/`);
   }
   if (href === PROVEEDORES_HREF) {
     return pathname === PROVEEDORES_HREF || pathname.startsWith(`${PROVEEDORES_HREF}/`);
@@ -273,7 +289,7 @@ function AdminSidebarInner({
 
   const linkClass = (href: string, active: boolean) =>
     [
-      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200",
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition duration-200",
       active
         ? "bg-neutral-950 text-white shadow-[0_8px_22px_-12px_rgba(0,0,0,0.35)] dark:bg-zinc-100 dark:text-zinc-950 dark:shadow-[0_8px_22px_-12px_rgba(255,255,255,0.12)]"
         : "text-stone-600 hover:bg-stone-100 hover:text-stone-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
@@ -292,22 +308,22 @@ function AdminSidebarInner({
     <aside
       className={`flex shrink-0 flex-col border-stone-200/90 bg-white shadow-[2px_0_32px_-16px_rgba(28,25,23,0.12)] transition-transform duration-300 ease-out motion-reduce:transition-none print:hidden dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[2px_0_32px_-16px_rgba(0,0,0,0.35)] fixed inset-y-0 left-0 z-[50] w-[min(88vw,288px)] max-w-[288px] border-r lg:w-64 lg:max-w-none lg:border-b-0 lg:shadow-[1px_0_0_rgba(231,229,228,0.9)] dark:lg:shadow-[1px_0_0_rgba(63,63,70,0.65)] ${drawerTranslate} ${drawerHiddenMobile}`}
     >
-      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-6 text-center dark:border-zinc-800">
+      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-5 text-center dark:border-zinc-800">
         <SidebarLogo />
-        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500 dark:text-zinc-500">
+        <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500 dark:text-zinc-500">
           Backoffice
         </p>
       </div>
       <nav
         id="admin-sidebar-nav"
-        className="flex-1 space-y-7 overflow-y-auto overscroll-contain px-3 py-5"
+        className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-3"
       >
         {navSectionsFiltered.map((section) => (
           <div key={section.title}>
             <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-400 dark:text-zinc-500">
               {section.title}
             </p>
-            <ul className="mt-2.5 space-y-0.5">
+            <ul className="mt-2 space-y-0.5">
               {section.items.map((item) => {
                 const active = navItemActive(pathname, item.href);
                 return (
@@ -327,9 +343,9 @@ function AdminSidebarInner({
           </div>
         ))}
       </nav>
-      <div className="border-t border-stone-200/90 px-3 pb-2.5 pt-2.5 dark:border-zinc-800">
-        <div className="mb-2.5 flex flex-col items-center gap-1 px-1 text-center">
-          <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-stone-400/85 dark:text-zinc-500/90">
+      <div className="shrink-0 border-t border-stone-200/90 px-3 pb-2 pt-1.5 dark:border-zinc-800">
+        <div className="mb-1 flex flex-col items-center gap-0 px-1 text-center">
+          <span className="text-[7px] font-medium uppercase tracking-[0.18em] text-stone-400/85 dark:text-zinc-500/90">
             Experiencia por
           </span>
           <Image
@@ -337,13 +353,13 @@ function AdminSidebarInner({
             alt="Berea — diseño y desarrollo"
             width={320}
             height={82}
-            className="h-10 w-auto max-w-[min(100%,8.75rem)] object-contain object-center opacity-[0.72] sm:h-11 sm:max-w-[10rem]"
+            className="h-7 w-auto max-w-[min(100%,7.5rem)] object-contain object-center opacity-[0.72]"
           />
         </div>
         <form action={signOutAdmin}>
           <button
             type="submit"
-            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
+            className="w-full rounded-lg px-3 py-1.5 text-left text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
           >
             Salir
           </button>
@@ -356,17 +372,17 @@ function AdminSidebarInner({
 function AdminSidebarFallback() {
   return (
     <aside className="fixed inset-y-0 left-0 z-[45] hidden w-64 flex-col border-r border-stone-200/90 bg-white print:hidden dark:border-zinc-800 dark:bg-zinc-900 lg:flex lg:flex-col">
-      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-6 text-center dark:border-zinc-800">
+      <div className="flex flex-col items-center border-b border-stone-200/90 px-4 py-5 text-center dark:border-zinc-800">
         <SidebarLogo />
-        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500 dark:text-zinc-500">
+        <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-stone-500 dark:text-zinc-500">
           Backoffice
         </p>
       </div>
-      <div className="flex-1 px-3 py-5" aria-busy aria-label="Cargando menú" />
-      <div className="border-t border-stone-200/90 px-3 pb-2.5 pt-2.5 dark:border-zinc-800">
-        <div className="mb-2.5 flex flex-col items-center gap-1">
-          <div className="h-2.5 w-16 rounded bg-stone-200/60 dark:bg-zinc-700/80" aria-hidden />
-          <div className="h-10 w-[8.75rem] max-w-full rounded bg-stone-200/50 dark:bg-zinc-700/60 sm:h-11" aria-hidden />
+      <div className="flex-1 px-3 py-3" aria-busy aria-label="Cargando menú" />
+      <div className="shrink-0 border-t border-stone-200/90 px-3 pb-2 pt-1.5 dark:border-zinc-800">
+        <div className="mb-1 flex flex-col items-center gap-0">
+          <div className="h-2 w-14 rounded bg-stone-200/60 dark:bg-zinc-700/80" aria-hidden />
+          <div className="h-7 w-[7.5rem] max-w-full rounded bg-stone-200/50 dark:bg-zinc-700/60" aria-hidden />
         </div>
       </div>
     </aside>

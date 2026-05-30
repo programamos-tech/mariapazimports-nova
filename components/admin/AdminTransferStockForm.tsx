@@ -10,6 +10,17 @@ import {
 } from "@/components/admin/product-form-primitives";
 import type { AdminVariantStockOption } from "@/components/admin/AdminUpdateStockForm";
 import { formatQuantityInputGrouping } from "@/lib/money";
+import {
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_TRANSFER_PREVIEW_HELP,
+  STOCK_TRANSFER_TO_LOCAL,
+  STOCK_TRANSFER_TO_LOCAL_SUMMARY,
+  STOCK_TRANSFER_TO_WAREHOUSE,
+  STOCK_TRANSFER_TO_WAREHOUSE_SUMMARY,
+  STOCK_TRANSFER_TOTAL_NOTE,
+  STOCK_WAREHOUSE_SHELF_NOTE,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
 
 export type TransferDirection = "local_to_warehouse" | "warehouse_to_local";
 
@@ -65,8 +76,8 @@ export function AdminTransferStockForm({
   }, [quantity, available, fromLocal, effectiveLocal, effectiveWarehouse]);
 
   const directionSummary = fromLocal
-    ? "Local → Bodega · movés desde el mostrador hacia bodega"
-    : "Bodega → Local · movés desde bodega al mostrador";
+    ? STOCK_TRANSFER_TO_WAREHOUSE_SUMMARY
+    : STOCK_TRANSFER_TO_LOCAL_SUMMARY;
 
   const cardBase =
     "rounded-2xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -125,13 +136,13 @@ export function AdminTransferStockForm({
             <span className={labelClass}>Stock actual</span>
             <div className="mt-2 grid grid-cols-2 gap-3 rounded-xl border border-zinc-200/90 bg-white/60 p-4 dark:border-zinc-700 dark:bg-zinc-950/60">
               <div>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Local</p>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{STOCK_LOCAL_SHORT_LABEL}</p>
                 <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                   {fmtQty(effectiveLocal)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Bodega</p>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{STOCK_WAREHOUSE_SHORT_LABEL}</p>
                 <p className="mt-1 text-lg font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                   {fmtQty(effectiveWarehouse)}
                 </p>
@@ -147,14 +158,14 @@ export function AdminTransferStockForm({
                 className={fromLocal ? toggleActive : toggleIdle}
                 onClick={() => setDirection("local_to_warehouse")}
               >
-                Local → Bodega
+                {STOCK_TRANSFER_TO_WAREHOUSE}
               </button>
               <button
                 type="button"
                 className={!fromLocal ? toggleActive : toggleIdle}
                 onClick={() => setDirection("warehouse_to_local")}
               >
-                Bodega → Local
+                {STOCK_TRANSFER_TO_LOCAL}
               </button>
             </div>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -195,15 +206,15 @@ export function AdminTransferStockForm({
             <div className="mt-5 rounded-xl border border-zinc-200/90 bg-white/60 px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950/60">
               <p className="font-medium text-zinc-800 dark:text-zinc-200">Después del traslado</p>
               <p className="mt-2 tabular-nums text-zinc-700 dark:text-zinc-300">
-                Local: <span className="font-medium text-zinc-900 dark:text-zinc-100">{fmtQty(afterLocal)}</span>
+                {STOCK_LOCAL_SHORT_LABEL}: <span className="font-medium text-zinc-900 dark:text-zinc-100">{fmtQty(afterLocal)}</span>
                 <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
-                Bodega:{" "}
+                {STOCK_WAREHOUSE_SHORT_LABEL}:{" "}
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{fmtQty(afterWh)}</span>
               </p>
             </div>
           ) : (
             <p className="mt-5 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Escribe una cantidad válida para ver cómo quedará el stock en local y en bodega.
+              {STOCK_TRANSFER_PREVIEW_HELP}
             </p>
           )}
         </div>
@@ -213,14 +224,13 @@ export function AdminTransferStockForm({
             <li>
               {hasVariants
                 ? "El traslado aplica a la presentación elegida; el total del producto se recalcula."
-                : "El total en listado y en la ficha del producto sigue siendo la suma de local + bodega."}
+                : STOCK_TRANSFER_TOTAL_NOTE}
             </li>
             <li>
               Esta acción solo mueve unidades entre los dos depósitos; no crea ni elimina productos.
             </li>
             <li>
-              Si usás ubicaciones detalladas en bodega, el total de bodega sigue reflejado en la columna
-              agregada.
+              {STOCK_WAREHOUSE_SHELF_NOTE}
             </li>
           </ul>
           <p className="mt-4">

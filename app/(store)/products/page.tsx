@@ -7,7 +7,7 @@ import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
-import { storeProductCardRevealOptions } from "@/lib/store-product-card-image";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { fetchPublishedBanners } from "@/lib/store-banners";
 import {
   computeListingFacetsFromProductRows,
@@ -398,25 +398,16 @@ export default async function ProductsPage({ searchParams }: Props) {
           />
         ) : showBrowseFlatFallback ? (
           <ul className={storeProductGridClass}>
-            {browseFlatFallback.map((p, index) => {
-              const reveal = storeProductCardRevealOptions(index);
-              return (
-              <li key={p.id}>
-                <RevealOnScroll
-                  className="h-full"
-                  initialVisible={reveal.revealInitialVisible}
-                  delayMs={reveal.revealDelayMs}
-                >
-                  <ProductListingCard
-                    imagePriority={reveal.imagePriority}
-                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
-                  />
-                </RevealOnScroll>
+            {browseFlatFallback.map((p, index) => (
+              <li key={p.id} className="h-full">
+                <ProductListingCard
+                  imagePriority={storeProductCardImagePriority(index)}
+                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                  product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
+                />
               </li>
-              );
-            })}
+            ))}
           </ul>
         ) : catalogBrowseMode ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
@@ -436,25 +427,16 @@ export default async function ProductsPage({ searchParams }: Props) {
           </p>
         ) : (
           <ul className={storeProductGridClass}>
-            {enrichedList.map((p, index) => {
-              const reveal = storeProductCardRevealOptions(index);
-              return (
-              <li key={p.id}>
-                <RevealOnScroll
-                  className="h-full"
-                  initialVisible={reveal.revealInitialVisible}
-                  delayMs={reveal.revealDelayMs}
-                >
-                  <ProductListingCard
-                    imagePriority={reveal.imagePriority}
-                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={toProductListingCardProps(p)}
-                  />
-                </RevealOnScroll>
+            {enrichedList.map((p, index) => (
+              <li key={p.id} className="h-full">
+                <ProductListingCard
+                  imagePriority={storeProductCardImagePriority(index)}
+                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                  product={toProductListingCardProps(p)}
+                />
               </li>
-              );
-            })}
+            ))}
           </ul>
         )}
       </div>

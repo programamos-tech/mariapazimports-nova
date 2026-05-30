@@ -2,6 +2,12 @@
 
 import { logAdminActivity } from "@/lib/admin-activity-log";
 import {
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_TRANSFER_TO_LOCAL,
+  STOCK_TRANSFER_TO_WAREHOUSE,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
+import {
   MAX_PRODUCT_IMAGES_PER_GROUP,
   parseFragranceImagesExistingField,
   primaryImagePath,
@@ -796,7 +802,7 @@ export async function adjustProductStock(productId: string, formData: FormData) 
       actionType: "stock_adjusted",
       entityType: "product",
       entityId: productId,
-      summary: `Stock ${isWarehouse ? "bodega" : "local"} · ${before.label} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
+      summary: `Stock ${isWarehouse ? STOCK_WAREHOUSE_SHORT_LABEL : STOCK_LOCAL_SHORT_LABEL} · ${before.label} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
       metadata: {
         variant_id: variantId,
         variant_label: before.label,
@@ -851,7 +857,7 @@ export async function adjustProductStock(productId: string, formData: FormData) 
       actionType: "stock_adjusted",
       entityType: "product",
       entityId: productId,
-      summary: `Stock ${isWarehouse ? "depósito" : "tienda"} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
+      summary: `Stock ${isWarehouse ? STOCK_WAREHOUSE_SHORT_LABEL : STOCK_LOCAL_SHORT_LABEL} · ${isAdd ? "suma" : "reemplazo"} (${qty})`,
       metadata: {
         location: isWarehouse ? "warehouse" : "local",
         movement_mode: movementMode,
@@ -928,7 +934,7 @@ export async function transferProductStock(productId: string, formData: FormData
       actionType: "stock_transferred",
       entityType: "product",
       entityId: productId,
-      summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${before.label} · ${qty} u.`,
+      summary: `${fromLocal ? STOCK_TRANSFER_TO_WAREHOUSE : STOCK_TRANSFER_TO_LOCAL} · ${before.label} · ${qty} u.`,
       metadata: {
         variant_id: variantId,
         variant_label: before.label,
@@ -987,7 +993,7 @@ export async function transferProductStock(productId: string, formData: FormData
       actionType: "stock_transferred",
       entityType: "product",
       entityId: productId,
-      summary: `${fromLocal ? "Tienda → depósito" : "Depósito → tienda"} · ${qty} u.`,
+      summary: `${fromLocal ? STOCK_TRANSFER_TO_WAREHOUSE : STOCK_TRANSFER_TO_LOCAL} · ${qty} u.`,
       metadata: {
         direction,
         quantity: qty,

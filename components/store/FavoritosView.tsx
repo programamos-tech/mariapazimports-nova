@@ -4,10 +4,9 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
-import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeBrand } from "@/lib/brand";
 import { storeShellClass } from "@/lib/store-layout";
-import { storeProductCardRevealOptions } from "@/lib/store-product-card-image";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 
 const shellClass = `${storeShellClass} py-10 sm:py-12`;
@@ -180,26 +179,17 @@ export function FavoritosView() {
         </div>
       ) : (
         <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-10 xl:grid-cols-4">
-          {products.map((p, index) => {
-            const reveal = storeProductCardRevealOptions(index);
-            return (
-            <li key={p.id}>
-              <RevealOnScroll
-                className="h-full"
-                initialVisible={reveal.revealInitialVisible}
-                delayMs={reveal.revealDelayMs}
-              >
-                <ProductListingCard
-                  imagePriority={reveal.imagePriority}
-                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                  couponDiscountPercent={p.coupon_discount_percent ?? 0}
-                  product={p}
-                  onCartChange={reloadCartQuantities}
-                />
-              </RevealOnScroll>
+          {products.map((p, index) => (
+            <li key={p.id} className="h-full">
+              <ProductListingCard
+                imagePriority={storeProductCardImagePriority(index)}
+                cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                couponDiscountPercent={p.coupon_discount_percent ?? 0}
+                product={p}
+                onCartChange={reloadCartQuantities}
+              />
             </li>
-            );
-          })}
+          ))}
         </ul>
       )}
     </div>

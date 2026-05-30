@@ -19,6 +19,11 @@ import {
 import { formatCop, formatQuantityInputGrouping } from "@/lib/money";
 import { blockSubmitIfImageTooLarge } from "@/lib/product-image-upload";
 import type { ProductVariantAxis } from "@/lib/product-variants";
+import {
+  STOCK_LOCAL_LABEL,
+  STOCK_TOTAL_SUMMARY,
+  STOCK_WAREHOUSE_LABEL,
+} from "@/lib/stock-locations";
 
 const cardClass =
   "rounded-xl border border-zinc-200 bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -308,7 +313,7 @@ export function EditProductForm({
               <div className="pointer-events-none mt-5 grid gap-4 opacity-75 sm:grid-cols-2">
                 <div>
                   <label htmlFor="ep-sl" className={labelClass}>
-                    Stock en local (mostrador)
+                    {STOCK_LOCAL_LABEL}
                   </label>
                   <ProductQuantityInput
                     id="ep-sl"
@@ -320,7 +325,7 @@ export function EditProductForm({
                 </div>
                 <div>
                   <label htmlFor="ep-sw" className={labelClass}>
-                    Stock en bodega
+                    {STOCK_WAREHOUSE_LABEL}
                   </label>
                   <ProductQuantityInput
                     id="ep-sw"
@@ -336,7 +341,7 @@ export function EditProductForm({
                 <span className="font-medium tabular-nums">
                   {fmtStock(totalStock)} unidades
                 </span>{" "}
-                (local + bodega)
+                ({STOCK_TOTAL_SUMMARY})
               </div>
               <p className="mt-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                 Cada presentación tiene su propio stock. Aquí ves la suma de todas las filas

@@ -6,6 +6,7 @@ import { transferProductStock } from "@/app/actions/admin/products";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
 import { fetchVariantStockRowsForAdmin } from "@/lib/product-stock";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { STOCK_TRANSFER_PAGE_INTRO } from "@/lib/stock-locations";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export default async function AdminTransferStockPage({ params, searchParams }: P
             Transferir stock
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
-            Mové unidades entre el local (punto de venta) y la bodega de la sucursal activa.
+            {STOCK_TRANSFER_PAGE_INTRO}
           </p>
           {err ? (
             <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/35 dark:text-red-100">

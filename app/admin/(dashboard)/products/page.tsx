@@ -27,6 +27,10 @@ import { loadAdminPermissions } from "@/lib/load-admin-permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { adminProductCardClass, adminTableWrapClass } from "@/lib/admin-ui";
 import { formatCop } from "@/lib/money";
+import {
+  STOCK_LOCAL_SHORT_LABEL,
+  STOCK_WAREHOUSE_SHORT_LABEL,
+} from "@/lib/stock-locations";
 import { AdminProductsFlashToast } from "@/components/admin/AdminProductsFlashToast";
 
 export const dynamic = "force-dynamic";
@@ -291,7 +295,7 @@ export default async function AdminProductsPage({
             La base está parcialmente migrada: se listan productos con un esquema
             compatible. Ejecuta{" "}
             <code className="text-xs">supabase/full_schema.sql</code> en el SQL
-            editor para alinear categorías, stock bodega/local y referencia/costo.
+            editor para alinear categorías, stock {STOCK_WAREHOUSE_SHORT_LABEL}/{STOCK_LOCAL_SHORT_LABEL} y referencia/costo.
           </p>
         ) : null}
 
@@ -368,13 +372,13 @@ export default async function AdminProductsPage({
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-zinc-400 dark:text-zinc-500">Local</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">{STOCK_LOCAL_SHORT_LABEL}</span>
                     <p className="tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
                       {p.stock_local}
                     </p>
                   </div>
                   <div>
-                    <span className="text-zinc-400 dark:text-zinc-500">Bodega</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">{STOCK_WAREHOUSE_SHORT_LABEL}</span>
                     <p className="tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
                       {p.stock_warehouse}
                     </p>
@@ -414,10 +418,10 @@ export default async function AdminProductsPage({
                   <th className={thCell}>Código</th>
                   <th className={thCell}>Categoría</th>
                   <th className={`${thCell} whitespace-nowrap text-right`}>
-                    Local
+                    {STOCK_LOCAL_SHORT_LABEL}
                   </th>
                   <th className={`${thCell} whitespace-nowrap text-right`}>
-                    Bodega
+                    {STOCK_WAREHOUSE_SHORT_LABEL}
                   </th>
                   <th className={`${thCell} whitespace-nowrap`}>Estado</th>
                   <th className={`${thCell} whitespace-nowrap text-right`}>

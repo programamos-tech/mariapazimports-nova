@@ -4,7 +4,7 @@ import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
 import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
-import { storeProductCardRevealOptions } from "@/lib/store-product-card-image";
+import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import {
   REVEAL_BLOCK_DELAY_MS,
 } from "@/lib/store-reveal-timing";
@@ -152,27 +152,18 @@ export default async function HomePage() {
             ) : (
               <>
                 <ul className={`mt-8 ${storeProductGridClass}`}>
-                  {enrichedFeatured.map((p, index) => {
-                    const reveal = storeProductCardRevealOptions(index);
-                    return (
-                    <li key={p.id}>
-                      <RevealOnScroll
-                        className="h-full"
-                        initialVisible={reveal.revealInitialVisible}
-                        delayMs={reveal.revealDelayMs}
-                      >
-                        <ProductListingCard
-                          imagePriority={reveal.imagePriority}
-                          cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                          couponDiscountPercent={
-                            couponPctByProductId[p.id] ?? 0
-                          }
-                          product={toProductListingCardProps(p)}
-                        />
-                      </RevealOnScroll>
+                  {enrichedFeatured.map((p, index) => (
+                    <li key={p.id} className="h-full">
+                      <ProductListingCard
+                        imagePriority={storeProductCardImagePriority(index)}
+                        cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                        couponDiscountPercent={
+                          couponPctByProductId[p.id] ?? 0
+                        }
+                        product={toProductListingCardProps(p)}
+                      />
                     </li>
-                    );
-                  })}
+                  ))}
                 </ul>
                 <RevealOnScroll
                   delayMs={REVEAL_BLOCK_DELAY_MS}
