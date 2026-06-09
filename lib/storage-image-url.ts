@@ -2,9 +2,14 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
-/** Proporción 4:5; ~2× en móvil (50vw) sin exceso de peso. */
-const CARD_IMAGE_WIDTH = 360;
-const CARD_IMAGE_HEIGHT = 450;
+/**
+ * Tarjeta 4:5 en retina: hasta ~480px CSS en desktop (25vw @ 1920) → 960px físicos.
+ * Antes 360px se veía pixelada en iPad y PC al ampliarse.
+ */
+const CARD_IMAGE_WIDTH = 960;
+const CARD_IMAGE_HEIGHT = 1200;
+const CARD_IMAGE_WIDTH_COMPACT = 480;
+const CARD_IMAGE_HEIGHT_COMPACT = 600;
 
 const PRESETS: Record<
   ProductImageSize,
@@ -13,17 +18,17 @@ const PRESETS: Record<
   card: {
     width: CARD_IMAGE_WIDTH,
     height: CARD_IMAGE_HEIGHT,
-    quality: 68,
+    quality: 84,
     resize: "cover",
   },
-  thumb: { width: 96, height: 96, quality: 72, resize: "contain" },
+  thumb: { width: 192, height: 192, quality: 82, resize: "contain" },
   hero: {
-    width: CARD_IMAGE_WIDTH * 2,
-    height: CARD_IMAGE_HEIGHT * 2,
-    quality: 80,
+    width: 1600,
+    height: 2000,
+    quality: 88,
     resize: "contain",
   },
-  banner: { width: 1200, quality: 78 },
+  banner: { width: 1920, quality: 86 },
 };
 
 /** Transformaciones de Storage vía imgproxy (Supabase hospedado y CLI local). */
@@ -106,6 +111,42 @@ export function productDisplayImageUrl(
   if (!src) return null;
   const preset = PRESETS[size];
   return storageImageTransformUrl(src, preset) ?? src;
+}
+
+/** `src` + `srcSet` para tarjetas: 480w en móvil, 960w en tablet/desktop retina. */
+export function productCardImageSources(src: string | null | undefined): {
+  src: string | null;
+  srcSet: string | null;
+} {
+  if (!src) return { src: null, srcSet: null };
+  if (!shouldUseStorageImageTransform(src)) {
+    return { src, srcSet: null };
+  }
+
+  const quality = PRESETS.card.quality;
+  const compact =
+    storageImageTransformUrl(src, {
+      width: CARD_IMAGE_WIDTH_COMPACT,
+      height: CARD_IMAGE_HEIGHT_COMPACT,
+      quality,
+      resize: "cover",
+    }) ?? src;
+  const full =
+    storageImageTransformUrl(src, {
+      width: CARD_IMAGE_WIDTH,
+      height: CARD_IMAGE_HEIGHT,
+      quality,
+      resize: "cover",
+    }) ?? src;
+
+  if (compact === full) {
+    return { src: full, srcSet: null };
+  }
+
+  return {
+    src: full,
+    srcSet: `${compact} ${CARD_IMAGE_WIDTH_COMPACT}w, ${full} ${CARD_IMAGE_WIDTH}w`,
+  };
 }
 
 /** Precarga imagen hero al hover en tarjetas (navegación hacia PDP). */

@@ -101,10 +101,12 @@ function ShowcaseProductCard({
   compact?: boolean;
   imagePriority?: boolean;
 }) {
-  const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
-    product.image_path,
-    product.image_paths,
-  );
+  const {
+    primary: cardImg,
+    primarySrcSet: cardImgSrcSet,
+    hover: cardHoverImg,
+    hoverSrcSet: cardHoverImgSrcSet,
+  } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
     product.image_paths,
@@ -131,7 +133,9 @@ function ShowcaseProductCard({
       >
         <StoreProductCardImage
           src={cardImg}
+          srcSet={cardImgSrcSet}
           hoverSrc={cardHoverImg}
+          hoverSrcSet={cardHoverImgSrcSet}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}
@@ -226,10 +230,12 @@ function CatalogProductCard({
   couponDiscountPercent?: number;
   imagePriority?: boolean;
 }) {
-  const { primary: cardImg, hover: cardHoverImg } = productCardDisplayImages(
-    product.image_path,
-    product.image_paths,
-  );
+  const {
+    primary: cardImg,
+    primarySrcSet: cardImgSrcSet,
+    hover: cardHoverImg,
+    hoverSrcSet: cardHoverImgSrcSet,
+  } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
     product.image_paths,
@@ -267,7 +273,9 @@ function CatalogProductCard({
       <div className="relative shrink-0">
         <StoreProductCardImage
           src={cardImg}
+          srcSet={cardImgSrcSet}
           hoverSrc={cardHoverImg}
+          hoverSrcSet={cardHoverImgSrcSet}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}
