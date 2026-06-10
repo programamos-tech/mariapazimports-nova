@@ -162,7 +162,6 @@ export function ProductDetailView({
   }, [selectedVariant, imageUrls]);
 
   const heroImageUrl = activeGalleryUrls[galleryIdx] ?? activeGalleryUrls[0] ?? null;
-  const heroDisplayUrl = productHeroImageUrl(heroImageUrl);
   const useClientHero = variantIdx !== 0 || galleryIdx !== 0;
   const showSsrHero = Boolean(ssrHero) && !useClientHero;
 
@@ -233,9 +232,9 @@ export function ProductDetailView({
         <div className="relative w-full overflow-hidden bg-white">
           {showSsrHero ? (
             ssrHero
-          ) : heroDisplayUrl ? (
+          ) : heroImageUrl ? (
             <ProductDetailHeroImage
-              src={heroDisplayUrl}
+              src={heroImageUrl}
               alt={
                 selectedVariantLabel
                   ? `${name} — ${selectedVariantLabel}`

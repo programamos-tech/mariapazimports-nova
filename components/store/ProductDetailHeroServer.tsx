@@ -1,16 +1,11 @@
-import Image from "next/image";
-import {
-  productHeroImageUrl,
-  shouldUseUnoptimizedImage,
-} from "@/lib/storage-image-url";
+import { productHeroImageUrl } from "@/lib/storage-image-url";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
   STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS,
-  STORE_PRODUCT_DETAIL_HERO_SIZES,
 } from "@/lib/store-product-card-image";
 
-/** Hero SSR: producto completo, mismo marco que tarjetas. */
+/** Hero SSR: archivo original en Storage, sin optimizador de `next/image`. */
 export function ProductDetailHeroServer({
   src,
   alt,
@@ -18,21 +13,21 @@ export function ProductDetailHeroServer({
   src: string;
   alt: string;
 }) {
-  const display = productHeroImageUrl(src) ?? src;
+  const displaySrc = productHeroImageUrl(src);
+  if (!displaySrc) return null;
 
   return (
     <div
       className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
     >
-      <Image
-        src={display}
+      {/* eslint-disable-next-line @next/next/no-img-element -- original HD sin recompresión */}
+      <img
+        src={displaySrc}
         alt={alt}
-        fill
-        className={STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS}
-        sizes={STORE_PRODUCT_DETAIL_HERO_SIZES}
-        priority
+        className={`absolute inset-0 size-full ${STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS}`}
+        loading="eager"
         fetchPriority="high"
-        unoptimized={shouldUseUnoptimizedImage(display)}
+        decoding="async"
       />
     </div>
   );
