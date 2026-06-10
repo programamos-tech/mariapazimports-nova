@@ -1,9 +1,13 @@
 "use client";
 
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
+import {
+  AUTH_SESSION_EXPIRED_MESSAGE,
+  isAuthSessionExpiredReason,
+} from "@/lib/auth-session";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { friendlyStoreAuthError } from "@/components/store/store-auth-shared";
 import {
   storeAuthFormErrorClass,
@@ -21,6 +25,13 @@ export function StoreLoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next");
+  const sessionExpiredNotice = useMemo(
+    () =>
+      isAuthSessionExpiredReason(searchParams.get("reason"))
+        ? AUTH_SESSION_EXPIRED_MESSAGE
+        : null,
+    [searchParams],
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +75,14 @@ export function StoreLoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {sessionExpiredNotice ? (
+        <p
+          role="status"
+          className="border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm leading-relaxed text-amber-950"
+        >
+          {sessionExpiredNotice}
+        </p>
+      ) : null}
       {error ? <p className={storeAuthFormErrorClass}>{error}</p> : null}
       <label className="block">
         <span className={storeAuthFormLabelClass}>Correo electrónico</span>

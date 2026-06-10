@@ -2,19 +2,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminLoginForm } from "@/components/admin/LoginForm";
+import {
+  AUTH_SESSION_EXPIRED_MESSAGE,
+  isAuthSessionExpiredReason,
+} from "@/lib/auth-session";
 import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
 
 const serif = "[font-family:ui-serif,Georgia,Cambria,'Times_New_Roman',serif]";
 
 type Props = {
-  searchParams: Promise<{ error?: string; email?: string }>;
+  searchParams: Promise<{ error?: string; email?: string; reason?: string }>;
 };
 
 export default async function AdminLoginPage({ searchParams }: Props) {
   const sp = await searchParams;
   const err = typeof sp.error === "string" ? sp.error : "";
+  const reason = typeof sp.reason === "string" ? sp.reason : "";
   const initialNotice =
-    err === "no_profile" ?
+    isAuthSessionExpiredReason(reason) ? AUTH_SESSION_EXPIRED_MESSAGE
+    : err === "no_profile" ?
       "Hay sesión en el navegador, pero este proyecto no reconoce tu usuario como staff (public.profiles). Revisá en Vercel que NEXT_PUBLIC_SUPABASE_URL y la anon key sean del mismo proyecto Supabase donde está tu usuario. Probá cerrar sesión o borrar cookies del sitio, o ejecutá: npm run admin:ensure:remote -- mp@imports.com admin123 Tras un deploy nuevo, el acceso debería validarse mejor con la base actualizada."
     : null;
 

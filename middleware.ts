@@ -1,3 +1,8 @@
+import {
+  adminLoginHref,
+  requestLikelyHadSession,
+  storeLoginHref,
+} from "@/lib/auth-session";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
@@ -85,9 +90,11 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!cuentaPublicPaths.has(path) && !user) {
-      const next = new URL("/cuenta/entrar", request.url);
-      next.searchParams.set("next", path + request.nextUrl.search);
-      return NextResponse.redirect(next);
+      const href = storeLoginHref({
+        sessionExpired: requestLikelyHadSession(request),
+        next: path + request.nextUrl.search,
+      });
+      return NextResponse.redirect(new URL(href, request.url));
     }
 
     if (cuentaPublicPaths.has(path) && user && !hasStaffProfile) {
@@ -118,7 +125,10 @@ export async function middleware(request: NextRequest) {
 
   if (path.startsWith("/admin")) {
     if (!user) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      const href = adminLoginHref({
+        sessionExpired: requestLikelyHadSession(request),
+      });
+      return NextResponse.redirect(new URL(href, request.url));
     }
     const hasStaffProfile = await sessionHasStaffProfile(supabase, user.id);
     if (!hasStaffProfile) {

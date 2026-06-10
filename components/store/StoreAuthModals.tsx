@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { AuthSessionWatcher } from "@/components/auth/AuthSessionWatcher";
 import { StoreLoginModal } from "@/components/store/StoreLoginModal";
 import { StoreRegisterModal } from "@/components/store/StoreRegisterModal";
 
@@ -70,6 +71,7 @@ export function StoreAuthModalProvider({
 
   return (
     <StoreAuthModalContext.Provider value={value}>
+      <AuthSessionWatcher />
       {children}
       <StoreRegisterModal
         open={registerOpen}
