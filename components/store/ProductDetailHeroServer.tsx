@@ -1,12 +1,13 @@
 import Image from "next/image";
 import {
-  productDisplayImageUrl,
+  productHeroImageUrl,
   shouldUseUnoptimizedImage,
 } from "@/lib/storage-image-url";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
-  STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS,
+  STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS,
+  STORE_PRODUCT_DETAIL_HERO_SIZES,
 } from "@/lib/store-product-card-image";
 
 /** Hero SSR: producto completo, mismo marco que tarjetas. */
@@ -17,7 +18,7 @@ export function ProductDetailHeroServer({
   src: string;
   alt: string;
 }) {
-  const display = productDisplayImageUrl(src, "hero") ?? src;
+  const display = productHeroImageUrl(src) ?? src;
 
   return (
     <div
@@ -27,8 +28,8 @@ export function ProductDetailHeroServer({
         src={display}
         alt={alt}
         fill
-        className={STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS}
-        sizes="(max-width: 1024px) 100vw, 50vw"
+        className={STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS}
+        sizes={STORE_PRODUCT_DETAIL_HERO_SIZES}
         priority
         fetchPriority="high"
         unoptimized={shouldUseUnoptimizedImage(display)}

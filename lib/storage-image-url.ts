@@ -2,33 +2,51 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
-/**
- * Tarjeta 4:5 en retina: hasta ~480px CSS en desktop (25vw @ 1920) → 960px físicos.
- * Antes 360px se veía pixelada en iPad y PC al ampliarse.
- */
-const CARD_IMAGE_WIDTH = 960;
-const CARD_IMAGE_HEIGHT = 1200;
-const CARD_IMAGE_WIDTH_COMPACT = 480;
-const CARD_IMAGE_HEIGHT_COMPACT = 600;
+/** Tarjeta 4:5 — srcSet hasta 1920w para pantallas Full HD / retina. */
+const CARD_SRCSET_TIERS = [
+  { width: 640, height: 800 },
+  { width: 960, height: 1200 },
+  { width: 1280, height: 1600 },
+  { width: 1920, height: 2400 },
+] as const;
 
 const PRESETS: Record<
   ProductImageSize,
-  { width: number; height?: number; quality: number; resize?: "cover" | "contain" | "fill" }
+  {
+    width?: number;
+    height?: number;
+    quality: number;
+    resize?: "cover" | "contain" | "fill";
+    format?: "origin";
+  }
 > = {
   card: {
-    width: CARD_IMAGE_WIDTH,
-    height: CARD_IMAGE_HEIGHT,
-    quality: 84,
+    width: CARD_SRCSET_TIERS[3].width,
+    height: CARD_SRCSET_TIERS[3].height,
+    quality: 92,
     resize: "cover",
+    format: "origin",
   },
-  thumb: { width: 192, height: 192, quality: 82, resize: "contain" },
-  hero: {
-    width: 1600,
-    height: 2000,
-    quality: 88,
+  thumb: {
+    width: 256,
+    height: 256,
+    quality: 90,
     resize: "contain",
+    format: "origin",
   },
-  banner: { width: 1920, quality: 86 },
+  /** Reservado; en PDP usamos el archivo original sin transformar. */
+  hero: {
+    width: 2500,
+    height: 3125,
+    quality: 95,
+    resize: "contain",
+    format: "origin",
+  },
+  banner: {
+    width: 2500,
+    quality: 92,
+    format: "origin",
+  },
 };
 
 /** Transformaciones de Storage vía imgproxy (Supabase hospedado y CLI local). */
@@ -60,9 +78,31 @@ export function isTransformedStorageImageUrl(src: string | null | undefined): bo
   return Boolean(src?.includes("/storage/v1/render/image/"));
 }
 
+/** URL pública sin resize (máxima calidad en ficha de producto). */
+export function storageOriginalObjectUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  try {
+    const u = new URL(src);
+    const renderMarker = "/storage/v1/render/image/public/";
+    const objectMarker = "/storage/v1/object/public/";
+
+    if (u.pathname.includes(renderMarker)) {
+      const objectPath = u.pathname.slice(
+        u.pathname.indexOf(renderMarker) + renderMarker.length,
+      );
+      return `${u.origin}${objectMarker}${objectPath}`;
+    }
+    if (u.pathname.includes(objectMarker)) {
+      return src;
+    }
+    return src;
+  } catch {
+    return src;
+  }
+}
+
 /**
  * Convierte URL pública de Storage a `/render/image/public/...` con tamaño y calidad.
- * En local (127.0.0.1) devuelve la URL original si imgproxy no está disponible.
  */
 export function storageImageTransformUrl(
   src: string | null | undefined,
@@ -71,6 +111,7 @@ export function storageImageTransformUrl(
     height?: number;
     quality?: number;
     resize?: "cover" | "contain" | "fill";
+    format?: "origin";
   } = {},
 ): string | null {
   if (!src) return null;
@@ -95,6 +136,7 @@ export function storageImageTransformUrl(
     if (opts.height) params.set("height", String(Math.round(opts.height)));
     if (opts.quality) params.set("quality", String(Math.round(opts.quality)));
     if (opts.resize) params.set("resize", opts.resize);
+    if (opts.format) params.set("format", opts.format);
 
     const qs = params.toString();
     return `${u.origin}${renderMarker}${objectPath}${qs ? `?${qs}` : ""}`;
@@ -103,17 +145,26 @@ export function storageImageTransformUrl(
   }
 }
 
-/** URL lista para `<Image />` según contexto (tarjeta, miniatura, hero, banner). */
+/** Ficha de producto: archivo original en Storage (sin WebP ni downscale). */
+export function productHeroImageUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  return storageOriginalObjectUrl(src) ?? src;
+}
+
+/** URL lista para `<Image />` según contexto (tarjeta, miniatura, banner). */
 export function productDisplayImageUrl(
   src: string | null | undefined,
   size: ProductImageSize = "card",
 ): string | null {
   if (!src) return null;
+  if (size === "hero") {
+    return productHeroImageUrl(src);
+  }
   const preset = PRESETS[size];
   return storageImageTransformUrl(src, preset) ?? src;
 }
 
-/** `src` + `srcSet` para tarjetas: 480w en móvil, 960w en tablet/desktop retina. */
+/** `src` + `srcSet` para tarjetas del catálogo. */
 export function productCardImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;
@@ -124,35 +175,46 @@ export function productCardImageSources(src: string | null | undefined): {
   }
 
   const quality = PRESETS.card.quality;
-  const compact =
-    storageImageTransformUrl(src, {
-      width: CARD_IMAGE_WIDTH_COMPACT,
-      height: CARD_IMAGE_HEIGHT_COMPACT,
-      quality,
-      resize: "cover",
-    }) ?? src;
-  const full =
-    storageImageTransformUrl(src, {
-      width: CARD_IMAGE_WIDTH,
-      height: CARD_IMAGE_HEIGHT,
-      quality,
-      resize: "cover",
-    }) ?? src;
+  const format = PRESETS.card.format;
+  const resize = PRESETS.card.resize;
 
-  if (compact === full) {
-    return { src: full, srcSet: null };
+  const entries = CARD_SRCSET_TIERS.map(({ width, height }) => {
+    const url =
+      storageImageTransformUrl(src, {
+        width,
+        height,
+        quality,
+        resize,
+        format,
+      }) ?? src;
+    return `${url} ${width}w`;
+  });
+
+  const unique = [...new Set(entries)];
+  if (unique.length <= 1) {
+    return { src: unique[0]?.split(" ")[0] ?? src, srcSet: null };
   }
 
+  const largest = CARD_SRCSET_TIERS[CARD_SRCSET_TIERS.length - 1];
+  const srcUrl =
+    storageImageTransformUrl(src, {
+      width: largest.width,
+      height: largest.height,
+      quality,
+      resize,
+      format,
+    }) ?? src;
+
   return {
-    src: full,
-    srcSet: `${compact} ${CARD_IMAGE_WIDTH_COMPACT}w, ${full} ${CARD_IMAGE_WIDTH}w`,
+    src: srcUrl,
+    srcSet: unique.join(", "),
   };
 }
 
 /** Precarga imagen hero al hover en tarjetas (navegación hacia PDP). */
 export function prefetchProductHeroImage(src: string | null | undefined): void {
   if (!src || typeof window === "undefined") return;
-  const href = productDisplayImageUrl(src, "hero");
+  const href = productHeroImageUrl(src);
   if (!href) return;
   const id = `prefetch-hero-${href}`;
   if (document.getElementById(id)) return;
@@ -164,10 +226,13 @@ export function prefetchProductHeroImage(src: string | null | undefined): void {
   document.head.appendChild(link);
 }
 
-/** Localhost: sin optimizador de Next. Producción CDN ya redimensionada: tampoco. */
+/** Evita doble compresión: Storage (original o transform) no pasa por `/_next/image`. */
 export function shouldUseUnoptimizedImage(src: string | null | undefined): boolean {
   if (!src) return false;
-  return (
-    shouldUnoptimizeStorageImageUrl(src) || isTransformedStorageImageUrl(src)
-  );
+  if (shouldUnoptimizeStorageImageUrl(src)) return true;
+  if (isTransformedStorageImageUrl(src)) return true;
+  if (shouldUseStorageImageTransform(src) && src.includes("/storage/v1/object/public/")) {
+    return true;
+  }
+  return false;
 }

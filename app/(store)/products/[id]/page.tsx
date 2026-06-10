@@ -7,7 +7,7 @@ import {
 } from "@/components/store/ProductDetailView";
 import { ProductDetailHeroServer } from "@/components/store/ProductDetailHeroServer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { productDisplayImageUrl } from "@/lib/storage-image-url";
+import { productHeroImageUrl } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import {
   normalizeProductImagePaths,
@@ -99,7 +99,7 @@ export default async function ProductDetailPage({ params }: Props) {
     variants[0]?.label
       ? `${product.name} — ${variants[0]!.label}`
       : product.name;
-  const heroPreloadUrl = productDisplayImageUrl(initialHeroSrc, "hero");
+  const heroPreloadUrl = productHeroImageUrl(initialHeroSrc);
   if (heroPreloadUrl) {
     preload(heroPreloadUrl, { as: "image", fetchPriority: "high" });
   }

@@ -20,6 +20,7 @@ import {
 import { pseudoReviewCount } from "@/lib/pseudo-review";
 import {
   productDisplayImageUrl,
+  productHeroImageUrl,
   shouldUseUnoptimizedImage,
 } from "@/lib/storage-image-url";
 import { productColorSwatchClass } from "@/lib/product-colors";
@@ -161,17 +162,17 @@ export function ProductDetailView({
   }, [selectedVariant, imageUrls]);
 
   const heroImageUrl = activeGalleryUrls[galleryIdx] ?? activeGalleryUrls[0] ?? null;
-  const heroDisplayUrl = productDisplayImageUrl(heroImageUrl, "hero");
+  const heroDisplayUrl = productHeroImageUrl(heroImageUrl);
   const useClientHero = variantIdx !== 0 || galleryIdx !== 0;
   const showSsrHero = Boolean(ssrHero) && !useClientHero;
 
   useEffect(() => {
     const nextUrl = activeGalleryUrls[galleryIdx + 1];
     if (!nextUrl) return;
-    const optimized = productDisplayImageUrl(nextUrl, "hero");
-    if (!optimized) return;
+    const fullRes = productHeroImageUrl(nextUrl);
+    if (!fullRes) return;
     const img = new window.Image();
-    img.src = optimized;
+    img.src = fullRes;
   }, [activeGalleryUrls, galleryIdx]);
 
   const onVariantChange = (idx: number) => {
@@ -299,7 +300,7 @@ export function ProductDetailView({
                 type="button"
                 onClick={() => setGalleryIdx(i)}
                 onMouseEnter={() => {
-                  const next = productDisplayImageUrl(url, "hero");
+                  const next = productHeroImageUrl(url);
                   if (next) {
                     const img = new window.Image();
                     img.src = next;
