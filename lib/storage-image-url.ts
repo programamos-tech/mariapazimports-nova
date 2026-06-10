@@ -145,10 +145,17 @@ export function storageImageTransformUrl(
   }
 }
 
-/** Ficha de producto: archivo original en Storage (sin WebP ni downscale). */
-export function productHeroImageUrl(src: string | null | undefined): string | null {
+/** Vitrina: archivo original en Storage (misma URL que al abrir en pestaña nueva). */
+export function productStorefrontImageUrl(
+  src: string | null | undefined,
+): string | null {
   if (!src) return null;
   return storageOriginalObjectUrl(src) ?? src;
+}
+
+/** Ficha de producto: alias de `productStorefrontImageUrl`. */
+export function productHeroImageUrl(src: string | null | undefined): string | null {
+  return productStorefrontImageUrl(src);
 }
 
 /** URL lista para `<Image />` según contexto (tarjeta, miniatura, banner). */
@@ -164,51 +171,14 @@ export function productDisplayImageUrl(
   return storageImageTransformUrl(src, preset) ?? src;
 }
 
-/** `src` + `srcSet` para tarjetas del catálogo. */
+/** Tarjetas del catálogo: original sin pasar por imgproxy (evita recompresión AVIF/JPEG). */
 export function productCardImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;
 } {
   if (!src) return { src: null, srcSet: null };
-  if (!shouldUseStorageImageTransform(src)) {
-    return { src, srcSet: null };
-  }
-
-  const quality = PRESETS.card.quality;
-  const format = PRESETS.card.format;
-  const resize = PRESETS.card.resize;
-
-  const entries = CARD_SRCSET_TIERS.map(({ width, height }) => {
-    const url =
-      storageImageTransformUrl(src, {
-        width,
-        height,
-        quality,
-        resize,
-        format,
-      }) ?? src;
-    return `${url} ${width}w`;
-  });
-
-  const unique = [...new Set(entries)];
-  if (unique.length <= 1) {
-    return { src: unique[0]?.split(" ")[0] ?? src, srcSet: null };
-  }
-
-  const largest = CARD_SRCSET_TIERS[CARD_SRCSET_TIERS.length - 1];
-  const srcUrl =
-    storageImageTransformUrl(src, {
-      width: largest.width,
-      height: largest.height,
-      quality,
-      resize,
-      format,
-    }) ?? src;
-
-  return {
-    src: srcUrl,
-    srcSet: unique.join(", "),
-  };
+  const original = productStorefrontImageUrl(src);
+  return { src: original, srcSet: null };
 }
 
 /** Precarga imagen hero al hover en tarjetas (navegación hacia PDP). */
