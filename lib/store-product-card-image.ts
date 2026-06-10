@@ -1,22 +1,23 @@
 /** Marco 4:5 unificado en vitrina (home, catálogo, favoritos, carruseles). */
 export const STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS = "aspect-[4/5]";
 
-/** Fondo de respaldo mientras carga la imagen. */
-export const STORE_PRODUCT_CARD_IMAGE_BG_CLASS = "bg-stone-100";
+/** Fondo blanco: coincide con el padding del transform contain en Storage. */
+export const STORE_PRODUCT_CARD_IMAGE_BG_CLASS = "bg-white";
 
 /** Producto completo dentro del marco 4:5 (catálogo y PDP). */
 export const STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS =
-  "object-contain object-center";
+  "object-cover object-center";
 
-/** Centra la foto a resolución intrínseca dentro del marco 4:5. */
-export const STORE_PRODUCT_IMAGE_FRAME_CLASS =
-  "flex size-full items-center justify-center";
-
-/** Imagen nítida: no estira el `<img>` al 100% del layout. */
+/**
+ * La imagen ya viene en 4:5 desde Storage (contain); llena el marco sin bandas CSS.
+ */
 export const STORE_PRODUCT_IMAGE_IMG_CLASS =
-  "max-h-full max-w-full object-contain object-center";
+  "absolute inset-0 size-full object-cover object-center";
 
-/** @deprecated Usar `STORE_PRODUCT_IMAGE_FRAME_CLASS` */
+/** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
+export const STORE_PRODUCT_IMAGE_FRAME_CLASS = "";
+
+/** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
 export const STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS =
   STORE_PRODUCT_IMAGE_FRAME_CLASS;
 
@@ -29,8 +30,7 @@ export const STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS =
   STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS;
 
 /** Tarjetas: capa absoluta para crossfade al hover. */
-export const STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS =
-  "absolute inset-0 flex items-center justify-center";
+export const STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS = "absolute inset-0";
 
 /** Margen de prefetch: empieza a descargar ~1 fila antes de entrar al viewport. */
 export const STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN =

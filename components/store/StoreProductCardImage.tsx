@@ -24,6 +24,8 @@ type Props = {
 
 function CardPhoto({
   src,
+  srcSet,
+  sizes,
   alt,
   className,
   priority = false,
@@ -32,6 +34,8 @@ function CardPhoto({
   hidden = false,
 }: {
   src: string;
+  srcSet?: string | null;
+  sizes: string;
   alt: string;
   className: string;
   priority?: boolean;
@@ -40,9 +44,11 @@ function CardPhoto({
   hidden?: boolean;
 }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- original HD desde Storage
+    // eslint-disable-next-line @next/next/no-img-element -- 4:5 contain desde Supabase
     <img
       src={src}
+      srcSet={srcSet ?? undefined}
+      sizes={sizes}
       alt={alt}
       aria-hidden={hidden || undefined}
       className={className}
@@ -82,11 +88,14 @@ function usePrefetchWhenNear(enabled: boolean) {
   return { ref, prefetch };
 }
 
-/** Imagen de tarjeta: marco 4:5, producto completo (contain) en HD. */
+/** Imagen de tarjeta: marco 4:5 lleno, producto completo en HD. */
 export function StoreProductCardImage({
   src,
+  srcSet,
   hoverSrc,
+  hoverSrcSet,
   alt,
+  sizes,
   outOfStock = false,
   placeholderClassName = "text-3xl text-stone-200",
   priority = false,
@@ -109,31 +118,29 @@ export function StoreProductCardImage({
     >
       {src && shouldLoad ? (
         <>
-          <div
-            className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${IMAGE_FADE} ${
+          <CardPhoto
+            src={src}
+            srcSet={srcSet}
+            sizes={sizes}
+            alt={alt}
+            className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${STORE_PRODUCT_IMAGE_IMG_CLASS} ${IMAGE_FADE} ${
               hoverActive && hoverSrc ? "opacity-0" : "opacity-100"
             }`}
-          >
-            <CardPhoto
-              src={src}
-              alt={alt}
-              className={STORE_PRODUCT_IMAGE_IMG_CLASS}
-              priority={priority}
-              fetchPriority={priority ? "high" : "auto"}
-              loading={priority ? "eager" : "lazy"}
-            />
-          </div>
+            priority={priority}
+            fetchPriority={priority ? "high" : "auto"}
+            loading={priority ? "eager" : "lazy"}
+          />
           {hoverActive && hoverSrc ? (
-            <div className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${IMAGE_FADE}`}>
-              <CardPhoto
-                src={hoverSrc}
-                alt=""
-                className={STORE_PRODUCT_IMAGE_IMG_CLASS}
-                fetchPriority="low"
-                loading="lazy"
-                hidden
-              />
-            </div>
+            <CardPhoto
+              src={hoverSrc}
+              srcSet={hoverSrcSet}
+              sizes={sizes}
+              alt=""
+              className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${STORE_PRODUCT_IMAGE_IMG_CLASS} ${IMAGE_FADE}`}
+              fetchPriority="low"
+              loading="lazy"
+              hidden
+            />
           ) : null}
         </>
       ) : src ? null : (

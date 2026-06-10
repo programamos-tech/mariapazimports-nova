@@ -10,6 +10,14 @@ const CARD_SRCSET_TIERS = [
   { width: 1920, height: 2400 },
 ] as const;
 
+/** PDP 4:5 — srcSet hasta 2560w (retina / Full HD). */
+const HERO_SRCSET_TIERS = [
+  { width: 960, height: 1200 },
+  { width: 1440, height: 1800 },
+  { width: 1920, height: 2400 },
+  { width: 2560, height: 3200 },
+] as const;
+
 const PRESETS: Record<
   ProductImageSize,
   {
@@ -23,8 +31,8 @@ const PRESETS: Record<
   card: {
     width: CARD_SRCSET_TIERS[3].width,
     height: CARD_SRCSET_TIERS[3].height,
-    quality: 92,
-    resize: "cover",
+    quality: 98,
+    resize: "contain",
     format: "origin",
   },
   thumb: {
@@ -153,9 +161,67 @@ export function productStorefrontImageUrl(
   return storageOriginalObjectUrl(src) ?? src;
 }
 
-/** Ficha de producto: alias de `productStorefrontImageUrl`. */
+/** Encaja el producto en 4:5 (contain + márgenes blancos en el archivo, sin bandas en CSS). */
+function productFrameImageSources(
+  src: string | null | undefined,
+  tiers: readonly { width: number; height: number }[],
+  quality: number,
+): { src: string | null; srcSet: string | null } {
+  if (!src) return { src: null, srcSet: null };
+
+  const fallback = productStorefrontImageUrl(src);
+  if (!shouldUseStorageImageTransform(src)) {
+    return { src: fallback, srcSet: null };
+  }
+
+  const resize = "contain" as const;
+  const format = "origin" as const;
+
+  const entries = tiers.map(({ width, height }) => {
+    const url =
+      storageImageTransformUrl(src, {
+        width,
+        height,
+        quality,
+        resize,
+        format,
+      }) ?? fallback;
+    return `${url} ${width}w`;
+  });
+
+  const unique = [...new Set(entries)];
+  const largest = tiers[tiers.length - 1]!;
+  const srcUrl =
+    storageImageTransformUrl(src, {
+      width: largest.width,
+      height: largest.height,
+      quality,
+      resize,
+      format,
+    }) ?? fallback;
+
+  if (unique.length <= 1) {
+    return { src: srcUrl, srcSet: null };
+  }
+
+  return {
+    src: srcUrl,
+    srcSet: unique.join(", "),
+  };
+}
+
+/** Ficha de producto: 4:5 contain en HD (producto completo, marco lleno). */
+export function productHeroImageSources(src: string | null | undefined): {
+  src: string | null;
+  srcSet: string | null;
+} {
+  return productFrameImageSources(src, HERO_SRCSET_TIERS, 100);
+}
+
+/** URL principal del hero PDP. */
 export function productHeroImageUrl(src: string | null | undefined): string | null {
-  return productStorefrontImageUrl(src);
+  const { src: display } = productHeroImageSources(src);
+  return display ?? productStorefrontImageUrl(src);
 }
 
 /** URL lista para `<Image />` según contexto (tarjeta, miniatura, banner). */
@@ -171,14 +237,12 @@ export function productDisplayImageUrl(
   return storageImageTransformUrl(src, preset) ?? src;
 }
 
-/** Tarjetas del catálogo: original sin pasar por imgproxy (evita recompresión AVIF/JPEG). */
+/** Tarjetas: 4:5 contain + srcSet retina (producto completo, sin bandas laterales). */
 export function productCardImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;
 } {
-  if (!src) return { src: null, srcSet: null };
-  const original = productStorefrontImageUrl(src);
-  return { src: original, srcSet: null };
+  return productFrameImageSources(src, CARD_SRCSET_TIERS, PRESETS.card.quality);
 }
 
 /** Precarga imagen hero al hover en tarjetas (navegación hacia PDP). */
