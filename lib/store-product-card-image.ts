@@ -4,27 +4,33 @@ export const STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS = "aspect-[4/5]";
 /** Fondo de respaldo mientras carga la imagen. */
 export const STORE_PRODUCT_CARD_IMAGE_BG_CLASS = "bg-stone-100";
 
-/** Llena todo el marco 4:5 sin bandas laterales ni superiores. */
+/** Producto completo dentro del marco 4:5 (catálogo y PDP). */
 export const STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS =
-  "object-cover object-center";
-
-/**
- * Cover nítido: escala desde resolución intrínseca (evita decodificar a tamaño del layout).
- */
-export const STORE_PRODUCT_CARD_IMAGE_IMG_CLASS =
-  "absolute left-1/2 top-1/2 min-h-full min-w-full w-auto max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center";
-
-/** Ficha de producto: imagen completa sin recorte dentro del marco 4:5. */
-export const STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS =
   "object-contain object-center";
 
-/** Marco hero: centra la imagen a resolución completa dentro del 4:5. */
-export const STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS =
-  "flex w-full items-center justify-center overflow-hidden";
+/** Centra la foto a resolución intrínseca dentro del marco 4:5. */
+export const STORE_PRODUCT_IMAGE_FRAME_CLASS =
+  "flex size-full items-center justify-center";
 
-/** Contain nítido en PDP (sin estirar el elemento `<img>` al 100%). */
-export const STORE_PRODUCT_DETAIL_HERO_IMG_CLASS =
+/** Imagen nítida: no estira el `<img>` al 100% del layout. */
+export const STORE_PRODUCT_IMAGE_IMG_CLASS =
   "max-h-full max-w-full object-contain object-center";
+
+/** @deprecated Usar `STORE_PRODUCT_IMAGE_FRAME_CLASS` */
+export const STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS =
+  STORE_PRODUCT_IMAGE_FRAME_CLASS;
+
+/** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
+export const STORE_PRODUCT_DETAIL_HERO_IMG_CLASS =
+  STORE_PRODUCT_IMAGE_IMG_CLASS;
+
+/** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
+export const STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS =
+  STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS;
+
+/** Tarjetas: capa absoluta para crossfade al hover. */
+export const STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS =
+  "absolute inset-0 flex items-center justify-center";
 
 /** Margen de prefetch: empieza a descargar ~1 fila antes de entrar al viewport. */
 export const STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN =

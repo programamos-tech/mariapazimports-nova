@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
-  STORE_PRODUCT_CARD_IMAGE_IMG_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS,
+  STORE_PRODUCT_IMAGE_IMG_CLASS,
   STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN,
 } from "@/lib/store-product-card-image";
 
@@ -81,7 +82,7 @@ function usePrefetchWhenNear(enabled: boolean) {
   return { ref, prefetch };
 }
 
-/** Imagen de tarjeta de catálogo: aspecto 4:5; hover carga la 2.ª foto solo al pasar el mouse. */
+/** Imagen de tarjeta: marco 4:5, producto completo (contain) en HD. */
 export function StoreProductCardImage({
   src,
   hoverSrc,
@@ -108,25 +109,31 @@ export function StoreProductCardImage({
     >
       {src && shouldLoad ? (
         <>
-          <CardPhoto
-            src={src}
-            alt={alt}
-            className={`${STORE_PRODUCT_CARD_IMAGE_IMG_CLASS} ${IMAGE_FADE} ${
+          <div
+            className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${IMAGE_FADE} ${
               hoverActive && hoverSrc ? "opacity-0" : "opacity-100"
             }`}
-            priority={priority}
-            fetchPriority={priority ? "high" : "auto"}
-            loading={priority ? "eager" : "lazy"}
-          />
-          {hoverActive && hoverSrc ? (
+          >
             <CardPhoto
-              src={hoverSrc}
-              alt=""
-              className={`${STORE_PRODUCT_CARD_IMAGE_IMG_CLASS} ${IMAGE_FADE}`}
-              fetchPriority="low"
-              loading="lazy"
-              hidden
+              src={src}
+              alt={alt}
+              className={STORE_PRODUCT_IMAGE_IMG_CLASS}
+              priority={priority}
+              fetchPriority={priority ? "high" : "auto"}
+              loading={priority ? "eager" : "lazy"}
             />
+          </div>
+          {hoverActive && hoverSrc ? (
+            <div className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${IMAGE_FADE}`}>
+              <CardPhoto
+                src={hoverSrc}
+                alt=""
+                className={STORE_PRODUCT_IMAGE_IMG_CLASS}
+                fetchPriority="low"
+                loading="lazy"
+                hidden
+              />
+            </div>
           ) : null}
         </>
       ) : src ? null : (

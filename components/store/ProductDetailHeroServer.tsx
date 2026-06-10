@@ -2,11 +2,11 @@ import { productHeroImageUrl } from "@/lib/storage-image-url";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
-  STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS,
-  STORE_PRODUCT_DETAIL_HERO_IMG_CLASS,
+  STORE_PRODUCT_IMAGE_FRAME_CLASS,
+  STORE_PRODUCT_IMAGE_IMG_CLASS,
 } from "@/lib/store-product-card-image";
 
-/** Hero SSR: archivo original en Storage, sin optimizador de `next/image`. */
+/** Hero SSR: marco 4:5, producto completo en HD. */
 export function ProductDetailHeroServer({
   src,
   alt,
@@ -19,17 +19,19 @@ export function ProductDetailHeroServer({
 
   return (
     <div
-      className={`${STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS} ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
+      className={`overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- original HD sin recompresión */}
-      <img
-        src={displaySrc}
-        alt={alt}
-        className={STORE_PRODUCT_DETAIL_HERO_IMG_CLASS}
-        loading="eager"
-        fetchPriority="high"
-        decoding="sync"
-      />
+      <div className={STORE_PRODUCT_IMAGE_FRAME_CLASS}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- original HD sin recompresión */}
+        <img
+          src={displaySrc}
+          alt={alt}
+          className={STORE_PRODUCT_IMAGE_IMG_CLASS}
+          loading="eager"
+          fetchPriority="high"
+          decoding="sync"
+        />
+      </div>
     </div>
   );
 }
