@@ -13,6 +13,8 @@
     "seed:produtos:remote": "node scripts/seed-produtos-cloud-via-supabase-cli.mjs",
     "admin:ensure:remote": "node scripts/ensure-admin-user-cloud-via-supabase-cli.mjs",
     "seed:shipping-geo": "node scripts/seed-shipping-geo.mjs",
+    "sync:catalog:from-prod": "node scripts/sync-catalog-prod-to-local.mjs",
+    "sync:catalog:from-prod:remote": "node scripts/sync-catalog-prod-to-local-remote.mjs",
     "admin:link-profile": "node scripts/link-admin-profile.mjs"
   },
   "dependencies": {

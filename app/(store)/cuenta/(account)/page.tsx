@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  storeBtnPrimaryClass,
+  storeBtnSecondaryClass,
+  storeEmptyStateTextClass,
+} from "@/components/store/store-ui-primitives";
 import { CuentaFavoritosResumenCard } from "@/components/store/CuentaFavoritosResumenCard";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
@@ -26,14 +31,7 @@ const cardTitle =
   "text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900";
 const cardBody = "mt-6 flex flex-1 flex-col items-center justify-center text-sm leading-relaxed text-stone-600";
 
-export default async function CuentaResumenPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ cumple?: string }>;
-}) {
-  const sp = await searchParams;
-  const cumpleOk = sp.cumple === "ok";
-
+export default async function CuentaResumenPage() {
   const supabase = await createSupabaseServerClient();
 
   const { data: lastOrder } = await supabase
@@ -45,11 +43,6 @@ export default async function CuentaResumenPage({
 
   return (
     <div className="space-y-10">
-      {cumpleOk ? (
-        <p className="rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-center text-sm font-medium text-emerald-900">
-          Guardamos tu fecha de cumpleaños. ¡Gracias!
-        </p>
-      ) : null}
       <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
         <article className="flex min-h-[15rem] flex-col border border-stone-200/90 bg-white p-6 sm:min-h-[16rem] sm:p-8">
           <h2 className={`${cardTitle} text-center`}>Pedido reciente</h2>
@@ -70,15 +63,20 @@ export default async function CuentaResumenPage({
                 </p>
                 <Link
                   href={`/cuenta/pedidos/${lastOrder.id}`}
-                  className="mt-6 inline-block text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-600"
+                  className={`${storeBtnSecondaryClass} mt-6`}
                 >
                   Ver pedido
                 </Link>
               </div>
             ) : (
-              <p className="text-center">
-                Todavía no tienes pedidos en esta tienda.
-              </p>
+              <div className="flex flex-col items-center text-center">
+                <p className={storeEmptyStateTextClass}>
+                  Todavía no tienes pedidos en esta tienda.
+                </p>
+                <Link href="/products" className={`${storeBtnPrimaryClass} mt-6`}>
+                  Ver productos
+                </Link>
+              </div>
             )}
           </div>
         </article>
@@ -93,7 +91,7 @@ export default async function CuentaResumenPage({
             </p>
             <Link
               href="/products"
-              className="mt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-600"
+              className={`${storeBtnSecondaryClass} mt-6`}
             >
               Explorar catálogo
             </Link>

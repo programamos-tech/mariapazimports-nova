@@ -9,6 +9,7 @@ export function ventaFormaPagoLabel(wompiReference: string | null | undefined): 
   if (r === "POS:cash") return "Efectivo";
   if (r === "POS:transfer") return "Transferencia";
   if (r === "POS:mixed") return "Mixto";
+  if (r === "ONLINE:transfer") return "Transferencia en línea";
   if (r.startsWith("POS:")) return "Mostrador";
   return "En línea";
 }
@@ -32,6 +33,13 @@ export function ventaFormaPagoBadge(
         "bg-sky-50 text-sky-900 ring-1 ring-sky-200/90 dark:bg-sky-950/45 dark:text-sky-100 dark:ring-sky-700/50",
     };
   }
+  if (r === "ONLINE:transfer") {
+    return {
+      label: "Transferencia en línea",
+      className:
+        "bg-teal-50 text-teal-900 ring-1 ring-teal-200/90 dark:bg-teal-950/45 dark:text-teal-100 dark:ring-teal-700/50",
+    };
+  }
   if (r === "POS:mixed") {
     return {
       label: "Mixto",
@@ -53,7 +61,7 @@ export function ventaFormaPagoBadge(
   };
 }
 
-export type VentaPagoFilter = "all" | "cash" | "transfer" | "mixed" | "online";
+export type VentaPagoFilter = "all" | "cash" | "transfer" | "online_transfer" | "mixed" | "online";
 
 export function matchesVentaPagoFilter(
   wompiReference: string | null | undefined,
@@ -62,7 +70,8 @@ export function matchesVentaPagoFilter(
   if (filter === "all") return true;
   const r = wompiReference?.trim() ?? "";
   const fisica = r.startsWith("POS:");
-  if (filter === "online") return !fisica;
+  if (filter === "online") return !fisica && r !== "ONLINE:transfer";
+  if (filter === "online_transfer") return r === "ONLINE:transfer";
   if (filter === "cash") return r === "POS:cash";
   if (filter === "transfer") return r === "POS:transfer";
   if (filter === "mixed") return r === "POS:mixed";

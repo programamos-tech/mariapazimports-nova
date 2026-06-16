@@ -8,6 +8,8 @@ import { STORE_ACCOUNT_HERO_IMAGE } from "@/lib/store-account-hero";
 import { storeShellClass } from "@/lib/store-layout";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 const shellClass = `${storeShellClass} py-8 sm:py-10`;
 
 function accountHeroFirstName(displayName: string): string {

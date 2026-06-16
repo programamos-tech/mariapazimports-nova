@@ -5,8 +5,8 @@ export const storeBrand =
 /** Logo principal en `/public` (tienda y backoffice). */
 export const storeLogoPath = "/logo-maria-paz-imports.png";
 
-/** Firma Berea en `/public/logo-berea.png` (footer tienda, cookies, login admin, sidebar). */
-export const bereaSignaturePath = "/logo-berea.png";
+/** Logo Berea en `/public/logo-berea-agencia.png` (footer tienda, cookies, login admin, sidebar). */
+export const bereaSignaturePath = "/logo-berea-agencia.png";
 
 /**
  * Nombre en el pie © (independiente del nombre corto de marca si usás env de plantilla).

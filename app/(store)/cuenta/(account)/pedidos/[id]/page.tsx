@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { storeBreadcrumbLinkClass } from "@/components/store/store-ui-primitives";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
 
@@ -56,17 +57,16 @@ export default async function CuentaPedidoDetallePage({
       <nav aria-label="Migas de pan" className="text-sm text-stone-500">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <li>
-            <Link
-              href="/cuenta/pedidos"
-              className="hover:text-[var(--store-accent)] hover:underline"
-            >
+            <Link href="/cuenta/pedidos" className={storeBreadcrumbLinkClass}>
               Mis pedidos
             </Link>
           </li>
           <li aria-hidden className="text-stone-300">
             /
           </li>
-          <li className="font-medium text-stone-700">Detalle</li>
+          <li className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-700">
+            Detalle
+          </li>
         </ol>
       </nav>
 

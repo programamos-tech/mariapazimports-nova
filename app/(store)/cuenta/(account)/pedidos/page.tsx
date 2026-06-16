@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  storeBtnPrimaryClass,
+  storeEmptyStateClass,
+  storeEmptyStateTextClass,
+} from "@/components/store/store-ui-primitives";
 import { formatCop } from "@/lib/money";
 
 export const metadata = {
@@ -45,15 +50,14 @@ export default async function CuentaPedidosPage() {
       </header>
 
       {list.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-stone-200 bg-[var(--store-chrome-bg)] px-4 py-8 text-center text-sm text-stone-600">
-          Todavía no tienes pedidos.{" "}
-          <Link
-            href="/products"
-            className="font-medium text-[var(--store-accent)] underline underline-offset-4 hover:text-[var(--store-accent-hover)]"
-          >
+        <div className={storeEmptyStateClass}>
+          <p className={storeEmptyStateTextClass}>
+            Todavía no tienes pedidos.
+          </p>
+          <Link href="/products" className={`${storeBtnPrimaryClass} mt-6`}>
             Ver productos
           </Link>
-        </p>
+        </div>
       ) : (
         <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {list.map((o) => (

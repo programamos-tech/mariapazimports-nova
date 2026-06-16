@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { updateStoreCustomerBirthDateAction } from "@/app/actions/store-customer-birthday";
+import { StoreDateInput } from "@/components/store/StoreDateInput";
 import { storeShellClass } from "@/lib/store-layout";
 
 const STORAGE_KEY = "tiendas_account_bday_banner_dismissed";
@@ -33,6 +34,7 @@ const btnGhost =
 export function StoreAccountBirthdayBanner({ birthDate }: { birthDate: string | null }) {
   const [localDismissed, setLocalDismissed] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [birthDateValue, setBirthDateValue] = useState("");
   const searchParams = useSearchParams();
   const cumple = searchParams.get("cumple");
 
@@ -45,6 +47,7 @@ export function StoreAccountBirthdayBanner({ birthDate }: { birthDate: string | 
   const maxDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   if (birthDate) return null;
+  if (cumple === "ok") return null;
   if (storedDismissed || localDismissed) return null;
 
   function dismiss() {
@@ -105,7 +108,10 @@ export function StoreAccountBirthdayBanner({ birthDate }: { birthDate: string | 
           {!editing ? (
             <button
               type="button"
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setBirthDateValue("");
+                setEditing(true);
+              }}
               className="border border-stone-900 bg-white px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
             >
               Actualizar
@@ -120,13 +126,14 @@ export function StoreAccountBirthdayBanner({ birthDate }: { birthDate: string | 
                 <label htmlFor="store-bday-input" className="sr-only">
                   Fecha de cumpleaños
                 </label>
-                <input
+                <StoreDateInput
                   id="store-bday-input"
-                  type="date"
                   name="birth_date"
+                  value={birthDateValue}
+                  onChange={setBirthDateValue}
                   required
-                  min="1900-01-01"
-                  max={maxDate}
+                  minDate="1900-01-01"
+                  maxDate={maxDate}
                   className={inputClass}
                 />
               </div>

@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import { OrderInvoiceDetailView } from "@/components/admin/OrderInvoiceDetailView";
+import { OrderTransferPanel } from "@/components/admin/OrderTransferPanel";
+import { getOrderPaymentProofSignedUrl } from "@/app/actions/admin/order-fulfillment";
+import { isOnlineBankTransferOrder } from "@/lib/bank-transfer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ventaNumeroReferencia } from "@/lib/ventas-sales";
 
@@ -53,6 +56,34 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   }));
 
   const invoiceRef = ventaNumeroReferencia(id);
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000";
+  const trackingUrl =
+    order.tracking_token != null
+      ? `${siteUrl}/pedidos/seguimiento/${String(order.tracking_token)}`
+      : null;
+  const isBankTransfer = isOnlineBankTransferOrder(
+    order.wompi_reference != null ? String(order.wompi_reference) : null,
+    order.payment_method != null ? String(order.payment_method) : null,
+  );
+
+  const { data: proofRows } = isBankTransfer
+    ? await supabase
+        .from("order_payment_proofs")
+        .select("id, file_name, storage_path, uploaded_at")
+        .eq("order_id", id)
+        .order("uploaded_at", { ascending: false })
+    : { data: [] as const };
+
+  const proofs = await Promise.all(
+    (proofRows ?? []).map(async (row) => ({
+      id: String(row.id),
+      fileName: String(row.file_name),
+      signedUrl: await getOrderPaymentProofSignedUrl(String(row.storage_path)),
+      uploadedAt: String(row.uploaded_at),
+    })),
+  );
 
   return (
     <div className="-m-4 bg-zinc-50/70 px-4 py-6 dark:bg-zinc-950/80 md:-m-6 md:px-6 print:m-0 print:bg-transparent print:p-0">
@@ -81,7 +112,24 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             ? String(order.cancellation_reason)
             : null
         }
+        fulfillmentStatus={
+          order.fulfillment_status != null
+            ? String(order.fulfillment_status)
+            : null
+        }
         lines={lines}
+      />
+      <OrderTransferPanel
+        orderId={id}
+        paymentStatus={String(order.status)}
+        fulfillmentStatus={
+          order.fulfillment_status != null
+            ? String(order.fulfillment_status)
+            : null
+        }
+        isBankTransfer={isBankTransfer}
+        proofs={proofs}
+        trackingUrl={trackingUrl}
       />
     </div>
   );

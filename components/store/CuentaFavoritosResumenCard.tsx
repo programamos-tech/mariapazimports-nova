@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
+import { storeBtnSecondaryClass } from "@/components/store/store-ui-primitives";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 
 const cardTitle =
@@ -55,10 +56,7 @@ export function CuentaFavoritosResumenCard() {
             <p className="max-w-[14rem] text-center text-sm">
               Esta lista está vacía — guarda favoritos mientras compras.
             </p>
-            <Link
-              href="/favoritos"
-              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-600"
-            >
+            <Link href="/favoritos" className={storeBtnSecondaryClass}>
               Ver favoritos
             </Link>
           </>
@@ -103,10 +101,7 @@ export function CuentaFavoritosResumenCard() {
                 Esos productos no están publicados ahora; abrí Favoritos para revisar la lista completa.
               </p>
             ) : null}
-            <Link
-              href="/favoritos"
-              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-600"
-            >
+            <Link href="/favoritos" className={storeBtnSecondaryClass}>
               Ver favoritos
             </Link>
           </>

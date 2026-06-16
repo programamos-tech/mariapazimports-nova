@@ -36,6 +36,7 @@ export type OrderInvoiceDetailViewProps = {
   shippingPhone: string | null;
   /** Motivo registrado al anular desde el panel. */
   cancellationReason: string | null;
+  fulfillmentStatus?: string | null;
   lines: Line[];
 };
 
@@ -153,6 +154,7 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
     shippingCity,
     shippingPhone,
     cancellationReason,
+    fulfillmentStatus = null,
     lines,
   } = props;
 
@@ -299,6 +301,8 @@ export function OrderInvoiceDetailView(props: OrderInvoiceDetailViewProps) {
                 orderId={orderId}
                 invoiceRef={invoiceRef}
                 currentStatus={status}
+                fulfillmentStatus={fulfillmentStatus}
+                wompiReference={wompiReference}
               />
             </div>
           </div>

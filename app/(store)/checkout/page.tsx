@@ -32,6 +32,8 @@ import {
   CheckoutSidebarTotals,
 } from "@/components/store/CheckoutShippingLocationFields";
 import { CheckoutLineControls } from "@/components/store/CheckoutLineControls";
+import { CheckoutPaymentMethods } from "@/components/store/CheckoutPaymentMethods";
+import { isBankTransferConfigured } from "@/lib/bank-transfer";
 
 const labelClass =
   "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900";
@@ -93,6 +95,8 @@ function CheckoutErrorBanner({
         (message
           ? `Wompi: ${decodeURIComponent(message)}`
           : "Error al crear el enlace de pago en Wompi.")}
+      {error === "bank_transfer_unavailable" &&
+        "La transferencia bancaria no está disponible en este momento. Elige pago en línea o contáctanos."}
       {error === "account_link" &&
         "No pudimos vincular tu cuenta con el cliente del pedido. Si el correo ya está en uso por otra cuenta, inicia sesión con ese correo o escríbenos."}
       {![
@@ -108,6 +112,7 @@ function CheckoutErrorBanner({
         "items",
         "wompi",
         "account_link",
+        "bank_transfer_unavailable",
         "empty",
         "stock",
         "removed",
@@ -601,49 +606,16 @@ export default async function CheckoutPage({
 
               <section className="border-t border-stone-200 pt-12">
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
-                  Pago seguro (Wompi)
+                  Método de pago
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                  El cobro se completa en la pasarela de Wompi. Esta tienda no guarda datos de tu tarjeta.
+                  Elige cómo quieres pagar tu pedido. Con transferencia, subirás
+                  el comprobante al finalizar.
                 </p>
 
-                <fieldset className="mt-6 space-y-3">
-                  <legend className="sr-only">Elige método de pago</legend>
-                  <label className="flex cursor-pointer items-center gap-3 border border-stone-900 bg-white p-4 ring-1 ring-stone-900">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="wompi"
-                      defaultChecked
-                      className="size-4 border-stone-400 text-stone-900 focus:ring-stone-900"
-                    />
-                    <span className="text-sm font-medium text-stone-900">
-                      Pago en línea
-                    </span>
-                  </label>
-                  <label className="flex cursor-not-allowed items-center gap-3 border border-stone-200 bg-stone-50 p-4 opacity-60">
-                    <input type="radio" disabled className="size-4" />
-                    <span className="text-sm text-stone-600">
-                      Contra entrega{" "}
-                      <span className="text-stone-400">(próximamente)</span>
-                    </span>
-                  </label>
-                </fieldset>
-
-                <p className="mt-5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-                  <span className="font-medium uppercase tracking-wide text-stone-700">
-                    Medios típicos
-                  </span>
-                  <span className="border border-stone-200 px-2 py-0.5 font-mono text-[10px] tracking-wide">
-                    VISA
-                  </span>
-                  <span className="border border-stone-200 px-2 py-0.5 font-mono text-[10px] tracking-wide">
-                    MC
-                  </span>
-                  <span className="border border-stone-200 px-2 py-0.5 font-mono text-[10px] tracking-wide">
-                    PSE
-                  </span>
-                </p>
+                <CheckoutPaymentMethods
+                  bankTransferEnabled={isBankTransferConfigured()}
+                />
               </section>
             </div>
 

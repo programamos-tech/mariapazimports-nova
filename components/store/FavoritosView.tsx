@@ -4,15 +4,17 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
+import {
+  storeBtnPrimaryClass,
+  storeEmptyStateClass,
+  storeEmptyStateTextClass,
+} from "@/components/store/store-ui-primitives";
 import { storeBrand } from "@/lib/brand";
 import { storeShellClass } from "@/lib/store-layout";
 import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 
 const shellClass = `${storeShellClass} py-10 sm:py-12`;
-
-const primaryCtaClass =
-  "inline-flex items-center justify-center border border-stone-900 bg-stone-900 px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-stone-800";
 
 function FavoritosPageHeader({
   eyebrow,
@@ -146,7 +148,7 @@ export function FavoritosView() {
               Todavía no tienes productos guardados. Toca el corazón en las tarjetas de todos los
               productos y los verás aquí.
             </p>
-            <Link href="/products" className={`${primaryCtaClass} mt-8 w-full max-w-xs sm:w-auto`}>
+            <Link href="/products" className={`${storeBtnPrimaryClass} mt-8 w-full max-w-xs sm:w-auto`}>
               Ir a todos los productos
             </Link>
           </div>
@@ -168,12 +170,11 @@ export function FavoritosView() {
           <p className="text-sm text-stone-500">Cargando productos…</p>
         </div>
       ) : products.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-200 bg-[var(--store-chrome-bg)] px-4 py-10 text-center text-sm text-stone-600 sm:px-8">
-          No encontramos estos productos o ya no están publicados.{" "}
-          <Link
-            href="/products"
-            className="font-medium text-[var(--store-accent)] underline underline-offset-4 hover:text-[var(--store-accent-hover)]"
-          >
+        <div className={storeEmptyStateClass}>
+          <p className={storeEmptyStateTextClass}>
+            No encontramos estos productos o ya no están publicados.
+          </p>
+          <Link href="/products" className={`${storeBtnPrimaryClass} mt-6`}>
             Ver todos los productos
           </Link>
         </div>

@@ -37,13 +37,21 @@ export async function updateAdminOrderStatus(
     return { ok: false as const, error: "forbidden" as const };
   }
 
-  let payload: { status: string; cancellation_reason: string | null };
+  let payload: {
+    status: string;
+    cancellation_reason: string | null;
+    fulfillment_status?: string;
+  };
   if (next === "cancelled") {
     const reason = String(cancellationReason ?? "").trim();
     if (reason.length < ORDER_CANCELLATION_REASON_MIN_LENGTH) {
       return { ok: false as const, error: "reason_required" as const };
     }
-    payload = { status: next, cancellation_reason: reason };
+    payload = {
+      status: next,
+      cancellation_reason: reason,
+      fulfillment_status: "cancelled",
+    };
   } else {
     payload = { status: next, cancellation_reason: null };
   }

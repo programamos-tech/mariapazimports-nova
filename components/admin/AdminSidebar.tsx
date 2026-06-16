@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Suspense, type SVGProps } from "react";
-import { signOutAdmin } from "@/app/actions/admin/auth";
 import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
@@ -343,27 +342,19 @@ function AdminSidebarInner({
           </div>
         ))}
       </nav>
-      <div className="shrink-0 border-t border-stone-200/90 px-3 pb-2 pt-1.5 dark:border-zinc-800">
-        <div className="mb-1 flex flex-col items-center gap-0 px-1 text-center">
-          <span className="text-[7px] font-medium uppercase tracking-[0.18em] text-stone-400/85 dark:text-zinc-500/90">
+      <div className="shrink-0 border-t border-stone-200/90 px-4 py-4 dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-stone-400/90 dark:text-zinc-500/90">
             Experiencia por
           </span>
           <Image
             src={bereaSignaturePath}
-            alt="Berea — diseño y desarrollo"
-            width={320}
-            height={82}
-            className="h-7 w-auto max-w-[min(100%,7.5rem)] object-contain object-center opacity-[0.72]"
+            alt="Berea — agencia de software"
+            width={1536}
+            height={1024}
+            className="h-14 w-auto max-w-[min(100%,13rem)] object-contain object-center opacity-90"
           />
         </div>
-        <form action={signOutAdmin}>
-          <button
-            type="submit"
-            className="w-full rounded-lg px-3 py-1.5 text-left text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-          >
-            Salir
-          </button>
-        </form>
       </div>
     </aside>
   );

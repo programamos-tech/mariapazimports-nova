@@ -2,7 +2,7 @@
 
 import { getCart, normalizeCartForCheckout, setCart } from "@/lib/cart";
 import { storeBrand } from "@/lib/brand";
-import { ensureStoreCustomerLinked } from "@/lib/store-customer-service";
+import { ensureStoreCustomerLinked, attachAuthUserToCustomerEmail } from "@/lib/store-customer-service";
 import {
   findVariantForCartLine,
   migrateLegacyFragranceToVariantId,
@@ -25,9 +25,19 @@ import {
   quoteShippingForMunicipality,
   SHIPPING_METHOD_DELIVERY,
 } from "@/lib/shipping-rates";
+import {
+  createOrderTrackingToken,
+  isBankTransferConfigured,
+  ONLINE_BANK_TRANSFER_REF,
+} from "@/lib/bank-transfer";
 import { normalizeMunicipalityCode, normalizeDepartmentCode } from "@/lib/colombia-geo";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+function parsePaymentMethod(raw: FormDataEntryValue | null): "wompi" | "bank_transfer" {
+  const v = String(raw ?? "").trim();
+  return v === "bank_transfer" ? "bank_transfer" : "wompi";
+}
 
 function siteUrl() {
   return (
@@ -37,6 +47,15 @@ function siteUrl() {
 
 function isEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function isDuplicateDbError(error: { code?: string; message?: string } | null) {
+  if (!error) return false;
+  return (
+    error.code === "23505" ||
+    error.message?.toLowerCase().includes("duplicate") ||
+    error.message?.toLowerCase().includes("unique")
+  );
 }
 
 export async function startCheckout(formData: FormData) {
@@ -60,6 +79,11 @@ export async function startCheckout(formData: FormData) {
       String(formData.get("shippingDepartmentCode") ?? "").trim(),
     ) ?? "";
   const couponCode = String(formData.get("couponCode") ?? "").trim();
+  const paymentMethod = parsePaymentMethod(formData.get("paymentMethod"));
+
+  if (paymentMethod === "bank_transfer" && !isBankTransferConfigured()) {
+    redirect("/checkout?error=bank_transfer_unavailable");
+  }
 
   if (!resolvedName) {
     redirect("/checkout?error=missing_name");
@@ -79,6 +103,8 @@ export async function startCheckout(formData: FormData) {
   } = await sessionSb.auth.getUser();
 
   let customerEmailForOrder = customerEmail;
+  let linkedCustomerId: string | null = null;
+  let storeSessionUserId: string | null = null;
 
   if (sessionUser?.email) {
     const { data: adminProf } = await sessionSb
@@ -88,18 +114,16 @@ export async function startCheckout(formData: FormData) {
       .maybeSingle();
 
     if (!adminProf) {
+      storeSessionUserId = sessionUser.id;
       const sessionMeta = sessionUser.user_metadata as
         | { document_id?: string }
         | undefined;
-      const linked = await ensureStoreCustomerLinked(
+      linkedCustomerId = await ensureStoreCustomerLinked(
         sessionUser.id,
         sessionUser.email,
         resolvedName,
         sessionMeta?.document_id ?? null,
       );
-      if (!linked) {
-        redirect("/checkout?error=account_link");
-      }
       customerEmailForOrder = sessionUser.email;
     }
   }
@@ -263,20 +287,15 @@ export async function startCheckout(formData: FormData) {
 
   const emailLc = customerEmailForOrder.toLowerCase();
 
-  const { data: existingCustomer } = await supabase
-    .from("customers")
-    .select("id")
-    .eq("email", emailLc)
-    .maybeSingle();
-
   let customerId: string;
 
-  if (existingCustomer?.id) {
-    customerId = existingCustomer.id as string;
+  if (linkedCustomerId) {
+    customerId = linkedCustomerId;
     await supabase
       .from("customers")
       .update({
         name: resolvedName,
+        email: emailLc,
         phone: shippingPhone,
         shipping_address: shippingAddress,
         shipping_city: resolvedShippingCity,
@@ -284,25 +303,84 @@ export async function startCheckout(formData: FormData) {
       })
       .eq("id", customerId);
   } else {
-    const { data: insertedCustomer, error: cErr } = await supabase
+    const { data: existingCustomer } = await supabase
       .from("customers")
-      .insert({
+      .select("id, auth_user_id")
+      .eq("email", emailLc)
+      .maybeSingle();
+
+    if (existingCustomer?.id) {
+      customerId = existingCustomer.id as string;
+      const patch: Record<string, unknown> = {
         name: resolvedName,
-        email: emailLc,
         phone: shippingPhone,
         shipping_address: shippingAddress,
         shipping_city: resolvedShippingCity,
         shipping_postal_code: shippingPostalCode || null,
-        source: "storefront",
-      })
-      .select("id")
-      .single();
+      };
+      if (
+        storeSessionUserId &&
+        (!existingCustomer.auth_user_id ||
+          existingCustomer.auth_user_id === storeSessionUserId)
+      ) {
+        patch.auth_user_id = storeSessionUserId;
+      }
+      await supabase.from("customers").update(patch).eq("id", customerId);
+      if (storeSessionUserId && !existingCustomer.auth_user_id) {
+        linkedCustomerId =
+          (await attachAuthUserToCustomerEmail(
+            storeSessionUserId,
+            customerEmailForOrder,
+          )) ?? customerId;
+      }
+    } else {
+      const { data: insertedCustomer, error: cErr } = await supabase
+        .from("customers")
+        .insert({
+          name: resolvedName,
+          email: emailLc,
+          phone: shippingPhone,
+          shipping_address: shippingAddress,
+          shipping_city: resolvedShippingCity,
+          shipping_postal_code: shippingPostalCode || null,
+          source: "storefront",
+          auth_user_id: storeSessionUserId,
+        })
+        .select("id")
+        .single();
 
-    if (cErr || !insertedCustomer) {
-      redirect("/checkout?error=order");
+      if (cErr || !insertedCustomer) {
+        if (storeSessionUserId && isDuplicateDbError(cErr)) {
+          const recovered = await attachAuthUserToCustomerEmail(
+            storeSessionUserId,
+            customerEmailForOrder,
+          );
+          if (recovered) {
+            customerId = recovered;
+            await supabase
+              .from("customers")
+              .update({
+                name: resolvedName,
+                phone: shippingPhone,
+                shipping_address: shippingAddress,
+                shipping_city: resolvedShippingCity,
+                shipping_postal_code: shippingPostalCode || null,
+              })
+              .eq("id", customerId);
+          } else {
+            redirect("/checkout?error=order");
+          }
+        } else {
+          redirect("/checkout?error=order");
+        }
+      } else {
+        customerId = insertedCustomer.id as string;
+      }
     }
-    customerId = insertedCustomer.id as string;
   }
+
+  const trackingToken =
+    paymentMethod === "bank_transfer" ? createOrderTrackingToken() : null;
 
   const { data: orderRow, error: oErr } = await supabase
     .from("orders")
@@ -318,6 +396,12 @@ export async function startCheckout(formData: FormData) {
       shipping_method: SHIPPING_METHOD_DELIVERY,
       currency,
       status: "pending",
+      payment_method: paymentMethod === "bank_transfer" ? "bank_transfer" : "wompi",
+      fulfillment_status:
+        paymentMethod === "bank_transfer" ? "awaiting_payment" : null,
+      tracking_token: trackingToken,
+      wompi_reference:
+        paymentMethod === "bank_transfer" ? ONLINE_BANK_TRANSFER_REF : null,
       shipping_address: shippingAddress,
       shipping_city: resolvedShippingCity,
       shipping_postal_code: shippingPostalCode || null,
@@ -352,6 +436,13 @@ export async function startCheckout(formData: FormData) {
   revalidatePath("/admin/ventas");
   revalidatePath("/admin/orders");
   revalidatePath("/cuenta/pedidos");
+
+  if (paymentMethod === "bank_transfer" && trackingToken) {
+    await setCart([]);
+    redirect(
+      `/checkout/transferencia?order_id=${orderId}&token=${encodeURIComponent(trackingToken)}`,
+    );
+  }
 
   const returnUrl = `${siteUrl()}/checkout/return?order_id=${orderId}`;
 

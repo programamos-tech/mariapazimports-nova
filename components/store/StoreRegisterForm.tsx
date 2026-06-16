@@ -1,19 +1,18 @@
 "use client";
 
+import { registerStoreCustomer } from "@/app/actions/store-register";
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { friendlyStoreAuthError } from "@/components/store/store-auth-shared";
 import {
   storeAuthFormErrorClass,
   storeAuthFormHintClass,
-  storeAuthFormInfoClass,
   storeAuthFormInputClass,
   storeAuthFormLabelClass,
   storeAuthFormPrimaryBtnClass,
 } from "@/components/store/store-auth-form-primitives";
-import { normalizeDocumentIdForMatch } from "@/lib/normalize-document-id";
+import { normalizeDocumentIdForMatch, emailConflictsWithDocument } from "@/lib/normalize-document-id";
 
 export function StoreRegisterForm({
   onSuccess,
@@ -24,15 +23,39 @@ export function StoreRegisterForm({
   inputClassName?: string;
   submitButtonClassName?: string;
 } = {}) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function completeStoreSignIn(email: string, password: string) {
+    const supabase = createSupabaseBrowserClient();
+    const { error: signErr } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signErr) {
+      setLoading(false);
+      setError(friendlyStoreAuthError(signErr.message));
+      return;
+    }
+
+    try {
+      await syncStoreCustomerFromSession();
+    } catch {
+      /* el layout /cuenta vuelve a intentar; no bloquear el flujo por fallo puntual */
+    }
+
+    setLoading(false);
+    if (onSuccess) {
+      onSuccess();
+      return;
+    }
+    window.location.assign("/cuenta");
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setInfo(null);
     setLoading(true);
     const form = e.currentTarget;
     const name = (form.elements.namedItem("name") as HTMLInputElement).value
@@ -60,48 +83,71 @@ export function StoreRegisterForm({
       return;
     }
 
-    const supabase = createSupabaseBrowserClient();
-    const { data, error: signErr } = await supabase.auth.signUp({
+    if (emailConflictsWithDocument(documentNorm, email)) {
+      setLoading(false);
+      setError(
+        "El correo no puede ser tu cédula ni usarla como usuario (ej. 1234567890@gmail.com). Usá un correo distinto al documento.",
+      );
+      return;
+    }
+
+    const registerRes = await registerStoreCustomer({
+      name,
       email,
       password,
-      options: {
-        data: { full_name: name, document_id: documentNorm },
-      },
+      documentId: documentRaw,
     });
 
-    if (signErr) {
+    if (!registerRes.ok) {
       setLoading(false);
-      setError(friendlyStoreAuthError(signErr.message));
+      if (registerRes.error === "duplicate_email") {
+        setError("Ese correo ya está registrado. Prueba iniciar sesión.");
+        return;
+      }
+      if (registerRes.error === "duplicate_document") {
+        setError(
+          "Esta cédula ya está asociada a otra cuenta. Iniciá sesión con ese usuario o escribinos si necesitás ayuda.",
+        );
+        return;
+      }
+      if (registerRes.error === "document") {
+        setError(
+          "Escribí tu documento solo con números (mínimo 6 dígitos). Así podemos unirte con tus compras anteriores si ya compraste con nosotras.",
+        );
+        return;
+      }
+      if (registerRes.error === "document_email_conflict") {
+        setError(
+          "El correo no puede ser tu cédula ni usarla como usuario (ej. 1234567890@gmail.com). Usá un correo distinto al documento.",
+        );
+        return;
+      }
+      if (registerRes.error === "name") {
+        setError("Ingresa tu nombre.");
+        return;
+      }
+      if (registerRes.error === "password") {
+        setError("La contraseña debe tener al menos 6 caracteres.");
+        return;
+      }
+      if (registerRes.error === "email") {
+        setError("Ingresa un correo electrónico válido.");
+        return;
+      }
+      setError(
+        registerRes.message
+          ? friendlyStoreAuthError(registerRes.message)
+          : "No se pudo crear la cuenta. Intenta de nuevo.",
+      );
       return;
     }
 
-    if (data.session) {
-      try {
-        await syncStoreCustomerFromSession();
-      } catch {
-        /* el layout /cuenta vuelve a intentar; no bloquear el flujo por fallo puntual */
-      } finally {
-        setLoading(false);
-      }
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.replace("/cuenta");
-        router.refresh();
-      }
-      return;
-    }
-
-    setLoading(false);
-    setInfo(
-      "Te enviamos un correo para confirmar la cuenta. Cuando lo confirmes, puedes iniciar sesión.",
-    );
+    await completeStoreSignIn(email, password);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error ? <p className={storeAuthFormErrorClass}>{error}</p> : null}
-      {info ? <p className={storeAuthFormInfoClass}>{info}</p> : null}
       <label className="block">
         <span className={storeAuthFormLabelClass}>Nombre</span>
         <input

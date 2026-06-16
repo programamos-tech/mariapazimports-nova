@@ -3,8 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { updateAdminOrderStatus } from "@/app/actions/admin/order-status";
+import { updateOrderFulfillmentStatus } from "@/app/actions/admin/order-fulfillment";
 import { productInputClass as inputClass } from "@/components/admin/product-form-primitives";
 import { ORDER_CANCELLATION_REASON_MIN_LENGTH } from "@/lib/orders-constants";
+import {
+  ADMIN_FULFILLMENT_OPTIONS,
+  type OrderFulfillmentStatus,
+} from "@/lib/order-fulfillment";
+import { isVentaFisica } from "@/lib/ventas-sales";
 
 const INVOICE_OPTIONS: { value: string; label: string }[] = [
   { value: "paid", label: "Finalizada" },
@@ -13,12 +19,64 @@ const INVOICE_OPTIONS: { value: string; label: string }[] = [
   { value: "failed", label: "Fallida" },
 ];
 
+const FULFILLMENT_PREFIX = "fulfillment:";
+
+function isOnlineWebOrder(wompiReference: string | null | undefined): boolean {
+  return !isVentaFisica(wompiReference);
+}
+
+function paidFulfillmentValue(
+  fulfillmentStatus: string | null | undefined,
+): OrderFulfillmentStatus {
+  const allowed: OrderFulfillmentStatus[] = [
+    "accepted",
+    "preparing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
+  const f = fulfillmentStatus as OrderFulfillmentStatus;
+  return allowed.includes(f) ? f : "accepted";
+}
+
+function selectValueForOrder(
+  paymentStatus: string,
+  fulfillmentStatus: string | null | undefined,
+  wompiReference: string | null | undefined,
+): string {
+  if (paymentStatus === "paid" && isOnlineWebOrder(wompiReference)) {
+    return `${FULFILLMENT_PREFIX}${paidFulfillmentValue(fulfillmentStatus)}`;
+  }
+  return paymentStatus;
+}
+
+function buildStatusOptions(
+  paymentStatus: string,
+  wompiReference: string | null | undefined,
+): { value: string; label: string }[] {
+  if (paymentStatus === "paid" && isOnlineWebOrder(wompiReference)) {
+    return ADMIN_FULFILLMENT_OPTIONS.map((o) => ({
+      value: `${FULFILLMENT_PREFIX}${o.value}`,
+      label: o.label,
+    }));
+  }
+  return INVOICE_OPTIONS;
+}
+
 function selectClassForStatus(status: string): string {
   const base =
     "w-full min-w-[150px] rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-500 dark:focus-visible:ring-offset-zinc-900";
-  switch (status) {
+  const key = status.startsWith(FULFILLMENT_PREFIX)
+    ? status.slice(FULFILLMENT_PREFIX.length)
+    : status;
+  switch (key) {
     case "paid":
+    case "accepted":
+    case "delivered":
       return `${base} border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800/70 dark:bg-emerald-950/45 dark:text-emerald-100`;
+    case "preparing":
+    case "shipped":
+      return `${base} border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800/70 dark:bg-sky-950/45 dark:text-sky-100`;
     case "pending":
       return `${base} border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/45 dark:text-amber-100`;
     case "cancelled":
@@ -195,19 +253,27 @@ export function OrderInvoiceStatusSelect({
   orderId,
   invoiceRef,
   currentStatus,
+  fulfillmentStatus = null,
+  wompiReference = null,
 }: {
   orderId: string;
   invoiceRef: string;
   currentStatus: string;
+  fulfillmentStatus?: string | null;
+  wompiReference?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [value, setValue] = useState(currentStatus);
+  const [value, setValue] = useState(() =>
+    selectValueForOrder(currentStatus, fulfillmentStatus, wompiReference),
+  );
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
+  const options = buildStatusOptions(currentStatus, wompiReference);
+
   useEffect(() => {
-    setValue(currentStatus);
-  }, [currentStatus]);
+    setValue(selectValueForOrder(currentStatus, fulfillmentStatus, wompiReference));
+  }, [currentStatus, fulfillmentStatus, wompiReference]);
 
   return (
     <>
@@ -217,15 +283,42 @@ export function OrderInvoiceStatusSelect({
         value={value}
         onChange={(e) => {
           const v = e.target.value;
-          if (v === "cancelled" && currentStatus !== "cancelled") {
-            setCancelModalOpen(true);
+
+          if (v === "cancelled" || v === `${FULFILLMENT_PREFIX}cancelled`) {
+            if (currentStatus !== "cancelled") {
+              setCancelModalOpen(true);
+            }
             return;
           }
+
           setValue(v);
           startTransition(async () => {
+            if (v.startsWith(FULFILLMENT_PREFIX)) {
+              const fulfillment = v.slice(FULFILLMENT_PREFIX.length);
+              const res = await updateOrderFulfillmentStatus(orderId, fulfillment);
+              if (!res.ok) {
+                setValue(
+                  selectValueForOrder(
+                    currentStatus,
+                    fulfillmentStatus,
+                    wompiReference,
+                  ),
+                );
+              } else {
+                router.refresh();
+              }
+              return;
+            }
+
             const res = await updateAdminOrderStatus(orderId, v);
             if (!res.ok) {
-              setValue(currentStatus);
+              setValue(
+                selectValueForOrder(
+                  currentStatus,
+                  fulfillmentStatus,
+                  wompiReference,
+                ),
+              );
               return;
             }
             router.refresh();
@@ -233,7 +326,7 @@ export function OrderInvoiceStatusSelect({
         }}
         className={`${selectClassForStatus(value)} disabled:opacity-60`}
       >
-        {INVOICE_OPTIONS.map((o) => (
+        {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

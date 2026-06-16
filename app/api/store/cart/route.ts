@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { imagePathForProductLine } from "@/lib/product-line-image";
 import {
+  fetchStoreProductSuggestions,
+  type StoreProductSuggestion,
+} from "@/lib/store-product-suggestions";
+import {
   findVariantForCartLine,
   resolveCartLinePrice,
   resolveCartLineStock,
@@ -25,44 +29,15 @@ export type CartDrawerItem = {
   maxStock: number;
 };
 
-export type CartDrawerSuggestion = {
-  id: string;
-  name: string;
-  priceCents: number;
-  imagePath: string | null;
-  colors: string[];
-};
+export type CartDrawerSuggestion = StoreProductSuggestion;
 
 const SUGGESTION_LIMIT = 8;
-
-function normalizedColorList(colors: unknown): string[] {
-  if (!Array.isArray(colors)) return [];
-  return colors.filter((c): c is string => typeof c === "string" && c.trim().length > 0);
-}
 
 async function loadCartDrawerSuggestions(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   excludeIds: string[],
 ): Promise<CartDrawerSuggestion[]> {
-  const exclude = new Set(excludeIds);
-  const { data } = await supabase
-    .from("products")
-    .select("id,name,price_cents,image_path,colors,stock_quantity,created_at")
-    .eq("is_published", true)
-    .gt("stock_quantity", 0)
-    .order("created_at", { ascending: false })
-    .limit(Math.min(64, Math.max(32, SUGGESTION_LIMIT + exclude.size + 12)));
-
-  return (data ?? [])
-    .filter((row) => !exclude.has(row.id))
-    .slice(0, SUGGESTION_LIMIT)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      priceCents: p.price_cents,
-      imagePath: p.image_path,
-      colors: normalizedColorList(p.colors),
-    }));
+  return fetchStoreProductSuggestions(supabase, excludeIds, SUGGESTION_LIMIT);
 }
 
 function firstColorLabel(colors: unknown): string | null {

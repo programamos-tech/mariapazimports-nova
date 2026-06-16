@@ -1,5 +1,6 @@
 "use server";
 
+import { ensureStoreCustomerLinked } from "@/lib/store-customer-service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -48,16 +49,29 @@ export async function updateStoreCustomerBirthDateAction(formData: FormData) {
     redirect(`${next}?cumple=forbidden`);
   }
 
-  const { error } = await supabase
+  const meta = user.user_metadata as {
+    full_name?: string;
+    document_id?: string;
+  };
+  await ensureStoreCustomerLinked(
+    user.id,
+    user.email,
+    meta?.full_name ?? null,
+    meta?.document_id ?? null,
+  );
+
+  const { data: updated, error } = await supabase
     .from("customers")
     .update({ birth_date: birthDate })
-    .eq("auth_user_id", user.id);
+    .eq("auth_user_id", user.id)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !updated) {
     redirect(`${next}?cumple=db`);
   }
 
   revalidatePath("/cuenta");
   revalidatePath("/cuenta/direcciones");
-  redirect(`${next}?cumple=ok`);
+  redirect(next);
 }

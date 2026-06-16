@@ -12,6 +12,9 @@ export const storeAuthFormInputClass =
 export const storeAuthFormPrimaryBtnClass =
   "w-full bg-stone-900 py-4 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800 disabled:opacity-60";
 
+export const storeAuthFormSecondaryBtnClass =
+  "w-full border border-stone-900 bg-white py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-900 transition hover:bg-stone-900 hover:text-white";
+
 export const storeAuthFormErrorClass =
   "rounded-xl border border-red-200/90 bg-red-50/90 px-3 py-2.5 text-sm text-red-900";
 
