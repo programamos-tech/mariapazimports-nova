@@ -1,10 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-/** Evita metacaracteres en ILIKE. */
-function sanitizeIlikeQuery(q: string) {
-  return q.replace(/[%_\\]/g, "").slice(0, 80);
-}
+import {
+  sanitizeStoreProductSearchQuery,
+  storeProductNameOrBrandSearchOr,
+} from "@/lib/store-product-search";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,8 +12,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ products: [] });
   }
 
-  const q = sanitizeIlikeQuery(raw);
+  const q = sanitizeStoreProductSearchQuery(raw);
   if (q.length < 2) {
+    return NextResponse.json({ products: [] });
+  }
+
+  const orClause = storeProductNameOrBrandSearchOr(q);
+  if (!orClause) {
     return NextResponse.json({ products: [] });
   }
 
@@ -30,9 +34,9 @@ export async function GET(request: Request) {
   const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("products")
-    .select("id,name,price_cents,image_path")
+    .select("id,name,brand,price_cents,image_path")
     .eq("is_published", true)
-    .ilike("name", `%${q}%`)
+    .or(orClause)
     .order("name")
     .limit(12);
 

@@ -4,6 +4,7 @@ import {
   expandManyCategoryIdsFromRows,
   fetchExpandedCategoryIds,
 } from "@/lib/store-category-group";
+import { storeProductNameOrBrandSearchOr } from "@/lib/store-product-search";
 
 /** Legacy (`size_value`/`size_unit`) o cualquier entrada en `size_options`. */
 export function productMatchesSizeFilterClause(s: {
@@ -112,7 +113,8 @@ export async function fetchPublishedProductsForListing(
   }
 
   if (input.q) {
-    query = query.ilike("name", `%${input.q}%`);
+    const orClause = storeProductNameOrBrandSearchOr(input.q);
+    if (orClause) query = query.or(orClause);
   }
 
   switch (input.sort) {

@@ -7,7 +7,8 @@ import {
 } from "@/components/store/ProductDetailView";
 import { ProductDetailHeroServer } from "@/components/store/ProductDetailHeroServer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { productHeroImageUrl } from "@/lib/storage-image-url";
+import { productHeroImageSources } from "@/lib/storage-image-url";
+import { STORE_PRODUCT_DETAIL_HERO_SIZES } from "@/lib/store-product-card-image";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import {
   normalizeProductImagePaths,
@@ -99,9 +100,17 @@ export default async function ProductDetailPage({ params }: Props) {
     variants[0]?.label
       ? `${product.name} — ${variants[0]!.label}`
       : product.name;
-  const heroPreloadUrl = productHeroImageUrl(initialHeroSrc);
+  const { src: heroPreloadUrl, srcSet: heroPreloadSrcSet } =
+    productHeroImageSources(initialHeroSrc);
   if (heroPreloadUrl) {
-    preload(heroPreloadUrl, { as: "image", fetchPriority: "high" });
+    preload(heroPreloadUrl, {
+      as: "image",
+      fetchPriority: "high",
+      // Coincide con el <img> del hero para que el navegador precargue el mismo
+      // candidato y no descargue dos imágenes distintas.
+      imageSrcSet: heroPreloadSrcSet ?? undefined,
+      imageSizes: heroPreloadSrcSet ? STORE_PRODUCT_DETAIL_HERO_SIZES : undefined,
+    });
   }
 
   return (
@@ -111,6 +120,10 @@ export default async function ProductDetailPage({ params }: Props) {
           rel="preload"
           as="image"
           href={heroPreloadUrl}
+          imageSrcSet={heroPreloadSrcSet ?? undefined}
+          imageSizes={
+            heroPreloadSrcSet ? STORE_PRODUCT_DETAIL_HERO_SIZES : undefined
+          }
           fetchPriority="high"
         />
       ) : null}

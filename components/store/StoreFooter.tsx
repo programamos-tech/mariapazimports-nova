@@ -3,7 +3,6 @@ import Link from "next/link";
 import { StoreLogo } from "@/components/store/StoreLogo";
 import { storeShellClass } from "@/lib/store-layout";
 import {
-  bereaSignaturePath,
   storeCopyrightHolder,
   storeInstagramUrl,
   storeSupportEmail,
@@ -167,11 +166,11 @@ export function StoreFooter() {
             </nav>
             <div className="group shrink-0 sm:pl-1">
               <Image
-                src={bereaSignaturePath}
-                alt="Berea — diseño y desarrollo de software a la medida"
-                width={320}
-                height={82}
-                className="h-10 w-auto max-w-[15rem] origin-right object-contain object-right opacity-[0.82] transition-[opacity,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100 group-hover:[filter:brightness(1.06)_contrast(1.03)_drop-shadow(0_12px_28px_rgba(61,82,64,0.14))] sm:h-12 sm:max-w-[18rem]"
+                src="/logo-berea-agencia.png"
+                alt="Berea — agencia de software"
+                width={1536}
+                height={1024}
+                className="h-20 w-auto max-w-[min(100%,14rem)] origin-right object-contain object-right opacity-[0.82] transition-[opacity,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100 group-hover:[filter:brightness(1.06)_contrast(1.03)_drop-shadow(0_12px_28px_rgba(61,82,64,0.14))] sm:h-24 sm:max-w-[18rem] md:h-28 md:max-w-[22rem]"
               />
             </div>
           </div>

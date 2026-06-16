@@ -10,12 +10,11 @@ const CARD_SRCSET_TIERS = [
   { width: 1920, height: 2400 },
 ] as const;
 
-/** PDP 4:5 — srcSet hasta 2560w (retina / Full HD). */
+/** PDP 4:5 — srcSet hasta 1920w (cubre Full HD / retina sin sobrepeso). */
 const HERO_SRCSET_TIERS = [
   { width: 960, height: 1200 },
   { width: 1440, height: 1800 },
   { width: 1920, height: 2400 },
-  { width: 2560, height: 3200 },
 ] as const;
 
 const PRESETS: Record<
@@ -175,8 +174,9 @@ function productFrameImageSources(
   }
 
   const resize = "contain" as const;
-  const format = "origin" as const;
 
+  // Sin `format` para que Supabase sirva WebP/AVIF automáticamente (Accept header).
+  // No baja calidad: mismos píxeles en un códec más liviano.
   const entries = tiers.map(({ width, height }) => {
     const url =
       storageImageTransformUrl(src, {
@@ -184,7 +184,6 @@ function productFrameImageSources(
         height,
         quality,
         resize,
-        format,
       }) ?? fallback;
     return `${url} ${width}w`;
   });
@@ -197,7 +196,6 @@ function productFrameImageSources(
       height: largest.height,
       quality,
       resize,
-      format,
     }) ?? fallback;
 
   if (unique.length <= 1) {

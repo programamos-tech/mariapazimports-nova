@@ -35,6 +35,10 @@ export const metadata: Metadata = {
   },
   description: storeShortDescription,
   applicationName: storeBrand,
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

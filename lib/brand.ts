@@ -27,7 +27,7 @@ export const storeShortDescription =
 
 /** Teléfono de contacto (footer, cabecera). */
 export const storeSupportPhone =
-  process.env.NEXT_PUBLIC_STORE_PHONE ?? "+57 300 555 0100";
+  process.env.NEXT_PUBLIC_STORE_PHONE ?? "+57 304 542 8347";
 
 /**
  * Solo dígitos para wa.me (sin +). Puedes fijar NEXT_PUBLIC_WHATSAPP_NUMBER si difiere del teléfono visible.
@@ -57,7 +57,7 @@ export const storeWelcomeDiscountCode =
 
 /** Email de contacto visible en el footer. */
 export const storeSupportEmail =
-  process.env.NEXT_PUBLIC_STORE_EMAIL ?? "hola@mariapazimports.com";
+  process.env.NEXT_PUBLIC_STORE_EMAIL ?? "mariapazestradalozano@gmail.com";
 
 /** Horario de atención (texto libre). */
 export const storeSupportHours =

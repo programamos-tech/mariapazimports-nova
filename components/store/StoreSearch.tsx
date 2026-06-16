@@ -20,6 +20,7 @@ import {
 type ProductRow = {
   id: string;
   name: string;
+  brand: string | null;
   price_cents: number;
   image_path: string | null;
 };
@@ -96,6 +97,9 @@ function SearchResultsPanel({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-stone-900">{p.name}</p>
+                    {p.brand?.trim() ? (
+                      <p className="truncate text-[11px] text-stone-500">{p.brand}</p>
+                    ) : null}
                     <p className="mt-0.5 flex items-center gap-1.5">
                       <span
                         className="text-[11px] leading-none tracking-tight text-[#6b7f6a]"
@@ -243,7 +247,7 @@ export function StoreSearch({
             name="q"
             type="search"
             autoComplete="off"
-            placeholder="Buscar"
+            placeholder="Buscar producto o marca"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             onFocus={() => {
@@ -270,7 +274,7 @@ export function StoreSearch({
           name="q"
           type="search"
           autoComplete="off"
-          placeholder="Buscar producto"
+          placeholder="Buscar producto o marca"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           onFocus={() => {
