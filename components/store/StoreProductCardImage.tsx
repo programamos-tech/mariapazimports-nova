@@ -54,7 +54,7 @@ function CardPhoto({
       className={className}
       loading={loading ?? (priority ? "eager" : "lazy")}
       fetchPriority={fetchPriority}
-      decoding={priority ? "sync" : "async"}
+      decoding="async"
     />
   );
 }
