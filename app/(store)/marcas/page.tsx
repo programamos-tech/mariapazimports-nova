@@ -156,18 +156,21 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
 
   const list = invalidCategory
     ? []
-    : await fetchPublishedProductsForListing(supabase, {
-        categoryFilterId,
-        filterCategoryIds,
-        activeBrands,
-        activeColors,
-        activeSizes,
-        priceMin,
-        priceMax,
-        q,
-        sort,
-        allCategoryRows,
-      });
+    : (
+        await fetchPublishedProductsForListing(supabase, {
+          categoryFilterId,
+          filterCategoryIds,
+          activeBrands,
+          activeColors,
+          activeSizes,
+          priceMin,
+          priceMax,
+          q,
+          sort,
+          allCategoryRows,
+          unpaged: true,
+        })
+      ).products;
 
   const enrichedList = await enrichListingProductsWithVariants(supabase, list);
   const sections = groupPublishedProductsByBrand(enrichedList);

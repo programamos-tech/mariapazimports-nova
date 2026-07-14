@@ -6,6 +6,9 @@ import {
 } from "@/lib/store-category-group";
 import { storeProductNameOrBrandSearchOr } from "@/lib/store-product-search";
 
+/** Productos por página en listados filtrados. */
+export const STORE_CATALOG_PAGE_SIZE = 24;
+
 /** Legacy (`size_value`/`size_unit`) o cualquier entrada en `size_options`. */
 export function productMatchesSizeFilterClause(s: {
   value: number;
@@ -46,6 +49,11 @@ export type StoreListingQueryInput = {
     | { id: string; name: string; sort_order: number }[]
     | null
     | undefined;
+  /** 1-based. Si se omite, se devuelve la primera página. */
+  page?: number;
+  pageSize?: number;
+  /** Sin `range` (p. ej. `/marcas` agrupa todo el catálogo). */
+  unpaged?: boolean;
 };
 
 /**
@@ -54,7 +62,7 @@ export type StoreListingQueryInput = {
 export async function fetchPublishedProductsForListing(
   supabase: SupabaseClient,
   input: StoreListingQueryInput,
-): Promise<StoreListingProductRow[]> {
+): Promise<{ products: StoreListingProductRow[]; total: number }> {
   let expandedCategoryIds: string[] | null = null;
   if (input.categoryFilterId) {
     expandedCategoryIds =
@@ -69,7 +77,9 @@ export async function fetchPublishedProductsForListing(
   let query = supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at",
+      // Sin description: las cards no la muestran y ahorra payload HTML/RSC.
+      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at",
+      { count: "exact" },
     )
     .eq("is_published", true);
 
@@ -131,7 +141,31 @@ export async function fetchPublishedProductsForListing(
       query = query.order("created_at", { ascending: false });
   }
 
-  const { data: products, error: productsError } = await query;
+  if (input.unpaged) {
+    const { data: products, error: productsError } = await query;
+    if (productsError) {
+      console.error(
+        "[store-products-listing]",
+        productsError.message,
+        productsError.code,
+      );
+    }
+    const rows = (products ?? []).map((p) => ({
+      ...p,
+      description: null,
+    })) as StoreListingProductRow[];
+    return { products: rows, total: rows.length };
+  }
+
+  const pageSize = Math.max(1, input.pageSize ?? STORE_CATALOG_PAGE_SIZE);
+  const page = Math.max(1, input.page ?? 1);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: products, count, error: productsError } = await query.range(
+    from,
+    to,
+  );
   if (productsError) {
     console.error(
       "[store-products-listing]",
@@ -139,5 +173,11 @@ export async function fetchPublishedProductsForListing(
       productsError.code,
     );
   }
-  return (products ?? []) as StoreListingProductRow[];
+  return {
+    products: (products ?? []).map((p) => ({
+      ...p,
+      description: null,
+    })) as StoreListingProductRow[],
+    total: typeof count === "number" ? count : (products?.length ?? 0),
+  };
 }

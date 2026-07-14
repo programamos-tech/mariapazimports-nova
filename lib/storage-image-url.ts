@@ -2,19 +2,18 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
-/** Tarjeta 4:5 — srcSet hasta 1920w para pantallas Full HD / retina. */
+/** Tarjeta 4:5 — srcSet contenido (máx ~800w visuales; sin 1920). */
 const CARD_SRCSET_TIERS = [
+  { width: 400, height: 500 },
   { width: 640, height: 800 },
-  { width: 960, height: 1200 },
-  { width: 1280, height: 1600 },
-  { width: 1920, height: 2400 },
+  { width: 800, height: 1000 },
 ] as const;
 
-/** PDP 4:5 — srcSet hasta 1920w (cubre Full HD / retina sin sobrepeso). */
+/** PDP 4:5 — tope razonable para móvil/desktop. */
 const HERO_SRCSET_TIERS = [
-  { width: 960, height: 1200 },
-  { width: 1440, height: 1800 },
-  { width: 1920, height: 2400 },
+  { width: 720, height: 900 },
+  { width: 1080, height: 1350 },
+  { width: 1400, height: 1750 },
 ] as const;
 
 const PRESETS: Record<
@@ -28,31 +27,26 @@ const PRESETS: Record<
   }
 > = {
   card: {
-    width: CARD_SRCSET_TIERS[3].width,
-    height: CARD_SRCSET_TIERS[3].height,
-    quality: 98,
+    width: CARD_SRCSET_TIERS[2].width,
+    height: CARD_SRCSET_TIERS[2].height,
+    quality: 75,
     resize: "contain",
-    format: "origin",
   },
   thumb: {
     width: 256,
     height: 256,
-    quality: 90,
+    quality: 72,
     resize: "contain",
-    format: "origin",
   },
-  /** Reservado; en PDP usamos el archivo original sin transformar. */
   hero: {
-    width: 2500,
-    height: 3125,
-    quality: 95,
+    width: 1400,
+    height: 1750,
+    quality: 80,
     resize: "contain",
-    format: "origin",
   },
   banner: {
-    width: 2500,
-    quality: 92,
-    format: "origin",
+    width: 1400,
+    quality: 78,
   },
 };
 
@@ -176,7 +170,6 @@ function productFrameImageSources(
   const resize = "contain" as const;
 
   // Sin `format` para que Supabase sirva WebP/AVIF automáticamente (Accept header).
-  // No baja calidad: mismos píxeles en un códec más liviano.
   const entries = tiers.map(({ width, height }) => {
     const url =
       storageImageTransformUrl(src, {
@@ -208,12 +201,12 @@ function productFrameImageSources(
   };
 }
 
-/** Ficha de producto: 4:5 contain en HD (producto completo, marco lleno). */
+/** Ficha de producto: 4:5 contain en HD razonable. */
 export function productHeroImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;
 } {
-  return productFrameImageSources(src, HERO_SRCSET_TIERS, 100);
+  return productFrameImageSources(src, HERO_SRCSET_TIERS, 80);
 }
 
 /** URL principal del hero PDP. */
@@ -235,7 +228,7 @@ export function productDisplayImageUrl(
   return storageImageTransformUrl(src, preset) ?? src;
 }
 
-/** Tarjetas: 4:5 contain + srcSet retina (producto completo, sin bandas laterales). */
+/** Tarjetas: 4:5 contain + srcSet liviano. */
 export function productCardImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;

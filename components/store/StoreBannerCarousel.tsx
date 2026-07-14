@@ -164,7 +164,7 @@ export function StoreBannerCarousel({
 
   const sizes =
     variant === "hero"
-      ? "100vw"
+      ? "(max-width: 768px) 100vw, 1400px"
       : "(max-width: 768px) 100vw, 896px";
 
   const shell =

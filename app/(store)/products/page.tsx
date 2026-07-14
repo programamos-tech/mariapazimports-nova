@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CatalogBrowseSections } from "@/components/store/CatalogBrowseSections";
 import { CatalogListingHero } from "@/components/store/CatalogListingHero";
+import { CatalogPagination } from "@/components/store/CatalogPagination";
 import { CategoryListingHero } from "@/components/store/CategoryListingHero";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
@@ -35,6 +36,7 @@ import {
 } from "@/lib/store-listing-variant-meta";
 import {
   fetchPublishedProductsForListing,
+  STORE_CATALOG_PAGE_SIZE,
   type StoreListingProductRow,
 } from "@/lib/store-products-listing-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
@@ -62,6 +64,7 @@ type Props = {
     categories?: string | string[];
     price_min?: string | string[];
     price_max?: string | string[];
+    page?: string | string[];
   }>;
 };
 
@@ -74,6 +77,10 @@ export default async function ProductsPage({ searchParams }: Props) {
     typeof sortRaw === "string" && sortRaw.trim()
       ? sortRaw.trim()
       : "newest";
+  const pageRaw = firstSearchParam(sp.page);
+  const pageParsed = Number.parseInt(pageRaw, 10);
+  const page =
+    Number.isFinite(pageParsed) && pageParsed > 0 ? Math.floor(pageParsed) : 1;
   const categoryId = parseProductsCategoryId(firstSearchParam(sp.category));
   const brandsParam = parseProductsBrandsParam(firstSearchParam(sp.brands));
   const legacyBrand = parseProductsBrandFilter(firstSearchParam(sp.brand));
@@ -199,7 +206,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     listingFacetsFromQuery,
     productsBanners,
     catalogBrowseData,
-    list,
+    listingResult,
     cartQtyByProductId,
     couponPctByProductId,
   ] = await Promise.all([
@@ -213,7 +220,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       fetchCatalogBrowseSections(supabase, allCategoryRows)
     : Promise.resolve(null),
     catalogBrowseMode ?
-      Promise.resolve([] as StoreListingProductRow[])
+      Promise.resolve({ products: [] as StoreListingProductRow[], total: 0 })
     : fetchPublishedProductsForListing(supabase, {
         categoryFilterId,
         filterCategoryIds,
@@ -225,10 +232,46 @@ export default async function ProductsPage({ searchParams }: Props) {
         q,
         sort,
         allCategoryRows,
+        page,
       }),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
   ]);
+
+  let list = listingResult.products;
+  let listingTotal = listingResult.total;
+  let totalPages = Math.max(
+    1,
+    Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE),
+  );
+  let currentPage = Math.min(page, totalPages);
+
+  if (
+    !catalogBrowseMode &&
+    page > totalPages &&
+    listingTotal > 0
+  ) {
+    const clamped = await fetchPublishedProductsForListing(supabase, {
+      categoryFilterId,
+      filterCategoryIds,
+      activeBrands,
+      activeColors,
+      activeSizes,
+      priceMin,
+      priceMax,
+      q,
+      sort,
+      allCategoryRows,
+      page: totalPages,
+    });
+    list = clamped.products;
+    listingTotal = clamped.total;
+    totalPages = Math.max(
+      1,
+      Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE),
+    );
+    currentPage = totalPages;
+  }
 
   const catalogSections = catalogBrowseData?.sections ?? null;
   const listingFacets =
@@ -238,6 +281,7 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   /** Si el modo “por categorías” no devolvió secciones pero hay filas publicadas (p. ej. error al leer categorías), mostrar grid plano. */
   let browseFlatFallback: StoreListingProductRow[] = [];
+  let browseFlatTotal = 0;
   let publishedProductHeadCount: number | null = null;
   if (
     catalogBrowseMode &&
@@ -253,7 +297,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       publishedProductHeadCount = count ?? 0;
     }
     if ((publishedProductHeadCount ?? 0) > 0) {
-      browseFlatFallback = await fetchPublishedProductsForListing(supabase, {
+      const flat = await fetchPublishedProductsForListing(supabase, {
         categoryFilterId: null,
         filterCategoryIds: [],
         activeBrands: [],
@@ -264,9 +308,18 @@ export default async function ProductsPage({ searchParams }: Props) {
         q: "",
         sort,
         allCategoryRows,
+        page,
       });
+      browseFlatFallback = flat.products;
+      browseFlatTotal = flat.total;
     }
   }
+
+  const browseFlatTotalPages = Math.max(
+    1,
+    Math.ceil(browseFlatTotal / STORE_CATALOG_PAGE_SIZE),
+  );
+  const browseFlatCurrentPage = Math.min(page, browseFlatTotalPages);
 
   const showCatalogBrowseSections =
     catalogBrowseMode &&
@@ -296,6 +349,31 @@ export default async function ProductsPage({ searchParams }: Props) {
     sort,
     q,
   ].join("::");
+
+  const paginationParams = new URLSearchParams();
+  if (q) paginationParams.set("q", q);
+  if (sort && sort !== "newest") paginationParams.set("sort", sort);
+  if (categoryFilterId) paginationParams.set("category", categoryFilterId);
+  if (activeBrands.length === 1 && !firstSearchParam(sp.brands)) {
+    paginationParams.set("brand", activeBrands[0]!);
+  } else if (activeBrands.length > 0) {
+    paginationParams.set("brands", activeBrands.join("|"));
+  }
+  if (activeColors.length > 0) {
+    paginationParams.set("colors", activeColors.join("|"));
+  }
+  if (activeSizes.length > 0) {
+    paginationParams.set(
+      "sizes",
+      activeSizes.map((s) => `${s.value}:${s.unit}`).join("|"),
+    );
+  }
+  if (filterCategoryIds.length > 0) {
+    paginationParams.set("categories", filterCategoryIds.join("|"));
+  }
+  if (priceMin != null) paginationParams.set("price_min", String(priceMin));
+  if (priceMax != null) paginationParams.set("price_max", String(priceMax));
+  const paginationBaseQuery = paginationParams.toString();
 
   const catalogHeroBanner = productsBanners[0];
 
@@ -397,18 +475,25 @@ export default async function ProductsPage({ searchParams }: Props) {
             couponPctByProductId={couponPctByProductId}
           />
         ) : showBrowseFlatFallback ? (
-          <ul className={storeProductGridClass}>
-            {browseFlatFallback.map((p, index) => (
-              <li key={p.id} className="h-full">
-                <ProductListingCard
-                  imagePriority={storeProductCardImagePriority(index)}
-                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                  product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
-                />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-10">
+            <ul className={storeProductGridClass}>
+              {browseFlatFallback.map((p, index) => (
+                <li key={p.id} className="h-full">
+                  <ProductListingCard
+                    imagePriority={storeProductCardImagePriority(index)}
+                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                    product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
+                  />
+                </li>
+              ))}
+            </ul>
+            <CatalogPagination
+              currentPage={browseFlatCurrentPage}
+              totalPages={browseFlatTotalPages}
+              baseQuery={paginationBaseQuery}
+            />
+          </div>
         ) : catalogBrowseMode ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             {publishedProductHeadCount != null && publishedProductHeadCount > 0
@@ -426,18 +511,25 @@ export default async function ProductsPage({ searchParams }: Props) {
                   : "Aún no hay productos publicados. Cárgalos desde el admin."}
           </p>
         ) : (
-          <ul className={storeProductGridClass}>
-            {enrichedList.map((p, index) => (
-              <li key={p.id} className="h-full">
-                <ProductListingCard
-                  imagePriority={storeProductCardImagePriority(index)}
-                  cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                  couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                  product={toProductListingCardProps(p)}
-                />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-10">
+            <ul className={storeProductGridClass}>
+              {enrichedList.map((p, index) => (
+                <li key={p.id} className="h-full">
+                  <ProductListingCard
+                    imagePriority={storeProductCardImagePriority(index)}
+                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
+                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
+                    product={toProductListingCardProps(p)}
+                  />
+                </li>
+              ))}
+            </ul>
+            <CatalogPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              baseQuery={paginationBaseQuery}
+            />
+          </div>
         )}
       </div>
     </div>

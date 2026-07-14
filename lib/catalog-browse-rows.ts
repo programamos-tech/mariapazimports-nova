@@ -10,7 +10,7 @@ const PRODUCT_SELECT =
 /** Incluye `category_id` solo para armar la vitrina en servidor (no se expone al card). */
 const PRODUCT_SELECT_WITH_CATEGORY = `${PRODUCT_SELECT},category_id,colors`;
 
-export const CATALOG_ROW_PREVIEW_LIMIT = 12;
+export const CATALOG_ROW_PREVIEW_LIMIT = 8;
 
 export type CatalogBrowseProductRow = {
   id: string;
