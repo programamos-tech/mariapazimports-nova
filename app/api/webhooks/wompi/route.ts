@@ -1,27 +1,20 @@
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { deductStockForOrderItem } from "@/lib/product-stock";
-import { verifyWompiEventIntegrity } from "@/lib/wompi";
+import { createHash } from "node:crypto";
+import { getWompiEnv } from "@/config/payments";
+import { PaymentService } from "@/services/payment.service";
+import { isPaymentError } from "@/lib/payments/errors";
+import { paymentLogger } from "@/lib/payments/logger";
+import { verifyEventChecksum } from "@/lib/payments/signature";
+import type { WompiTransaction, WompiWebhookPayload } from "@/types/wompi";
 
 export const runtime = "nodejs";
 
-function mapTxnStatus(
-  status: string | undefined,
-): "paid" | "failed" | null {
-  if (!status) return null;
-  const u = status.toUpperCase();
-  if (u === "APPROVED") return "paid";
-  if (
-    u === "DECLINED" ||
-    u === "VOIDED" ||
-    u === "ERROR" ||
-    u === "CANCELED" ||
-    u === "CANCELLED"
-  ) {
-    return "failed";
-  }
-  return null;
-}
-
+/**
+ * Webhook Wompi Events.
+ * - Verifica X-Event-Checksum (events secret + timestamp)
+ * - Idempotencia vía payment_events.checksum
+ * - Confirma monto/moneda en PaymentService
+ * - Nunca confía en el redirect del navegador
+ */
 export async function POST(request: Request) {
   const raw = await request.text();
   let body: unknown;
@@ -31,99 +24,73 @@ export async function POST(request: Request) {
     return new Response("invalid json", { status: 400 });
   }
 
-  if (!verifyWompiEventIntegrity(body)) {
-    return new Response("invalid signature", { status: 401 });
-  }
+  const headerChecksum =
+    request.headers.get("x-event-checksum") ??
+    request.headers.get("X-Event-Checksum");
 
-  const data = (body as { data?: Record<string, unknown> }).data;
-  const transaction = data?.transaction as
-    | Record<string, unknown>
-    | undefined;
-  if (!transaction) {
-    return new Response("ok", { status: 200 });
-  }
-
-  const txnId = transaction.id != null ? String(transaction.id) : null;
-  const reference =
-    transaction.reference != null ? String(transaction.reference) : null;
-  const paymentLinkId =
-    transaction.payment_link_id != null
-      ? String(transaction.payment_link_id)
-      : transaction.payment_link != null &&
-          typeof transaction.payment_link === "object" &&
-          "id" in (transaction.payment_link as object)
-        ? String((transaction.payment_link as { id: unknown }).id)
-        : null;
-
-  const mapped = mapTxnStatus(
-    transaction.status != null ? String(transaction.status) : undefined,
-  );
-  if (!mapped) {
-    return new Response("ok", { status: 200 });
-  }
-
-  const supabase = createSupabaseServiceClient();
-
-  let orderId: string | null = null;
-  if (reference && /^[0-9a-f-]{36}$/i.test(reference)) {
-    orderId = reference;
-  }
-  if (!orderId && paymentLinkId) {
-    const { data: row } = await supabase
-      .from("orders")
-      .select("id")
-      .eq("wompi_payment_link_id", paymentLinkId)
-      .maybeSingle();
-    orderId = (row?.id as string | undefined) ?? null;
-  }
-
-  if (!orderId) {
-    return new Response("ok", { status: 200 });
-  }
-
-  const { data: order } = await supabase
-    .from("orders")
-    .select("id,status")
-    .eq("id", orderId)
-    .maybeSingle();
-
-  if (!order) {
-    return new Response("ok", { status: 200 });
-  }
-
-  if (order.status === "paid" && mapped === "paid") {
-    return new Response("ok", { status: 200 });
-  }
-
-  const nextStatus = mapped;
-  const { error: updErr } = await supabase
-    .from("orders")
-    .update({
-      status: nextStatus,
-      wompi_transaction_id: txnId ?? undefined,
-      wompi_reference: reference ?? undefined,
-    })
-    .eq("id", orderId);
-
-  if (updErr) {
-    console.error("[wompi webhook] order update", updErr);
-    return new Response("db error", { status: 500 });
-  }
-
-  if (nextStatus === "paid") {
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("product_id,variant_id,quantity")
-      .eq("order_id", orderId);
-
-    for (const it of items ?? []) {
-      const pid = it.product_id as string | null;
-      if (!pid) continue;
-      const variantId = (it.variant_id as string | null | undefined) ?? null;
-      const q = Number(it.quantity) || 0;
-      await deductStockForOrderItem(supabase, pid, variantId, q);
+  try {
+    if (!verifyEventChecksum(body, headerChecksum)) {
+      paymentLogger.warn("webhook signature rejected");
+      return new Response("invalid signature", { status: 401 });
     }
+  } catch (err) {
+    paymentLogger.error("webhook signature config error", err);
+    return new Response("signature config error", { status: 500 });
   }
 
-  return new Response("ok", { status: 200 });
+  const payload = body as WompiWebhookPayload;
+  const txn = payload.data?.transaction as WompiTransaction | undefined;
+  if (!txn?.id || !txn.reference) {
+    return new Response("ok", { status: 200 });
+  }
+
+  const checksum =
+    (headerChecksum?.trim() ||
+      payload.signature?.checksum ||
+      createHash("sha256").update(raw).digest("hex")).trim();
+
+  try {
+    const payment = await PaymentService.findByReference(txn.reference);
+    const isNew = await PaymentService.recordEvent({
+      paymentId: payment?.id ?? null,
+      checksum,
+      eventId: `${payload.event ?? "event"}:${txn.id}:${payload.timestamp ?? ""}`,
+      eventType: payload.event ?? null,
+      payload: body as Record<string, unknown>,
+    });
+
+    if (!isNew) {
+      return new Response("ok", { status: 200 });
+    }
+
+    await PaymentService.applyProviderTransaction(txn, "webhook");
+    paymentLogger.info("webhook processed", {
+      reference: txn.reference,
+      txnId: txn.id,
+      status: txn.status,
+      env: getWompiEnv(),
+    });
+    return new Response("ok", { status: 200 });
+  } catch (err) {
+    if (isPaymentError(err)) {
+      paymentLogger.error("webhook business error", {
+        code: err.code,
+        message: err.message,
+        details: err.details,
+      });
+      // Mismatch de negocio: 200 para que Wompi no reintente en bucle.
+      if (
+        err.code === "AMOUNT_MISMATCH" ||
+        err.code === "CURRENCY_MISMATCH"
+      ) {
+        return new Response(err.message, { status: 200 });
+      }
+      if (err.httpStatus >= 500) {
+        return new Response(err.message, { status: 500 });
+      }
+      return new Response(err.message, { status: 200 });
+    }
+    paymentLogger.error("webhook unexpected error", err);
+    return new Response("error", { status: 500 });
+  }
 }

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CheckoutPaymentPoller } from "@/components/store/CheckoutPaymentPoller";
+import { PaymentStatus } from "@/components/payments/PaymentStatus";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatCop } from "@/lib/money";
@@ -7,11 +9,12 @@ import { storeShellClass } from "@/lib/store-layout";
 
 export const dynamic = "force-dynamic";
 
-const labels: Record<string, string> = {
+const orderLabels: Record<string, string> = {
   pending: "Pendiente de pago",
   paid: "Pagado",
   failed: "Pago rechazado o fallido",
   cancelled: "Cancelado",
+  awaiting_payment: "Esperando transferencia",
 };
 
 export default async function CheckoutReturnPage({
@@ -22,6 +25,8 @@ export default async function CheckoutReturnPage({
   const sp = await searchParams;
   const orderId =
     typeof sp.order_id === "string" ? sp.order_id : undefined;
+  const reference =
+    typeof sp.reference === "string" ? sp.reference : undefined;
   const testCheckoutRaw = sp.test_checkout;
   const testCheckout =
     testCheckoutRaw === "1" ||
@@ -32,7 +37,9 @@ export default async function CheckoutReturnPage({
   if (!orderId) {
     return (
       <div className={`${storeShellClass} max-w-lg space-y-4 py-10`}>
-        <h1 className="text-2xl font-semibold text-stone-900">Resultado del pago</h1>
+        <h1 className="text-2xl font-semibold text-stone-900">
+          Resultado del pago
+        </h1>
         <p className="text-stone-600">
           Falta el identificador del pedido en la URL.
         </p>
@@ -81,7 +88,9 @@ export default async function CheckoutReturnPage({
   if (!order) {
     return (
       <div className={`${storeShellClass} max-w-lg space-y-4 py-10`}>
-        <h1 className="text-2xl font-semibold text-stone-900">Pedido no encontrado</h1>
+        <h1 className="text-2xl font-semibold text-stone-900">
+          Pedido no encontrado
+        </h1>
         <Link
           href="/products"
           className="font-medium text-[var(--store-accent)] underline"
@@ -90,6 +99,32 @@ export default async function CheckoutReturnPage({
         </Link>
       </div>
     );
+  }
+
+  // Ledger de pagos (fuente de verdad del cobro Wompi). No confiar en ?widget=
+  let payment: {
+    reference: string;
+    status: string;
+    status_message: string | null;
+  } | null = null;
+
+  if (reference) {
+    const { data } = await supabase
+      .from("payments")
+      .select("reference,status,status_message")
+      .eq("reference", reference)
+      .eq("order_id", orderId)
+      .maybeSingle();
+    payment = data;
+  } else {
+    const { data } = await supabase
+      .from("payments")
+      .select("reference,status,status_message")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    payment = data;
   }
 
   const status = order.status as string;
@@ -105,18 +140,35 @@ export default async function CheckoutReturnPage({
           role="status"
         >
           <strong className="font-semibold">Modo prueba:</strong> no se llamó a
-          Wompi (falta <code className="rounded bg-amber-100/80 px-1">WOMPI_PRIVATE_KEY</code>{" "}
-          en local o tienes <code className="rounded bg-amber-100/80 px-1">CHECKOUT_SKIP_WOMPI</code>
-          ). El pedido quedó registrado como pendiente; en{" "}
-          <strong>Administración → Ventas</strong> deberías verlo. El stock no
-          se descuenta hasta que el cobro quede pagado (webhook o POS).
+          Wompi (falta{" "}
+          <code className="rounded bg-amber-100/80 px-1">
+            WOMPI_PRIVATE_KEY
+          </code>{" "}
+          en local o tienes{" "}
+          <code className="rounded bg-amber-100/80 px-1">
+            CHECKOUT_SKIP_WOMPI
+          </code>
+          ). El pedido quedó registrado como pendiente.
         </div>
       ) : null}
+
+      {payment ? (
+        <CheckoutPaymentPoller
+          reference={payment.reference}
+          initialStatus={payment.status}
+          initialMessage={payment.status_message}
+        />
+      ) : !testCheckout ? (
+        <PaymentStatus status="PENDING" statusMessage="Esperando confirmación del pago…" />
+      ) : null}
+
       <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm ring-1 ring-stone-100">
         <p className="text-sm text-stone-500">Pedido</p>
         <p className="font-mono text-sm text-stone-800">{order.id}</p>
-        <p className="mt-4 text-sm text-stone-500">Estado</p>
-        <p className="text-lg font-medium text-stone-900">{labels[status] ?? status}</p>
+        <p className="mt-4 text-sm text-stone-500">Estado del pedido</p>
+        <p className="text-lg font-medium text-stone-900">
+          {orderLabels[status] ?? status}
+        </p>
         <p className="mt-4 text-sm text-stone-500">Total</p>
         <p className="text-lg font-semibold text-[var(--store-accent)]">
           {formatCop(order.total_cents)}
@@ -125,9 +177,8 @@ export default async function CheckoutReturnPage({
           {order.customer_name} · {order.customer_email}
         </p>
         <p className="mt-4 text-xs text-stone-500">
-          {testCheckout
-            ? "Cuando configures Wompi, el flujo normal abrirá el checkout y el webhook actualizará el estado."
-            : "El estado final lo confirma Wompi por webhook; si ves “Pendiente”, espera unos segundos y refresca."}
+          El cobro lo confirma Wompi por webhook. El parámetro de la URL no
+          marca el pedido como pagado.
         </p>
       </div>
       <div className="flex flex-wrap gap-3">

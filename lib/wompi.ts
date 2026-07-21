@@ -1,4 +1,12 @@
+/**
+ * Legacy Wompi helpers (Payment Links).
+ * El flujo principal de la tienda usa Widget + `lib/payments/*` y `PaymentService`.
+ * `verifyWompiEventIntegrity` está deprecado: el webhook usa `verifyEventChecksum`
+ * con `WOMPI_EVENTS_SECRET` (no el integrity secret del Widget).
+ */
+
 import { createHash } from "node:crypto";
+import { verifyEventChecksum } from "@/lib/payments/signature";
 
 export type WompiEnv = "sandbox" | "production";
 
@@ -39,6 +47,7 @@ export type CreatePaymentLinkResult =
 
 /**
  * Creates a single-use payment link. Docs: POST /v1/payment_links
+ * @deprecated Prefer Widget Checkout (`createWompiCheckoutSession`).
  */
 export async function createPaymentLink(
   input: CreatePaymentLinkInput,
@@ -69,7 +78,10 @@ export async function createPaymentLink(
     body: JSON.stringify(body),
   });
 
-  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  const json = (await res.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
   if (!res.ok) {
     const err =
       (json?.error as string) ||
@@ -94,48 +106,32 @@ export async function createPaymentLink(
   return { ok: true, id, url };
 }
 
-type WompiSignature = {
-  checksum?: string;
-  properties?: string[];
-};
-
-function getPath(obj: unknown, path: string): unknown {
-  return path.split(".").reduce<unknown>((acc, part) => {
-    if (acc && typeof acc === "object" && part in (acc as object)) {
-      return (acc as Record<string, unknown>)[part];
-    }
-    return undefined;
-  }, obj);
-}
-
 /**
- * Best-effort validation per Wompi event signature.properties + checksum (hex).
- * If WOMPI_INTEGRITY_SECRET is unset, returns true and skips verification.
+ * @deprecated Usa `verifyEventChecksum` de `@/lib/payments/signature` con
+ * `WOMPI_EVENTS_SECRET`. Esta función usaba el integrity secret incorrecto
+ * y omitía el timestamp.
  */
 export function verifyWompiEventIntegrity(event: unknown): boolean {
-  const secret = process.env.WOMPI_INTEGRITY_SECRET;
-  if (!secret) return true;
+  let header: string | null = null;
+  if (event && typeof event === "object" && "signature" in event) {
+    const checksum = (event as { signature?: { checksum?: string } }).signature
+      ?.checksum;
+    header = typeof checksum === "string" ? checksum : null;
+  }
+  try {
+    return verifyEventChecksum(event, header);
+  } catch {
+    return false;
+  }
+}
 
-  if (!event || typeof event !== "object") return false;
-  const sig = (event as { signature?: WompiSignature }).signature;
-  if (!sig?.checksum || !sig.properties?.length) return false;
-
-  const data = (event as { data?: unknown }).data;
-  const concat = sig.properties
-    .map((p) => {
-      const v =
-        getPath(event, p) ??
-        (data && typeof data === "object" ? getPath(data, p) : undefined);
-      if (v === undefined || v === null) return "";
-      return String(v);
-    })
-    .join("");
-
-  // If this fails in production, compare with Wompi docs for your checksum algorithm.
-  const digest = createHash("sha256")
+/** @deprecated Solo para scripts de diagnóstico legacy. */
+export function legacyIntegrityDigestWithoutTimestamp(
+  concat: string,
+  secret: string,
+): string {
+  return createHash("sha256")
     .update(`${concat}${secret}`, "utf8")
     .digest("hex")
     .toUpperCase();
-
-  return digest === String(sig.checksum).toUpperCase();
 }

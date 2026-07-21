@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { startCheckout } from "@/app/actions/checkout";
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
 import { getCart } from "@/lib/cart";
 import { formatCop } from "@/lib/money";
@@ -33,7 +32,9 @@ import {
 } from "@/components/store/CheckoutShippingLocationFields";
 import { CheckoutLineControls } from "@/components/store/CheckoutLineControls";
 import { CheckoutPaymentMethods } from "@/components/store/CheckoutPaymentMethods";
+import { StoreCheckoutForm } from "@/components/store/StoreCheckoutForm";
 import { isBankTransferConfigured } from "@/lib/bank-transfer";
+import { isWompiWidgetConfigured } from "@/config/payments";
 
 const labelClass =
   "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900";
@@ -414,7 +415,7 @@ export default async function CheckoutPage({
         />
 
         <CheckoutShippingProvider>
-        <form action={startCheckout}>
+        <StoreCheckoutForm wompiEnabled={isWompiWidgetConfigured()}>
           <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_min(100%,340px)] lg:items-start xl:gap-16">
             <div className="min-w-0 space-y-14">
               <section>
@@ -615,6 +616,7 @@ export default async function CheckoutPage({
 
                 <CheckoutPaymentMethods
                   bankTransferEnabled={isBankTransferConfigured()}
+                  wompiEnabled={isWompiWidgetConfigured()}
                 />
               </section>
             </div>
@@ -653,7 +655,7 @@ export default async function CheckoutPage({
               </Link>
             </aside>
           </div>
-        </form>
+        </StoreCheckoutForm>
         </CheckoutShippingProvider>
       </div>
     </div>

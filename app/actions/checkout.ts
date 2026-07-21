@@ -1,465 +1,67 @@
 "use server";
 
-import { getCart, normalizeCartForCheckout, setCart } from "@/lib/cart";
 import { storeBrand } from "@/lib/brand";
-import { ensureStoreCustomerLinked, attachAuthUserToCustomerEmail } from "@/lib/store-customer-service";
-import {
-  findVariantForCartLine,
-  migrateLegacyFragranceToVariantId,
-  resolveCartLinePrice,
-  type CartNormalizeProduct,
-} from "@/lib/store-listing-variant-meta";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createPendingStoreOrderFromForm } from "@/lib/checkout/create-pending-order";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import {
-  fetchProductVariantsByProductIds,
-  parseProductVariantAxis,
-} from "@/lib/product-variants";
 import {
   createPaymentLink,
   getWompiEnv,
   shouldSkipWompiPayment,
 } from "@/lib/wompi";
-import { findActiveStoreCouponForCheckout } from "@/lib/store-coupons";
-import {
-  quoteShippingForMunicipality,
-  SHIPPING_METHOD_DELIVERY,
-} from "@/lib/shipping-rates";
-import {
-  createOrderTrackingToken,
-  isBankTransferConfigured,
-  ONLINE_BANK_TRANSFER_REF,
-} from "@/lib/bank-transfer";
-import { normalizeMunicipalityCode, normalizeDepartmentCode } from "@/lib/colombia-geo";
-import { revalidatePath } from "next/cache";
+import { isBankTransferConfigured } from "@/lib/bank-transfer";
 import { redirect } from "next/navigation";
 
-function parsePaymentMethod(raw: FormDataEntryValue | null): "wompi" | "bank_transfer" {
+function parsePaymentMethod(
+  raw: FormDataEntryValue | null,
+): "wompi" | "bank_transfer" {
   const v = String(raw ?? "").trim();
   return v === "bank_transfer" ? "bank_transfer" : "wompi";
 }
 
 function siteUrl() {
   return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000"
   );
 }
 
-function isEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
-
-function isDuplicateDbError(error: { code?: string; message?: string } | null) {
-  if (!error) return false;
-  return (
-    error.code === "23505" ||
-    error.message?.toLowerCase().includes("duplicate") ||
-    error.message?.toLowerCase().includes("unique")
-  );
-}
-
+/**
+ * Checkout server action.
+ * - bank_transfer → crea pedido y redirige a /checkout/transferencia
+ * - wompi → legacy Payment Link (fallback). El flujo principal in-site usa
+ *   `createWompiCheckoutSession` desde el cliente.
+ */
 export async function startCheckout(formData: FormData) {
-  const customerEmail = String(formData.get("email") ?? "").trim();
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const customerName = `${firstName} ${lastName}`.trim();
-  const legacyName = String(formData.get("name") ?? "").trim();
-  const resolvedName = customerName || legacyName;
-
-  const shippingAddress = String(formData.get("address") ?? "").trim();
-  const shippingCity = String(formData.get("city") ?? "").trim();
-  const shippingPostalCode = String(formData.get("zipCode") ?? "").trim();
-  const shippingPhone = String(formData.get("mobile") ?? "").trim();
-  const shippingMunicipalityCode =
-    normalizeMunicipalityCode(
-      String(formData.get("shippingMunicipalityCode") ?? "").trim(),
-    ) ?? "";
-  const shippingDepartmentCode =
-    normalizeDepartmentCode(
-      String(formData.get("shippingDepartmentCode") ?? "").trim(),
-    ) ?? "";
-  const couponCode = String(formData.get("couponCode") ?? "").trim();
   const paymentMethod = parsePaymentMethod(formData.get("paymentMethod"));
 
   if (paymentMethod === "bank_transfer" && !isBankTransferConfigured()) {
     redirect("/checkout?error=bank_transfer_unavailable");
   }
 
-  if (!resolvedName) {
-    redirect("/checkout?error=missing_name");
-  }
-  if (
-    !shippingAddress ||
-    !shippingPhone ||
-    !shippingMunicipalityCode ||
-    !shippingDepartmentCode
-  ) {
-    redirect("/checkout?error=missing_shipping");
-  }
+  // Flujo Widget: el cliente no debería llegar aquí con wompi.
+  // Si llega, usamos Payment Link legacy o skip en dev.
+  const order = await createPendingStoreOrderFromForm(formData, paymentMethod);
 
-  const sessionSb = await createSupabaseServerClient();
-  const {
-    data: { user: sessionUser },
-  } = await sessionSb.auth.getUser();
-
-  let customerEmailForOrder = customerEmail;
-  let linkedCustomerId: string | null = null;
-  let storeSessionUserId: string | null = null;
-
-  if (sessionUser?.email) {
-    const { data: adminProf } = await sessionSb
-      .from("profiles")
-      .select("id")
-      .eq("id", sessionUser.id)
-      .maybeSingle();
-
-    if (!adminProf) {
-      storeSessionUserId = sessionUser.id;
-      const sessionMeta = sessionUser.user_metadata as
-        | { document_id?: string }
-        | undefined;
-      linkedCustomerId = await ensureStoreCustomerLinked(
-        sessionUser.id,
-        sessionUser.email,
-        resolvedName,
-        sessionMeta?.document_id ?? null,
-      );
-      customerEmailForOrder = sessionUser.email;
-    }
-  }
-
-  if (!isEmail(customerEmailForOrder)) {
-    redirect("/checkout?error=invalid_email");
-  }
-
-  const cart = await getCart();
-  if (!cart.length) {
-    redirect("/checkout?error=empty");
-  }
-
-  const supabase = createSupabaseServiceClient();
-  const ids = [...new Set(cart.map((l) => l.productId))];
-  const [{ data: products, error: pErr }, variantMap] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id,name,price_cents,currency,stock_quantity,is_published,variant_axis")
-      .in("id", ids),
-    fetchProductVariantsByProductIds(supabase, ids),
-  ]);
-
-  if (pErr) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[checkout] products query:", pErr.message);
-    }
-    redirect("/checkout?error=products");
-  }
-
-  const byId = new Map(
-    (products ?? []).map((p) => [
-      p.id,
-      {
-        is_published: p.is_published,
-        stock_quantity: p.stock_quantity,
-        variant_axis: p.variant_axis,
-      },
-    ]),
-  );
-  const variantStockMap = new Map<string, { id: string; stockQuantity: number }[]>();
-  for (const [pid, variants] of variantMap) {
-    variantStockMap.set(
-      pid,
-      variants.map((v) => ({ id: v.id, stockQuantity: v.stockQuantity })),
-    );
-  }
-
-  const migrated = cart.map((line) => {
-    const p = byId.get(line.productId);
-    if (!p) return line;
-    const axis = parseProductVariantAxis(p.variant_axis);
-    const variants = variantMap.get(line.productId) ?? [];
-    const variantId = migrateLegacyFragranceToVariantId(line, variants, axis);
-    return {
-      productId: line.productId,
-      quantity: line.quantity,
-      ...(variantId ? { variantId } : {}),
-    };
-  });
-
-  const normalized = normalizeCartForCheckout(migrated, byId, variantStockMap);
-
-  if (JSON.stringify(cart) !== JSON.stringify(normalized)) {
-    await setCart(normalized);
-  }
-
-  if (!normalized.length) {
-    redirect("/checkout?error=empty");
-  }
-
-  const productById = new Map((products ?? []).map((p) => [p.id, p]));
-
-  let total = 0;
-  const lines: {
-    product_id: string;
-    quantity: number;
-    unit_price_cents: number;
-    product_name_snapshot: string;
-    variant_id: string | null;
-    variant_label_snapshot: string | null;
-  }[] = [];
-
-  for (const line of normalized) {
-    const p = productById.get(line.productId);
-    if (!p) {
-      redirect("/checkout?error=removed");
-    }
-    const variants = variantMap.get(line.productId) ?? [];
-    const variant = findVariantForCartLine(variants, line.variantId);
-    const unitPrice = resolveCartLinePrice(p as CartNormalizeProduct, variant);
-    const sub = unitPrice * line.quantity;
-    total += sub;
-    const variantLabel = variant?.label?.trim() || null;
-    lines.push({
-      product_id: p.id,
-      quantity: line.quantity,
-      unit_price_cents: unitPrice,
-      product_name_snapshot: variantLabel
-        ? `${p.name} (${variantLabel})`
-        : p.name,
-      variant_id: variant?.id ?? null,
-      variant_label_snapshot: variantLabel,
-    });
-  }
-
-  let discount = 0;
-  if (couponCode) {
-    const couponMatch = await findActiveStoreCouponForCheckout(
-      supabase,
-      couponCode,
-    );
-    if (!couponMatch) {
-      redirect("/checkout?error=coupon_invalid");
-    }
-    const eligible =
-      couponMatch.eligible_product_ids === null
-        ? total
-        : normalized.reduce((sum, line) => {
-            if (!couponMatch.eligible_product_ids!.has(line.productId)) {
-              return sum;
-            }
-            const p = productById.get(line.productId);
-            if (!p) return sum;
-            const variants = variantMap.get(line.productId) ?? [];
-            const variant = findVariantForCartLine(variants, line.variantId);
-            const unitPrice = resolveCartLinePrice(
-              p as CartNormalizeProduct,
-              variant,
-            );
-            return sum + unitPrice * line.quantity;
-          }, 0);
-    if (
-      couponMatch.eligible_product_ids !== null &&
-      couponMatch.eligible_product_ids.size > 0 &&
-      eligible <= 0
-    ) {
-      redirect("/checkout?error=coupon_no_eligible_items");
-    }
-    discount = Math.max(
-      0,
-      Math.round((eligible * couponMatch.discount_percent) / 100),
-    );
-  }
-  const totalWithDiscount = Math.max(0, total - discount);
-
-  const shippingQuote = await quoteShippingForMunicipality(
-    supabase,
-    shippingMunicipalityCode,
-  );
-  if (!shippingQuote || shippingQuote.departmentCode !== shippingDepartmentCode) {
-    redirect("/checkout?error=shipping_unavailable");
-  }
-  const shippingCents = shippingQuote.costCents;
-  const orderSubtotalCents = totalWithDiscount;
-  const orderTotalCents = orderSubtotalCents + shippingCents;
-  const resolvedShippingCity = shippingCity || shippingQuote.label;
-
-  const first = productById.get(normalized[0]!.productId);
-  const currency = first?.currency ?? "COP";
-
-  const emailLc = customerEmailForOrder.toLowerCase();
-
-  let customerId: string;
-
-  if (linkedCustomerId) {
-    customerId = linkedCustomerId;
-    await supabase
-      .from("customers")
-      .update({
-        name: resolvedName,
-        email: emailLc,
-        phone: shippingPhone,
-        shipping_address: shippingAddress,
-        shipping_city: resolvedShippingCity,
-        shipping_postal_code: shippingPostalCode || null,
-      })
-      .eq("id", customerId);
-  } else {
-    const { data: existingCustomer } = await supabase
-      .from("customers")
-      .select("id, auth_user_id")
-      .eq("email", emailLc)
-      .maybeSingle();
-
-    if (existingCustomer?.id) {
-      customerId = existingCustomer.id as string;
-      const patch: Record<string, unknown> = {
-        name: resolvedName,
-        phone: shippingPhone,
-        shipping_address: shippingAddress,
-        shipping_city: resolvedShippingCity,
-        shipping_postal_code: shippingPostalCode || null,
-      };
-      if (
-        storeSessionUserId &&
-        (!existingCustomer.auth_user_id ||
-          existingCustomer.auth_user_id === storeSessionUserId)
-      ) {
-        patch.auth_user_id = storeSessionUserId;
-      }
-      await supabase.from("customers").update(patch).eq("id", customerId);
-      if (storeSessionUserId && !existingCustomer.auth_user_id) {
-        linkedCustomerId =
-          (await attachAuthUserToCustomerEmail(
-            storeSessionUserId,
-            customerEmailForOrder,
-          )) ?? customerId;
-      }
-    } else {
-      const { data: insertedCustomer, error: cErr } = await supabase
-        .from("customers")
-        .insert({
-          name: resolvedName,
-          email: emailLc,
-          phone: shippingPhone,
-          shipping_address: shippingAddress,
-          shipping_city: resolvedShippingCity,
-          shipping_postal_code: shippingPostalCode || null,
-          source: "storefront",
-          auth_user_id: storeSessionUserId,
-        })
-        .select("id")
-        .single();
-
-      if (cErr || !insertedCustomer) {
-        if (storeSessionUserId && isDuplicateDbError(cErr)) {
-          const recovered = await attachAuthUserToCustomerEmail(
-            storeSessionUserId,
-            customerEmailForOrder,
-          );
-          if (recovered) {
-            customerId = recovered;
-            await supabase
-              .from("customers")
-              .update({
-                name: resolvedName,
-                phone: shippingPhone,
-                shipping_address: shippingAddress,
-                shipping_city: resolvedShippingCity,
-                shipping_postal_code: shippingPostalCode || null,
-              })
-              .eq("id", customerId);
-          } else {
-            redirect("/checkout?error=order");
-          }
-        } else {
-          redirect("/checkout?error=order");
-        }
-      } else {
-        customerId = insertedCustomer.id as string;
-      }
-    }
-  }
-
-  const trackingToken =
-    paymentMethod === "bank_transfer" ? createOrderTrackingToken() : null;
-
-  const { data: orderRow, error: oErr } = await supabase
-    .from("orders")
-    .insert({
-      customer_id: customerId,
-      customer_email: customerEmailForOrder,
-      customer_name: resolvedName,
-      total_cents: orderTotalCents,
-      subtotal_cents: orderSubtotalCents,
-      shipping_cents: shippingCents,
-      shipping_department_code: shippingDepartmentCode,
-      shipping_municipality_code: shippingMunicipalityCode,
-      shipping_method: SHIPPING_METHOD_DELIVERY,
-      currency,
-      status: "pending",
-      payment_method: paymentMethod === "bank_transfer" ? "bank_transfer" : "wompi",
-      fulfillment_status:
-        paymentMethod === "bank_transfer" ? "awaiting_payment" : null,
-      tracking_token: trackingToken,
-      wompi_reference:
-        paymentMethod === "bank_transfer" ? ONLINE_BANK_TRANSFER_REF : null,
-      shipping_address: shippingAddress,
-      shipping_city: resolvedShippingCity,
-      shipping_postal_code: shippingPostalCode || null,
-      shipping_phone: shippingPhone,
-    })
-    .select("id")
-    .single();
-
-  if (oErr || !orderRow) {
-    redirect("/checkout?error=order");
-  }
-
-  const orderId = orderRow.id as string;
-
-  const { error: iErr } = await supabase.from("order_items").insert(
-    lines.map((l) => ({
-      order_id: orderId,
-      product_id: l.product_id,
-      quantity: l.quantity,
-      unit_price_cents: l.unit_price_cents,
-      product_name_snapshot: l.product_name_snapshot,
-      variant_id: l.variant_id,
-      variant_label_snapshot: l.variant_label_snapshot,
-    })),
-  );
-
-  if (iErr) {
-    await supabase.from("orders").delete().eq("id", orderId);
-    redirect("/checkout?error=items");
-  }
-
-  revalidatePath("/admin/ventas");
-  revalidatePath("/admin/orders");
-  revalidatePath("/cuenta/pedidos");
-
-  if (paymentMethod === "bank_transfer" && trackingToken) {
-    await setCart([]);
+  if (paymentMethod === "bank_transfer" && order.trackingToken) {
     redirect(
-      `/checkout/transferencia?order_id=${orderId}&token=${encodeURIComponent(trackingToken)}`,
+      `/checkout/transferencia?order_id=${order.orderId}&token=${encodeURIComponent(order.trackingToken)}`,
     );
   }
 
-  const returnUrl = `${siteUrl()}/checkout/return?order_id=${orderId}`;
+  const returnUrl = `${siteUrl()}/checkout/return?order_id=${order.orderId}`;
+  const supabase = createSupabaseServiceClient();
 
   if (shouldSkipWompiPayment()) {
     await supabase
       .from("orders")
-      .update({
-        wompi_reference: orderId,
-      })
-      .eq("id", orderId);
-
-    await setCart([]);
+      .update({ wompi_reference: order.orderId })
+      .eq("id", order.orderId);
 
     if (process.env.NODE_ENV === "development") {
       console.info(
         "[checkout] Wompi omitido (sin clave en dev o CHECKOUT_SKIP_WOMPI). Pedido:",
-        orderId,
+        order.orderId,
       );
     }
 
@@ -468,16 +70,19 @@ export async function startCheckout(formData: FormData) {
 
   const link = await createPaymentLink({
     name: `${storeBrand} · Pedido`,
-    description: `Pedido ${orderId}`,
-    amountInCents: orderTotalCents,
-    currency,
+    description: `Pedido ${order.orderId}`,
+    // BUG legacy: amountInCents recibía pesos. El Widget nuevo usa ×100.
+    // Payment Link legacy mantiene comportamiento previo para no romper demos
+    // hasta deprecarlo; preferí createWompiCheckoutSession.
+    amountInCents: order.totalPesos,
+    currency: order.currency,
     redirectUrl: returnUrl,
-    sku: orderId,
+    sku: order.orderId,
     singleUse: true,
   });
 
   if (!link.ok) {
-    await supabase.from("orders").delete().eq("id", orderId);
+    await supabase.from("orders").delete().eq("id", order.orderId);
     redirect(
       `/checkout?error=wompi&message=${encodeURIComponent(link.error)}`,
     );
@@ -487,15 +92,13 @@ export async function startCheckout(formData: FormData) {
     .from("orders")
     .update({
       wompi_payment_link_id: link.id,
-      wompi_reference: orderId,
+      wompi_reference: order.orderId,
     })
-    .eq("id", orderId);
-
-  await setCart([]);
+    .eq("id", order.orderId);
 
   const env = getWompiEnv();
   if (process.env.NODE_ENV === "development") {
-    console.info("[checkout] Wompi env:", env, "order:", orderId);
+    console.info("[checkout] Wompi env:", env, "order:", order.orderId);
   }
 
   redirect(link.url);
