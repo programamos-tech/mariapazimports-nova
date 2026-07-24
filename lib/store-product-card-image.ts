@@ -4,15 +4,15 @@ export const STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS = "aspect-[4/5]";
 /** Fondo blanco: coincide con el padding del transform contain en Storage. */
 export const STORE_PRODUCT_CARD_IMAGE_BG_CLASS = "bg-white";
 
-/** Producto completo dentro del marco 4:5 (catálogo y PDP). */
+/** Producto completo dentro del marco 4:5 (sin recortar). */
 export const STORE_PRODUCT_CARD_IMAGE_OBJECT_CLASS =
-  "object-cover object-center";
+  "object-contain object-center";
 
 /**
- * La imagen ya viene en 4:5 desde Storage (contain); llena el marco sin bandas CSS.
+ * Original de Storage en marco 4:5: contain + fondo blanco (no cover).
  */
 export const STORE_PRODUCT_IMAGE_IMG_CLASS =
-  "absolute inset-0 size-full object-cover object-center";
+  "absolute inset-0 size-full object-contain object-center";
 
 /** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
 export const STORE_PRODUCT_IMAGE_FRAME_CLASS = "";

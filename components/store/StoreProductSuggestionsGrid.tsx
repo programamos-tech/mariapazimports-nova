@@ -72,7 +72,7 @@ export function StoreProductSuggestionsGrid({
                       srcSet={framed.srcSet ?? undefined}
                       sizes="(max-width: 640px) 22vw, 120px"
                       alt=""
-                      className="absolute inset-0 size-full object-cover object-center"
+                      className="absolute inset-0 size-full object-contain object-center"
                       loading="lazy"
                     />
                   ) : (
