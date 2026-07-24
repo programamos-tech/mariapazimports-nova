@@ -205,6 +205,8 @@ export async function openWompiWidgetCheckout(input: {
   session: WompiCheckoutSession;
   customerEmail?: string;
   customerFullName?: string;
+  /** Si el usuario no completa, evita colgar el UI para siempre. */
+  timeoutMs?: number;
 }): Promise<WompiWidgetCheckoutResult> {
   await loadWompiScript();
   if (!window.WidgetCheckout) {
@@ -224,7 +226,30 @@ export async function openWompiWidgetCheckout(input: {
     },
   };
 
+  const timeoutMs = input.timeoutMs ?? 15 * 60 * 1000;
+
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (result: WompiWidgetCheckoutResult) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(result);
+    };
+
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      // No rechazar: el pedido ya existe; el return page hará poll.
+      resolve({
+        transaction: {
+          id: "",
+          status: "PENDING",
+          reference: input.session.reference,
+        },
+      });
+    }, timeoutMs);
+
     try {
       const checkout = new window.WidgetCheckout!(params);
       checkout.open((result) => {
@@ -237,10 +262,12 @@ export async function openWompiWidgetCheckout(input: {
               /* webhook es la fuente de verdad */
             }
           }
-          resolve(result);
+          finish(result ?? { transaction: { id: "", status: "PENDING" } });
         })();
       });
     } catch (err) {
+      window.clearTimeout(timer);
+      settled = true;
       reject(err);
     }
   });
