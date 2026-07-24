@@ -39,9 +39,12 @@ export const STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN =
 /** Tarjetas visibles al entrar al catálogo: cargar sin lazy. */
 export const STORE_PRODUCT_CARD_EAGER_COUNT = 4;
 
-/** `sizes` para grilla 2→4 columnas (sin pedir más de ~400 CSS px). */
+/**
+ * `sizes` alineado a la grilla real (2 cols hasta lg, 4 desde lg).
+ * El navegador elige el tier del srcSet (~2× DPR) sin bajar a 400–800 blando.
+ */
 export const STORE_PRODUCT_CARD_IMAGE_SIZES =
-  "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 320px";
+  "(max-width: 1023px) 50vw, (max-width: 1536px) 25vw, 380px";
 
 /** Hero PDP: columna completa en móvil, mitad en desktop. */
 export const STORE_PRODUCT_DETAIL_HERO_SIZES =

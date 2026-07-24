@@ -4,7 +4,10 @@ import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
 import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
-import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
+import {
+  STORE_PRODUCT_CARD_IMAGE_SIZES,
+  storeProductCardImagePriority,
+} from "@/lib/store-product-card-image";
 import {
   REVEAL_BLOCK_DELAY_MS,
 } from "@/lib/store-reveal-timing";
@@ -69,13 +72,30 @@ export default async function HomePage() {
 
   const featuredImagePreloads = enrichedFeatured
     .slice(0, 4)
-    .map((p) => productCardDisplayImages(p.image_path, p.image_paths).primary)
-    .filter((url): url is string => Boolean(url));
+    .map((p) => {
+      const imgs = productCardDisplayImages(p.image_path, p.image_paths);
+      if (!imgs.primary) return null;
+      return {
+        href: imgs.primary,
+        srcSet: imgs.primarySrcSet,
+      };
+    })
+    .filter((row): row is { href: string; srcSet: string | null } =>
+      Boolean(row),
+    );
 
   return (
     <div>
-      {featuredImagePreloads.map((href) => (
-        <link key={href} rel="preload" as="image" href={href} fetchPriority="high" />
+      {featuredImagePreloads.map(({ href, srcSet }) => (
+        <link
+          key={href}
+          rel="preload"
+          as="image"
+          href={href}
+          imageSrcSet={srcSet ?? undefined}
+          imageSizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
+          fetchPriority="high"
+        />
       ))}
       {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
       <section

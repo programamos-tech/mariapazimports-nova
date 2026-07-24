@@ -2,11 +2,14 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
-/** Tarjeta 4:5 — srcSet contenido (máx ~800w visuales; sin 1920). */
+/**
+ * Tarjeta 4:5 — nítido en retina sin servir el original.
+ * Tope ~1280w (~640 CSS px @2x en grilla de 4); WebP vía Accept.
+ */
 const CARD_SRCSET_TIERS = [
-  { width: 400, height: 500 },
-  { width: 640, height: 800 },
+  { width: 480, height: 600 },
   { width: 800, height: 1000 },
+  { width: 1280, height: 1600 },
 ] as const;
 
 /** PDP 4:5 — tope razonable para móvil/desktop. */
@@ -29,7 +32,7 @@ const PRESETS: Record<
   card: {
     width: CARD_SRCSET_TIERS[2].width,
     height: CARD_SRCSET_TIERS[2].height,
-    quality: 75,
+    quality: 82,
     resize: "contain",
   },
   thumb: {
