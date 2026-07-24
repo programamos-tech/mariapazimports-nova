@@ -51,6 +51,18 @@ export async function createWompiCheckoutSession(
     });
 
     const config = getWompiConfig();
+    if (
+      process.env.NODE_ENV === "production" &&
+      /localhost|127\.0\.0\.1/i.test(config.baseUrl)
+    ) {
+      return {
+        ok: false,
+        error:
+          "Falta NEXT_PUBLIC_SITE_URL en producción (el Widget no puede redirigir a localhost).",
+        code: "CONFIG",
+      };
+    }
+
     const integritySignature = generateIntegritySignature({
       reference: payment.reference,
       amountInCents: payment.amountInCents,
@@ -75,6 +87,8 @@ export async function createWompiCheckoutSession(
       orderId: order.orderId,
       reference: payment.reference,
       amountInCents: payment.amountInCents,
+      baseUrl: config.baseUrl,
+      publicKeyPrefix: config.publicKey.slice(0, 12),
     });
 
     return { ok: true, session };

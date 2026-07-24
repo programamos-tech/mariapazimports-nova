@@ -52,8 +52,21 @@ function loadWompiScript(): Promise<void> {
     `script[src="${WIDGET_SCRIPT}"]`,
   );
   if (existing) {
+    // Ya terminó de cargar (éxito o fallo) → no esperar eventos que no volverán.
+    if (existing.dataset.wompiLoaded === "1" || window.WidgetCheckout) {
+      if (window.WidgetCheckout) return Promise.resolve();
+      return Promise.reject(new Error("No se pudo cargar el Widget Wompi"));
+    }
     return new Promise((resolve, reject) => {
-      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener(
+        "load",
+        () => {
+          existing.dataset.wompiLoaded = "1";
+          if (window.WidgetCheckout) resolve();
+          else reject(new Error("WidgetCheckout no disponible tras cargar el script"));
+        },
+        { once: true },
+      );
       existing.addEventListener(
         "error",
         () => reject(new Error("No se pudo cargar el Widget Wompi")),
@@ -66,12 +79,31 @@ function loadWompiScript(): Promise<void> {
     const script = document.createElement("script");
     script.src = WIDGET_SCRIPT;
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.wompiLoaded = "1";
+      if (window.WidgetCheckout) resolve();
+      else reject(new Error("WidgetCheckout no disponible tras cargar el script"));
+    };
     script.onerror = () =>
-      reject(new Error("No se pudo cargar el Widget Wompi"));
+      reject(new Error("No se pudo cargar el Widget Wompi (bloqueado o red)"));
     document.body.appendChild(script);
   });
 }
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string" && err.trim()) return err;
+  if (err && typeof err === "object" && "message" in err) {
+    const m = (err as { message?: unknown }).message;
+    if (typeof m === "string" && m.trim()) return m;
+  }
+  try {
+    return `No se pudo abrir la pasarela de pago (${JSON.stringify(err)})`;
+  } catch {
+    return "No se pudo abrir la pasarela de pago";
+  }
+}
+
 
 async function reconcileStatus(
   reference: string,

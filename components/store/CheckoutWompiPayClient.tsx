@@ -18,6 +18,20 @@ import { storeShellClass } from "@/lib/store-layout";
 
 const STORAGE_PREFIX = "wompi_checkout_session:";
 
+function errorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string" && err.trim()) return err;
+  if (err && typeof err === "object" && "message" in err) {
+    const m = (err as { message?: unknown }).message;
+    if (typeof m === "string" && m.trim()) return m;
+  }
+  try {
+    return `No se pudo abrir la pasarela de pago (${JSON.stringify(err)})`;
+  } catch {
+    return "No se pudo abrir la pasarela de pago";
+  }
+}
+
 export function readStoredWompiSession(
   reference: string,
 ): WompiCheckoutSession | null {
@@ -94,11 +108,7 @@ export function CheckoutWompiPayClient({ orderId, reference }: Props) {
       } catch (err) {
         if (cancelled) return;
         setPhase("error");
-        setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo abrir la pasarela de pago",
-        );
+        setError(errorMessage(err));
       }
     }
 
