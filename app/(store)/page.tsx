@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { preconnect } from "react-dom";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
@@ -22,6 +23,8 @@ import {
   enrichListingProductsWithVariants,
   toProductListingCardProps,
 } from "@/lib/store-listing-variant-meta";
+import { bannerImageSources } from "@/lib/storage-image-url";
+import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -42,9 +45,12 @@ const STORE_HIGHLIGHTS = [
 ] as const;
 
 export default async function HomePage() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl) preconnect(supabaseUrl);
+
   const supabase = await createSupabaseServerClient();
-  const heroBanners = await fetchPublishedBanners(supabase, "hero");
-  const { data: homeProducts, error: homeProductsError } = await supabase
+
+  const productsQuery = supabase
     .from("products")
     .select(
       "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,size_options,size_value,size_unit,created_at",
@@ -52,6 +58,18 @@ export default async function HomePage() {
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(HOME_PRODUCTS_LIMIT);
+
+  const [
+    heroBanners,
+    { data: homeProducts, error: homeProductsError },
+    cartQtyByProductId,
+    couponPctByProductId,
+  ] = await Promise.all([
+    fetchPublishedBanners(supabase, "hero"),
+    productsQuery,
+    getStorefrontCartQuantityByProductId(),
+    fetchStorefrontCouponDiscountPercentByProductId(supabase),
+  ]);
 
   if (homeProductsError) {
     console.error(
@@ -66,12 +84,13 @@ export default async function HomePage() {
     supabase,
     featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
   );
-  const cartQtyByProductId = await getStorefrontCartQuantityByProductId();
-  const couponPctByProductId =
-    await fetchStorefrontCouponDiscountPercentByProductId(supabase);
+
+  const lcpBanner = heroBanners[0]
+    ? bannerImageSources(storagePublicObjectUrl(heroBanners[0].image_path))
+    : null;
 
   const featuredImagePreloads = enrichedFeatured
-    .slice(0, 4)
+    .slice(0, 2)
     .map((p) => {
       const imgs = productCardDisplayImages(p.image_path, p.image_paths);
       if (!imgs.primary) return null;
@@ -86,6 +105,16 @@ export default async function HomePage() {
 
   return (
     <div>
+      {lcpBanner?.src ? (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpBanner.src}
+          imageSrcSet={lcpBanner.srcSet ?? undefined}
+          imageSizes="(max-width: 768px) 100vw, 100vw"
+          fetchPriority="high"
+        />
+      ) : null}
       {featuredImagePreloads.map(({ href, srcSet }) => (
         <link
           key={href}
@@ -94,7 +123,6 @@ export default async function HomePage() {
           href={href}
           imageSrcSet={srcSet ?? undefined}
           imageSizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
-          fetchPriority="high"
         />
       ))}
       {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
@@ -133,25 +161,22 @@ export default async function HomePage() {
       <section className="border-t border-stone-200/60 bg-white py-8 sm:py-10">
         <div className={storeShellClass}>
           <ul className="grid gap-5 border-y border-stone-200/70 py-5 sm:grid-cols-3 sm:gap-4 sm:py-6">
-            {STORE_HIGHLIGHTS.map(({ title, Icon }, i) => (
+            {STORE_HIGHLIGHTS.map(({ title, Icon }) => (
               <li key={title}>
-                <RevealOnScroll
-                  delayMs={Math.min(i * 36, 108)}
-                  className="flex flex-col items-center text-center"
-                >
+                <div className="flex flex-col items-center text-center">
                   <span className="inline-flex size-7 items-center justify-center text-zinc-900">
                     <Icon className="size-4" strokeWidth={2.2} />
                   </span>
                   <p className="mt-2 max-w-[19rem] text-xs leading-snug text-stone-800 sm:text-[13px]">
                     {title}
                   </p>
-                </RevealOnScroll>
+                </div>
               </li>
             ))}
           </ul>
 
           <div className="mt-6 sm:mt-8">
-            <RevealOnScroll className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto max-w-3xl text-center">
               <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
                 Destacado en {storeBrand.split(/\s+/)[0]}
               </p>
@@ -162,7 +187,7 @@ export default async function HomePage() {
                 Versatilidad y estilo; abrí cada producto para ver detalle y
                 comprar.
               </p>
-            </RevealOnScroll>
+            </div>
 
             {featuredProducts.length === 0 ? (
               <p className="mt-6 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-8 text-center text-sm text-stone-600">

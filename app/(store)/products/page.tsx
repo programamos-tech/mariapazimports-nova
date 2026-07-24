@@ -399,25 +399,21 @@ export default async function ProductsPage({ searchParams }: Props) {
       categoryListingHeroPath &&
       categoryName &&
       categoryHeroResolvedSrc ? (
-        <RevealOnScroll className="w-full">
-          <CategoryListingHero
-            imagePath={categoryListingHeroPath}
-            title={categoryName}
-            alt={categoryListingHeroAlt}
-          />
-        </RevealOnScroll>
+        <CategoryListingHero
+          imagePath={categoryListingHeroPath}
+          title={categoryName}
+          alt={categoryListingHeroAlt}
+        />
       ) : null}
 
       {categoryView && categoryName && !showCategoryListingHero ? (
-        <RevealOnScroll className="w-full">
-          <header
-            className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
-          >
-            <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
-              {categoryName}
-            </h1>
-          </header>
-        </RevealOnScroll>
+        <header
+          className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
+        >
+          <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
+            {categoryName}
+          </h1>
+        </header>
       ) : null}
 
       <div className="w-full bg-white">
@@ -455,17 +451,15 @@ export default async function ProductsPage({ searchParams }: Props) {
         }`}
       >
         {!categoryView && !catalogBrowseMode && productsBanners.length > 0 ? (
-          <RevealOnScroll className="w-full">
-            <StoreBannerCarousel
-              variant="products"
-              slides={productsBanners.map((b) => ({
-                id: b.id,
-                image_path: b.image_path,
-                href: b.href,
-                alt_text: b.alt_text,
-              }))}
-            />
-          </RevealOnScroll>
+          <StoreBannerCarousel
+            variant="products"
+            slides={productsBanners.map((b) => ({
+              id: b.id,
+              image_path: b.image_path,
+              href: b.href,
+              alt_text: b.alt_text,
+            }))}
+          />
         ) : null}
 
         {showCatalogBrowseSections ? (

@@ -24,18 +24,17 @@ export type StoreCategoryMenuItem = {
 export async function fetchStoreCategoriesWithCounts(
   supabase: SupabaseClient,
 ): Promise<StoreCategoryMenuItem[]> {
-  const { data: categories, error: catErr } = await supabase
-    .from("categories")
-    .select("id,name,sort_order,icon_key")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+  const [{ data: categories, error: catErr }, { data: products, error: prodErr }] =
+    await Promise.all([
+      supabase
+        .from("categories")
+        .select("id,name,sort_order,icon_key")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+      supabase.from("products").select("category_id").eq("is_published", true),
+    ]);
 
   if (catErr || !categories?.length) return [];
-
-  const { data: products, error: prodErr } = await supabase
-    .from("products")
-    .select("category_id")
-    .eq("is_published", true);
 
   const countByCategory = new Map<string, number>();
   if (!prodErr) {

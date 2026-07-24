@@ -3,21 +3,24 @@ import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 export type ProductImageSize = "card" | "thumb" | "hero" | "banner";
 
 /**
- * Tarjeta 4:5 — nítido en retina sin servir el original.
- * Tope ~1280w (~640 CSS px @2x en grilla de 4); WebP vía Accept.
+ * Tarjeta 4:5 — nítido en retina (hasta ~1440w ≈ Full HD en 2 cols / 2×).
+ * WebP vía Accept; el navegador elige el tier con `sizes`.
  */
 const CARD_SRCSET_TIERS = [
   { width: 480, height: 600 },
   { width: 800, height: 1000 },
-  { width: 1280, height: 1600 },
+  { width: 1440, height: 1800 },
 ] as const;
 
-/** PDP 4:5 — tope razonable para móvil/desktop. */
+/** PDP 4:5 — Full HD en desktop retina. */
 const HERO_SRCSET_TIERS = [
-  { width: 720, height: 900 },
-  { width: 1080, height: 1350 },
-  { width: 1400, height: 1750 },
+  { width: 960, height: 1200 },
+  { width: 1440, height: 1800 },
+  { width: 1920, height: 2400 },
 ] as const;
+
+/** Banner ancho — Full HD sin servir el archivo original. */
+const BANNER_SRCSET_WIDTHS = [960, 1440, 1920] as const;
 
 const PRESETS: Record<
   ProductImageSize,
@@ -42,13 +45,13 @@ const PRESETS: Record<
     resize: "contain",
   },
   hero: {
-    width: 1400,
-    height: 1750,
+    width: 1920,
+    height: 2400,
     quality: 80,
     resize: "contain",
   },
   banner: {
-    width: 1400,
+    width: 1920,
     quality: 78,
   },
 };
@@ -204,7 +207,7 @@ function productFrameImageSources(
   };
 }
 
-/** Ficha de producto: 4:5 contain en HD razonable. */
+/** Ficha de producto: 4:5 contain Full HD. */
 export function productHeroImageSources(src: string | null | undefined): {
   src: string | null;
   srcSet: string | null;
@@ -218,6 +221,36 @@ export function productHeroImageUrl(src: string | null | undefined): string | nu
   return display ?? productStorefrontImageUrl(src);
 }
 
+/** Banner / hero carousel: srcSet Full HD (el navegador elige según viewport). */
+export function bannerImageSources(src: string | null | undefined): {
+  src: string | null;
+  srcSet: string | null;
+} {
+  if (!src) return { src: null, srcSet: null };
+
+  const fallback = productStorefrontImageUrl(src);
+  if (!shouldUseStorageImageTransform(src)) {
+    return { src: fallback, srcSet: null };
+  }
+
+  const quality = PRESETS.banner.quality;
+  const entries = BANNER_SRCSET_WIDTHS.map((width) => {
+    const url =
+      storageImageTransformUrl(src, { width, quality }) ?? fallback;
+    return `${url} ${width}w`;
+  });
+  const unique = [...new Set(entries)];
+  const largest = BANNER_SRCSET_WIDTHS[BANNER_SRCSET_WIDTHS.length - 1]!;
+  const srcUrl =
+    storageImageTransformUrl(src, { width: largest, quality }) ?? fallback;
+
+  if (unique.length <= 1) {
+    return { src: srcUrl, srcSet: null };
+  }
+
+  return { src: srcUrl, srcSet: unique.join(", ") };
+}
+
 /** URL lista para `<Image />` según contexto (tarjeta, miniatura, banner). */
 export function productDisplayImageUrl(
   src: string | null | undefined,
@@ -226,6 +259,9 @@ export function productDisplayImageUrl(
   if (!src) return null;
   if (size === "hero") {
     return productHeroImageUrl(src);
+  }
+  if (size === "banner") {
+    return bannerImageSources(src).src;
   }
   const preset = PRESETS[size];
   return storageImageTransformUrl(src, preset) ?? src;

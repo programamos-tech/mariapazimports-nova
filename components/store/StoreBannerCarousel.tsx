@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -12,10 +11,7 @@ import {
   type TransitionEvent,
 } from "react";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
-import {
-  productDisplayImageUrl,
-  shouldUseUnoptimizedImage,
-} from "@/lib/storage-image-url";
+import { bannerImageSources } from "@/lib/storage-image-url";
 
 export type StoreBannerSlide = {
   id: string;
@@ -164,7 +160,7 @@ export function StoreBannerCarousel({
 
   const sizes =
     variant === "hero"
-      ? "(max-width: 768px) 100vw, 1400px"
+      ? "(max-width: 768px) 100vw, 100vw"
       : "(max-width: 768px) 100vw, 896px";
 
   const shell =
@@ -201,22 +197,24 @@ export function StoreBannerCarousel({
           onTransitionEnd={n > 1 ? onTrackTransitionEnd : undefined}
         >
           {panels.map(({ slide, isClone }, i) => {
-            const url = productDisplayImageUrl(
-              storagePublicObjectUrl(slide.image_path),
-              "banner",
-            )!;
+            const pub = storagePublicObjectUrl(slide.image_path);
+            const framed = bannerImageSources(pub);
+            if (!framed.src) return null;
             const alt = slide.alt_text?.trim() || defaultAlt;
             const href = slide.href?.trim();
+            const isLcp = i === 0 && !isClone;
 
             const image = (
-              <Image
-                src={url}
-                alt={alt}
-                fill
-                className="object-cover"
+              // eslint-disable-next-line @next/next/no-img-element -- srcSet Full HD vía Storage
+              <img
+                src={framed.src}
+                srcSet={framed.srcSet ?? undefined}
                 sizes={sizes}
-                unoptimized={shouldUseUnoptimizedImage(url)}
-                priority={i === 0}
+                alt={alt}
+                className="absolute inset-0 size-full object-cover"
+                loading={isLcp ? "eager" : "lazy"}
+                fetchPriority={isLcp ? "high" : "auto"}
+                decoding={isLcp ? "sync" : "async"}
               />
             );
 

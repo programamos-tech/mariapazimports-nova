@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   getCart,
   normalizeCartForCheckout,
@@ -67,10 +68,11 @@ export async function normalizeStorefrontCartLines(
   return normalizeCartForCheckout(migrated, byId, variantStockMap);
 }
 
-export async function getStorefrontCartLines(): Promise<CartLine[]> {
+/** Dedup en el mismo request (header badge + page qty map). */
+export const getStorefrontCartLines = cache(async (): Promise<CartLine[]> => {
   const raw = await getCart();
   return normalizeStorefrontCartLines(raw);
-}
+});
 
 export async function getStorefrontCartItemCount(): Promise<number> {
   const lines = await getStorefrontCartLines();

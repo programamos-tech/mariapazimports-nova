@@ -32,9 +32,9 @@ export const STORE_PRODUCT_DETAIL_HERO_OBJECT_CLASS =
 /** Tarjetas: capa absoluta para crossfade al hover. */
 export const STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS = "absolute inset-0";
 
-/** Margen de prefetch: empieza a descargar ~1 fila antes de entrar al viewport. */
+/** Margen de prefetch: ~media fila antes (menos descargas en paralelo). */
 export const STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN =
-  "720px 0px 720px 0px";
+  "480px 0px 480px 0px";
 
 /** Tarjetas visibles al entrar al catálogo: cargar sin lazy. */
 export const STORE_PRODUCT_CARD_EAGER_COUNT = 4;

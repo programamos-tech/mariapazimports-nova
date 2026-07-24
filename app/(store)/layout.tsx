@@ -20,8 +20,10 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createSupabaseServerClient();
-  const welcomeModal = await fetchActiveWelcomeModal(supabase);
-  const promoBanner = await fetchBannerStoreCoupon(supabase);
+  const [welcomeModal, promoBanner] = await Promise.all([
+    fetchActiveWelcomeModal(supabase),
+    fetchBannerStoreCoupon(supabase),
+  ]);
 
   return (
     <StoreFavoritesProvider>

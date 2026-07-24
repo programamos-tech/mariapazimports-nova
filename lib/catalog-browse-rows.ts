@@ -145,17 +145,25 @@ export async function fetchCatalogBrowseSections(
     });
   }
 
-  const sections: CatalogBrowseSection[] = [];
+  // Una sola enrich para todos los previews (evita N round-trips de variantes).
+  const previewById = new Map<string, CatalogBrowseProductRow>();
   for (const section of rawSections) {
-    const enriched = await enrichListingProductsWithVariants(
-      supabase,
-      section.products,
-    );
-    sections.push({
-      ...section,
-      products: enriched,
-    });
+    for (const p of section.products) {
+      if (!previewById.has(p.id)) previewById.set(p.id, p);
+    }
   }
+  const enrichedAll = await enrichListingProductsWithVariants(
+    supabase,
+    [...previewById.values()],
+  );
+  const enrichedById = new Map(enrichedAll.map((p) => [p.id, p]));
+
+  const sections: CatalogBrowseSection[] = rawSections.map((section) => ({
+    ...section,
+    products: section.products
+      .map((p) => enrichedById.get(p.id))
+      .filter((p): p is ListingProductWithVariantMeta => Boolean(p)),
+  }));
 
   return { sections, facets };
 }
