@@ -6,7 +6,6 @@ import { CategoryListingHero } from "@/components/store/CategoryListingHero";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
-import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
 import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { fetchPublishedBanners } from "@/lib/store-banners";
