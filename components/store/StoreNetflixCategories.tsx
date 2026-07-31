@@ -25,46 +25,63 @@ function CategoryPoster({
 
   return (
     <li className="min-w-0">
-      <Link
-        href={href}
-        className="group block h-full outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
-      >
-        <div
-          className={`relative w-full overflow-hidden bg-white ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
-        >
-          {category.imageSrc ? (
-            <Image
-              src={category.imageSrc}
-              alt=""
-              fill
-              priority={priority}
-              quality={90}
-              sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
-              className="object-contain object-center transition duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-              unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
-            />
-          ) : (
-            <div className={`absolute inset-0 ${category.tint}`} />
-          )}
+      <article className="group/cat flex h-full flex-col">
+        <div className="relative shrink-0">
+          <div
+            className={`relative w-full overflow-hidden bg-[#faf8f5] ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+          >
+            {category.imageSrc ? (
+              <Image
+                src={category.imageSrc}
+                alt=""
+                fill
+                priority={priority}
+                quality={90}
+                sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
+                className="object-contain object-center transition duration-500 ease-out group-hover/cat:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/cat:scale-100"
+                unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
+              />
+            ) : (
+              <div className={`absolute inset-0 ${category.tint}`} />
+            )}
+          </div>
+          <span className="pointer-events-none absolute left-3 top-3 z-10 border border-stone-900 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-900">
+            Catálogo
+          </span>
+          <Link
+            href={href}
+            className="absolute inset-0 z-[1] block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
+            aria-label={`Ver catálogo de ${category.name}`}
+          />
         </div>
 
-        <div className="space-y-1 pt-4 text-left">
+        <div className="flex min-h-0 flex-1 flex-col space-y-1.5 pt-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+            Categoría
+          </p>
+          <Link
+            href={href}
+            className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"
+          >
+            <span className="line-clamp-3">{category.name}</span>
+          </Link>
+          <p className="pt-0.5 text-[13px] font-medium tabular-nums text-stone-900">
             {countLabel}
           </p>
-          <h3 className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition group-hover:text-stone-600">
-            {category.name}
-          </h3>
-          <p className="pt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 underline decoration-transparent underline-offset-4 transition group-hover:decoration-stone-900">
-            Ver categoría
-          </p>
+
+          <Link
+            href={href}
+            className="mt-auto block border border-stone-900 bg-stone-900 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900"
+          >
+            Ver catálogo
+          </Link>
         </div>
-      </Link>
+      </article>
     </li>
   );
 }
 
-/** Vitrina de categorías: mismo lenguaje visual que las tarjetas de producto. */
+/** Vitrina de categorías: misma card que productos, marcada como catálogo. */
 export function StoreNetflixCategories({
   categories,
 }: {
