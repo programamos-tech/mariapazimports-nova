@@ -9,6 +9,7 @@ import {
 } from "@/lib/store-category-group";
 import { getStoreCategoryVisual } from "@/lib/store-category-visuals";
 import { normalizeProductImagePaths } from "@/lib/product-images";
+import { storageOriginalObjectUrl } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 
@@ -32,7 +33,9 @@ function resolveProductCoverUrl(
   if (!first) return null;
   if (/^https?:\/\//i.test(first)) return first;
   if (first.startsWith("/")) return first;
-  return storagePublicObjectUrl(first) ?? resolveCategoryListingHeroSrc(first);
+  const pub = storagePublicObjectUrl(first);
+  // Original de Storage (sin resize agresivo) para póster HD.
+  return storageOriginalObjectUrl(pub) ?? pub ?? resolveCategoryListingHeroSrc(first);
 }
 
 /**

@@ -17,7 +17,7 @@ function CategoryPoster({
     <li className="min-w-0">
       <Link
         href={href}
-        className="group relative block overflow-hidden rounded-xl bg-stone-200 shadow-[0_10px_28px_-16px_rgba(0,0,0,0.35)] ring-1 ring-black/5 outline-none transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-14px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-stone-400/50"
+        className="group relative block overflow-hidden rounded-2xl bg-stone-100 shadow-[0_14px_40px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/8 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_-16px_rgba(0,0,0,0.5)] focus-visible:ring-2 focus-visible:ring-stone-400/50"
       >
         <div className="relative aspect-[2/3] w-full">
           {category.imageSrc ? (
@@ -26,16 +26,23 @@ function CategoryPoster({
               alt=""
               fill
               priority={priority}
-              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 18vw"
-              className="object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+              quality={92}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+              className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06] group-hover:brightness-[1.03]"
               unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
             />
           ) : (
             <div className={`absolute inset-0 ${category.tint}`} />
           )}
-          <div className="absolute inset-0 bg-black/35" aria-hidden />
+
+          {/* Velo mínimo solo para legibilidad del texto; la foto queda nítida */}
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.22)_0%,rgba(0,0,0,0.08)_55%,transparent_100%)]"
+            aria-hidden
+          />
+
           <div className="absolute inset-0 flex items-center justify-center p-4">
-            <h3 className="text-center text-sm font-semibold uppercase tracking-[0.12em] text-white sm:text-[15px] md:text-base">
+            <h3 className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)] sm:text-[15px] md:text-base">
               {category.name}
             </h3>
           </div>
@@ -77,14 +84,14 @@ export function StoreNetflixCategories({
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 lg:gap-5">
           {top.map((c, i) => (
             <CategoryPoster key={c.id} category={c} priority={i < 2} />
           ))}
         </ul>
 
         {bottom.length > 0 ? (
-          <ul className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4">
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4 lg:gap-5">
             {bottom.map((c) => (
               <CategoryPoster key={c.id} category={c} />
             ))}
