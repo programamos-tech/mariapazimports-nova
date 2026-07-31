@@ -184,3 +184,44 @@ body {
     display: none;
   }
 }
+
+/* Hero home: filas verticales tipo Netflix (marquee horizontal). */
+@keyframes store-mpi-marquee-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-33.333%, 0, 0);
+  }
+}
+
+@keyframes store-mpi-marquee-right {
+  from {
+    transform: translate3d(-33.333%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.store-mpi-marquee-left {
+  animation-name: store-mpi-marquee-left;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.store-mpi-marquee-right {
+  animation-name: store-mpi-marquee-right;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-mpi-marquee-left,
+  .store-mpi-marquee-right {
+    animation: none;
+    transform: none;
+  }
+}

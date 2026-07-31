@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { preconnect } from "react-dom";
 import { CalendarDays, Headset, Star } from "lucide-react";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
-import { storeShellClass, storeShellXClass, storeProductGridClass } from "@/lib/store-layout";
+import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
 import {
   STORE_PRODUCT_CARD_IMAGE_SIZES,
   storeProductCardImagePriority,
@@ -14,8 +13,10 @@ import {
 } from "@/lib/store-reveal-timing";
 import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { storeBrand } from "@/lib/brand";
-import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
-import { fetchPublishedBanners } from "@/lib/store-banners";
+import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
+import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
+import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
+import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
@@ -23,8 +24,6 @@ import {
   enrichListingProductsWithVariants,
   toProductListingCardProps,
 } from "@/lib/store-listing-variant-meta";
-import { bannerImageSources } from "@/lib/storage-image-url";
-import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -60,12 +59,12 @@ export default async function HomePage() {
     .limit(HOME_PRODUCTS_LIMIT);
 
   const [
-    heroBanners,
+    homeCategories,
     { data: homeProducts, error: homeProductsError },
     cartQtyByProductId,
     couponPctByProductId,
   ] = await Promise.all([
-    fetchPublishedBanners(supabase, "hero"),
+    fetchHomeCategoryCards(supabase),
     productsQuery,
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
@@ -85,10 +84,6 @@ export default async function HomePage() {
     featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
   );
 
-  const lcpBanner = heroBanners[0]
-    ? bannerImageSources(storagePublicObjectUrl(heroBanners[0].image_path))
-    : null;
-
   const featuredImagePreloads = enrichedFeatured
     .slice(0, 2)
     .map((p) => {
@@ -105,16 +100,15 @@ export default async function HomePage() {
 
   return (
     <div>
-      {lcpBanner?.src ? (
+      {MPI_HERO_IMAGES.slice(0, 3).map((href) => (
         <link
+          key={href}
           rel="preload"
           as="image"
-          href={lcpBanner.src}
-          imageSrcSet={lcpBanner.srcSet ?? undefined}
-          imageSizes="(max-width: 768px) 100vw, 100vw"
+          href={href}
           fetchPriority="high"
         />
-      ) : null}
+      ))}
       {featuredImagePreloads.map(({ href, srcSet }) => (
         <link
           key={href}
@@ -125,40 +119,13 @@ export default async function HomePage() {
           imageSizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
         />
       ))}
-      {/* Hero: solo imágenes desde Admin → Banners (zona hero), con respiro lateral en móvil/tablet */}
-      <section
-        className={`w-full ${storeShellXClass} lg:px-0`}
-        aria-label="Banner principal"
-      >
-        {heroBanners.length > 0 ? (
-          <StoreBannerCarousel
-            variant="hero"
-            className="overflow-hidden rounded-xl sm:rounded-2xl lg:rounded-none"
-            slides={heroBanners.map((b) => ({
-              id: b.id,
-              image_path: b.image_path,
-              href: b.href,
-              alt_text: b.alt_text,
-            }))}
-          />
-        ) : (
-          <div className="flex min-h-[min(40vh,320px)] w-full flex-col items-center justify-center gap-3 bg-stone-100 px-4 py-16 text-center">
-            <p className="max-w-md text-sm text-stone-500">
-              Aún no hay banner principal. Sube imágenes en el panel:{" "}
-              <Link
-                href="/admin/banners"
-                className="font-semibold text-[#6b7f6a] underline decoration-[#6b7f6a]/35 underline-offset-2 hover:text-[#556654]"
-              >
-                Administración → Banners
-              </Link>{" "}
-              (zona <span className="font-medium text-stone-600">hero</span>).
-            </p>
-          </div>
-        )}
-      </section>
+
+      <StoreNetflixHero />
+
+      <StoreNetflixCategories categories={homeCategories} />
 
       {/* Highlights + productos destacados */}
-      <section className="border-t border-stone-200/60 bg-white py-8 sm:py-10">
+      <section className="bg-white py-8 sm:py-10">
         <div className={storeShellClass}>
           <ul className="grid gap-5 border-y border-stone-200/70 py-5 sm:grid-cols-3 sm:gap-4 sm:py-6">
             {STORE_HIGHLIGHTS.map(({ title, Icon }) => (
