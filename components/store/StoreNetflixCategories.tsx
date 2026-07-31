@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
-import { storeShellClass } from "@/lib/store-layout";
+import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
+import {
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_SIZES,
+} from "@/lib/store-product-card-image";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
 function CategoryPoster({
@@ -15,15 +19,19 @@ function CategoryPoster({
   const countLabel =
     category.productCount === 1
       ? "1 producto"
-      : `${category.productCount} productos`;
+      : category.productCount > 0
+        ? `${category.productCount} productos`
+        : category.sub;
 
   return (
     <li className="min-w-0">
       <Link
         href={href}
-        className="group relative block h-full overflow-hidden bg-stone-200 outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40 focus-visible:ring-offset-2"
+        className="group block h-full outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
       >
-        <div className="relative aspect-[3/4] w-full sm:aspect-[4/5]">
+        <div
+          className={`relative w-full overflow-hidden bg-white ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+        >
           {category.imageSrc ? (
             <Image
               src={category.imageSrc}
@@ -31,46 +39,32 @@ function CategoryPoster({
               fill
               priority={priority}
               quality={90}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
+              className="object-contain object-center transition duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
               unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
             />
           ) : (
             <div className={`absolute inset-0 ${category.tint}`} />
           )}
+        </div>
 
-          {/* Velos: legibilidad + profundidad editorial */}
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-stone-950/15 to-transparent transition duration-500 group-hover:from-stone-950/85 group-hover:via-stone-950/30"
-            aria-hidden
-          />
-          <div
-            className="absolute inset-0 bg-stone-950/0 transition duration-500 group-hover:bg-stone-950/10"
-            aria-hidden
-          />
-
-          <div className="absolute inset-x-0 bottom-0 flex flex-col items-center px-2.5 pb-4 pt-14 text-center sm:px-5 sm:pb-6 sm:pt-16">
-            <h3 className="max-w-full text-[10px] font-semibold uppercase tracking-[0.16em] text-white sm:text-xs sm:tracking-[0.22em] md:text-[13px]">
-              {category.name}
-            </h3>
-            <span
-              className="mt-2.5 h-px w-6 bg-white/55 transition-all duration-500 ease-out group-hover:w-12 group-hover:bg-white"
-              aria-hidden
-            />
-            <p className="mt-2.5 text-[10px] font-medium uppercase tracking-[0.16em] text-white/70 transition duration-300 group-hover:text-white/90 sm:text-[11px]">
-              {category.productCount > 0 ? countLabel : category.sub}
-            </p>
-            <span className="mt-3 translate-y-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white opacity-0 transition duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:translate-y-0 motion-reduce:opacity-100 sm:mt-3.5">
-              Explorar
-            </span>
-          </div>
+        <div className="space-y-1 pt-4 text-left">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+            {countLabel}
+          </p>
+          <h3 className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition group-hover:text-stone-600">
+            {category.name}
+          </h3>
+          <p className="pt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 underline decoration-transparent underline-offset-4 transition group-hover:decoration-stone-900">
+            Ver categoría
+          </p>
         </div>
       </Link>
     </li>
   );
 }
 
-/** Vitrina de categorías: grilla igualada, imagen a sangre y tipografía editorial. */
+/** Vitrina de categorías: mismo lenguaje visual que las tarjetas de producto. */
 export function StoreNetflixCategories({
   categories,
 }: {
@@ -79,24 +73,14 @@ export function StoreNetflixCategories({
   if (categories.length === 0) return null;
 
   const visible = categories.slice(0, 8);
-  const count = visible.length;
-
-  const gridCols =
-    count === 1
-      ? "mx-auto max-w-md grid-cols-1"
-      : count === 2
-        ? "grid-cols-2"
-        : count === 3
-          ? "grid-cols-3"
-          : "grid-cols-2 sm:grid-cols-4";
 
   return (
     <section
-      className="bg-[#f7f5f2] py-10 sm:py-12 lg:py-14"
+      className="bg-white py-8 sm:py-10"
       aria-labelledby="home-categories-heading"
     >
       <div className={storeShellClass}>
-        <div className="mb-6 text-center sm:mb-8">
+        <div className="mx-auto max-w-3xl text-center">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
             Explorá el catálogo
           </p>
@@ -110,14 +94,13 @@ export function StoreNetflixCategories({
             Elegí una categoría y mirá los productos disponibles.
           </p>
         </div>
-      </div>
 
-      {/* Sangre total: columnas iguales (1fr cada una), tipografía al mismo nivel */}
-      <ul className={`grid w-full gap-px bg-stone-300/80 ${gridCols}`}>
-        {visible.map((c, i) => (
-          <CategoryPoster key={c.id} category={c} priority={i < 2} />
-        ))}
-      </ul>
+        <ul className={`mt-8 ${storeProductGridClass}`}>
+          {visible.map((c, i) => (
+            <CategoryPoster key={c.id} category={c} priority={i < 2} />
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
