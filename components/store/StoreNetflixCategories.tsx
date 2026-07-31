@@ -17,7 +17,7 @@ function CategoryPoster({
     <li className="min-w-0">
       <Link
         href={href}
-        className="group relative block overflow-hidden rounded-2xl bg-stone-100 shadow-[0_14px_40px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/8 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_-16px_rgba(0,0,0,0.5)] focus-visible:ring-2 focus-visible:ring-stone-400/50"
+        className="group relative block overflow-hidden rounded-2xl bg-[#141210] shadow-[0_18px_48px_-18px_rgba(0,0,0,0.55)] ring-1 ring-white/10 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_60px_-16px_rgba(0,0,0,0.65)] focus-visible:ring-2 focus-visible:ring-stone-400/50"
       >
         <div className="relative aspect-[2/3] w-full">
           {category.imageSrc ? (
@@ -26,23 +26,17 @@ function CategoryPoster({
               alt=""
               fill
               priority={priority}
-              quality={92}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-              className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.06] group-hover:brightness-[1.03]"
+              quality={95}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 22vw"
+              className="object-contain object-center p-5 contrast-[1.08] saturate-[1.15] transition duration-700 ease-out group-hover:scale-[1.05] group-hover:saturate-[1.22] sm:p-6"
               unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
             />
           ) : (
-            <div className={`absolute inset-0 ${category.tint}`} />
+            <div className="absolute inset-0 bg-gradient-to-br from-stone-700 to-stone-950" />
           )}
 
-          {/* Velo mínimo solo para legibilidad del texto; la foto queda nítida */}
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.22)_0%,rgba(0,0,0,0.08)_55%,transparent_100%)]"
-            aria-hidden
-          />
-
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <h3 className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)] sm:text-[15px] md:text-base">
+          <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-4">
+            <h3 className="max-w-[92%] rounded-md bg-black/75 px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.45)] backdrop-blur-[2px] sm:px-3.5 sm:py-3 sm:text-xs md:text-[13px]">
               {category.name}
             </h3>
           </div>
