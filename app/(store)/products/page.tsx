@@ -41,6 +41,9 @@ import {
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
+import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
+import { CatalogMoreCategories } from "@/components/store/CatalogMoreCategories";
+import { categoryGroupKey } from "@/lib/store-category-group";
 
 export const dynamic = "force-dynamic";
 
@@ -206,6 +209,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     listingResult,
     cartQtyByProductId,
     couponPctByProductId,
+    homeCategoryCards,
   ] = await Promise.all([
     fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
     categoryView ?
@@ -227,6 +231,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     }),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
+    categoryView ? fetchHomeCategoryCards(supabase) : Promise.resolve([]),
   ]);
 
   const categoryNameById = new Map(
@@ -283,6 +288,32 @@ export default async function ProductsPage({ searchParams }: Props) {
     categoryName:
       p.category_id ? (categoryNameById.get(p.category_id) ?? null) : null,
   }));
+
+  const currentCategoryGroupKey =
+    categoryName ? categoryGroupKey(categoryName) : null;
+  const excludeCategoryIds = new Set(
+    (expandedCategoryIds ?? []).map((id) => id.trim().toLowerCase()),
+  );
+  if (categoryFilterId) {
+    excludeCategoryIds.add(categoryFilterId.trim().toLowerCase());
+  }
+
+  const moreCategories =
+    categoryView && currentPage >= totalPages
+      ? shuffleStoreListingProducts(
+          homeCategoryCards.filter((c) => {
+            if (c.productCount <= 0) return false;
+            if (excludeCategoryIds.has(c.id.trim().toLowerCase())) return false;
+            if (
+              currentCategoryGroupKey &&
+              categoryGroupKey(c.name) === currentCategoryGroupKey
+            ) {
+              return false;
+            }
+            return true;
+          }),
+        ).slice(0, 3)
+      : [];
 
   const invalidCategory = Boolean(categoryId && !categoryName);
 
@@ -446,6 +477,10 @@ export default async function ProductsPage({ searchParams }: Props) {
             ) : null}
           </div>
         )}
+
+        {moreCategories.length > 0 ? (
+          <CatalogMoreCategories categories={moreCategories} />
+        ) : null}
       </div>
     </div>
   );

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Menu, UserRound, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
+import { List } from "@phosphor-icons/react/dist/csr/List";
+import { User } from "@phosphor-icons/react/dist/csr/User";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   STORE_HEADER_ICON_LG,
-  STORE_HEADER_ICON_STROKE,
+  STORE_HEADER_ICON_WEIGHT,
 } from "@/lib/store-header-icons";
 import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
 import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
@@ -55,7 +57,7 @@ export function StoreNavDropdowns({
   }, [open, close]);
 
   const shopBtnClass =
-    "group inline-flex items-center gap-2 rounded-none py-1 text-[13px] font-medium tracking-wide text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2";
+    "group inline-flex items-center gap-2 rounded-none py-1 text-[13px] font-medium tracking-wide text-stone-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2";
 
   const drawerLayer =
     portalTarget &&
@@ -165,9 +167,9 @@ export function StoreNavDropdowns({
                 className="flex w-full items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
               >
                 <span className="flex items-center gap-3">
-                  <UserRound
+                  <User
                     className="size-5 shrink-0 text-stone-900"
-                    strokeWidth={STORE_HEADER_ICON_STROKE}
+                    weight={STORE_HEADER_ICON_WEIGHT}
                     aria-hidden
                   />
                   <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
@@ -187,9 +189,9 @@ export function StoreNavDropdowns({
                 className="flex items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
               >
                 <span className="flex items-center gap-3">
-                  <UserRound
+                  <User
                     className="size-5 shrink-0 text-stone-900"
-                    strokeWidth={STORE_HEADER_ICON_STROKE}
+                    weight={STORE_HEADER_ICON_WEIGHT}
                     aria-hidden
                   />
                   <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
@@ -255,9 +257,9 @@ export function StoreNavDropdowns({
         id={`${baseId}-shop-trigger`}
         onClick={() => setOpen((v) => !v)}
       >
-        <Menu
+        <List
           className={STORE_HEADER_ICON_LG}
-          strokeWidth={STORE_HEADER_ICON_STROKE}
+          weight={STORE_HEADER_ICON_WEIGHT}
           aria-hidden
         />
         <span className="text-[13px]">Shop</span>

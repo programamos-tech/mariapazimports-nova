@@ -3,20 +3,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/csr/MagnifyingGlass";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { formatCop } from "@/lib/money";
-import { pseudoReviewCount } from "@/lib/pseudo-review";
 import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
 import {
   STORE_HEADER_ICON_LG,
-  STORE_HEADER_ICON_SM,
-  STORE_HEADER_ICON_STROKE,
+  STORE_HEADER_ICON_WEIGHT,
 } from "@/lib/store-header-icons";
 
 type ProductRow = {
@@ -27,124 +26,35 @@ type ProductRow = {
   image_path: string | null;
 };
 
-function SearchResultsPanel({
-  resultsId,
-  debounced,
-  loading,
-  products,
-  onPick,
-  panelClassName,
-}: {
-  resultsId: string;
-  debounced: string;
-  loading: boolean;
-  products: ProductRow[];
-  onPick: () => void;
-  panelClassName: string;
-}) {
-  return (
-    <div
-      id={resultsId}
-      role="listbox"
-      aria-label="Resultados de búsqueda"
-      className={panelClassName}
-    >
-      {loading ? (
-        <div className="space-y-0 p-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex animate-pulse gap-3 border-b border-stone-100 p-3 last:border-b-0"
-            >
-              <div className="size-12 shrink-0 rounded-lg bg-stone-100" />
-              <div className="flex-1 space-y-2 pt-1">
-                <div className="h-3 w-full max-w-[12rem] rounded bg-stone-100" />
-                <div className="h-2 w-full max-w-[6rem] rounded bg-stone-100" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : products.length === 0 ? (
-        <p className="p-4 text-center text-sm text-stone-500">
-          No hay productos que coincidan con “{debounced}”.
-        </p>
-      ) : (
-        <ul className="py-1">
-          {products.map((p, idx) => {
-            const img = storagePublicObjectUrl(p.image_path);
-            const reviews = pseudoReviewCount(p.id);
-            return (
-              <li
-                key={p.id}
-                className={idx < products.length - 1 ? "border-b border-stone-100" : ""}
-              >
-                <Link
-                  href={`/products/${p.id}`}
-                  onClick={onPick}
-                  className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-[#faf8f5] active:bg-[#f5f2ee]"
-                >
-                  <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-stone-100 ring-1 ring-stone-200/80">
-                    {img ? (
-                      <Image
-                        src={img}
-                        alt=""
-                        fill
-                        className="object-contain object-center"
-                        sizes="48px"
-                        unoptimized={shouldUnoptimizeStorageImageUrl(img)}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-stone-400">
-                        —
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-stone-900">{p.name}</p>
-                    {p.brand?.trim() ? (
-                      <p className="truncate text-[11px] text-stone-500">{p.brand}</p>
-                    ) : null}
-                    <p className="mt-0.5 flex items-center gap-1.5">
-                      <span
-                        className="text-[11px] leading-none tracking-tight text-[#6b7f6a]"
-                        aria-hidden
-                      >
-                        ★★★★★
-                      </span>
-                      <span className="text-[11px] text-stone-400">({reviews})</span>
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-sm font-semibold text-[#556654]">
-                    {formatCop(p.price_cents)}
-                  </p>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
+const SEARCH_PLACEHOLDER = "Buscar productos";
+
+const SUGGESTED_SEARCHES = [
+  "Maquillaje",
+  "Cuidado de la piel",
+  "Vitaminas",
+  "Termos",
+  "Bolsos",
+  "Cuidado corporal",
+] as const;
 
 export function StoreSearch({
   variant = "default",
 }: {
+  /** @deprecated El header usa siempre el drawer; se ignora. */
   variant?: "default" | "minimal";
 }) {
+  void variant;
   const router = useRouter();
   const baseId = useId();
-  const desktopResultsId = `${baseId}-desktop-results`;
-  const mobileResultsId = `${baseId}-mobile-results`;
+  const resultsId = `${baseId}-results`;
+  const titleId = `${baseId}-title`;
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [open, setOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setPortalTarget(document.body);
@@ -156,26 +66,23 @@ export function StoreSearch({
   }, [query]);
 
   useEffect(() => {
-    if (debounced.length < 2) return;
+    if (!drawerOpen) return;
 
     let cancelled = false;
+    const q = debounced.length >= 2 ? debounced : "";
 
     void (async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/products/search?q=${encodeURIComponent(debounced)}`,
-        );
+        const url =
+          q.length >= 2
+            ? `/api/products/search?q=${encodeURIComponent(q)}`
+            : `/api/products/search`;
+        const res = await fetch(url);
         const data = (await res.json()) as { products?: ProductRow[] };
-        if (!cancelled) {
-          setProducts(data.products ?? []);
-          setOpen(true);
-        }
+        if (!cancelled) setProducts(data.products ?? []);
       } catch {
-        if (!cancelled) {
-          setProducts([]);
-          setOpen(true);
-        }
+        if (!cancelled) setProducts([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -184,261 +91,274 @@ export function StoreSearch({
     return () => {
       cancelled = true;
     };
-  }, [debounced]);
+  }, [debounced, drawerOpen]);
 
-  const closeDesktop = useCallback(() => setOpen(false), []);
-
-  const closeMobile = useCallback(() => {
-    setMobileOpen(false);
-    setOpen(false);
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
   }, []);
 
-  const openMobile = useCallback(() => {
-    setMobileOpen(true);
-    if (debounced.length >= 2) setOpen(true);
-  }, [debounced.length]);
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+  }, []);
 
   useEffect(() => {
-    if (!open || mobileOpen) return;
-    function onDoc(e: MouseEvent) {
-      if (!wrapRef.current?.contains(e.target as Node)) closeDesktop();
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeDesktop();
-    }
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, mobileOpen, closeDesktop]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
+    if (!drawerOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [mobileOpen]);
+  }, [drawerOpen]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!drawerOpen) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeMobile();
+      if (e.key === "Escape") closeDrawer();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [mobileOpen, closeMobile]);
+  }, [drawerOpen, closeDrawer]);
 
   useEffect(() => {
-    if (!mobileOpen) return;
-    const t = window.setTimeout(() => mobileInputRef.current?.focus(), 40);
+    if (!drawerOpen) return;
+    const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
-  }, [mobileOpen]);
+  }, [drawerOpen]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     const q = query.trim();
-    closeDesktop();
-    closeMobile();
+    closeDrawer();
     if (q) router.push(`/products?q=${encodeURIComponent(q)}`);
     else router.push("/products");
   }
 
-  function onQueryChange(v: string) {
-    setQuery(v);
-    const t = v.trim();
-    if (t.length < 2) {
-      setProducts([]);
-      setOpen(false);
-    } else {
-      setOpen(true);
-    }
+  function applySuggestion(term: string) {
+    setQuery(term);
+    inputRef.current?.focus();
   }
 
-  const showPanel = open && debounced.length >= 2;
+  const isFiltering = debounced.length >= 2;
+  const iconBtn =
+    "flex shrink-0 items-center justify-center rounded-none p-1.5 text-stone-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2";
 
-  const panelBase =
-    "absolute left-0 top-full z-50 mt-2 max-h-[min(70vh,22rem)] min-w-0 overflow-y-auto rounded-xl border border-stone-200/90 bg-white shadow-xl shadow-stone-200/90 ring-1 ring-stone-100";
-
-  const desktopResultsPanel = showPanel && !mobileOpen ? (
-    <SearchResultsPanel
-      resultsId={desktopResultsId}
-      debounced={debounced}
-      loading={loading}
-      products={products}
-      onPick={closeDesktop}
-      panelClassName={
-        variant === "minimal"
-          ? `${panelBase} left-auto right-0 w-[min(22rem,calc(100svw-2rem))]`
-          : `${panelBase} right-0 w-full`
-      }
-    />
-  ) : null;
-
-  const mobileOverlay =
+  const drawer =
     portalTarget &&
+    drawerOpen &&
     createPortal(
-      <div
-        className={`fixed inset-0 z-[88] flex flex-col bg-white transition-[visibility,opacity] duration-200 lg:hidden ${
-          mobileOpen
-            ? "pointer-events-auto visible opacity-100"
-            : "pointer-events-none invisible opacity-0"
-        }`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Buscar productos"
-        aria-hidden={!mobileOpen}
-      >
-        <div className="flex shrink-0 items-center gap-2 border-b border-stone-200/90 px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3 sm:px-4">
-          <form onSubmit={onSubmit} className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-stone-200 bg-[#faf8f5] py-2.5 pl-3.5 pr-3 shadow-sm">
-              <Search
-                className={STORE_HEADER_ICON_SM}
-                strokeWidth={STORE_HEADER_ICON_STROKE}
-                aria-hidden
-              />
-              <input
-                ref={mobileInputRef}
-                name="q"
-                type="search"
-                enterKeyHint="search"
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                placeholder="Buscar producto o marca"
-                value={query}
-                onChange={(e) => onQueryChange(e.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-base text-stone-800 placeholder:text-stone-400 focus:outline-none sm:text-sm [&::-webkit-search-cancel-button]:hidden"
-                aria-controls={mobileResultsId}
-                aria-autocomplete="list"
-                aria-haspopup="listbox"
-              />
-            </div>
-            <button
-              type="submit"
-              className="hidden shrink-0 rounded-full px-3 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-100 sm:inline-flex"
-            >
-              Buscar
-            </button>
-          </form>
-          <button
-            type="button"
-            onClick={closeMobile}
-            className="inline-flex size-11 shrink-0 items-center justify-center text-stone-600 transition hover:bg-stone-50 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
-            aria-label="Cerrar búsqueda"
-          >
-            <X className="size-5" strokeWidth={1.25} aria-hidden />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {showPanel ? (
-            <SearchResultsPanel
-              resultsId={mobileResultsId}
-              debounced={debounced}
-              loading={loading}
-              products={products}
-              onPick={closeMobile}
-              panelClassName="w-full"
-            />
-          ) : (
-            <p className="px-6 py-10 text-center text-sm text-stone-500">
-              Escribí al menos 2 caracteres para ver productos.
-            </p>
-          )}
-        </div>
-      </div>,
-      portalTarget,
-    );
-
-  if (variant === "minimal") {
-    return (
       <>
         <button
           type="button"
-          onClick={openMobile}
-          className="flex shrink-0 items-center justify-center p-1 text-stone-600 transition hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2 lg:hidden"
-          aria-label="Buscar productos"
-          aria-expanded={mobileOpen}
-          aria-haspopup="dialog"
-        >
-          <Search
-            className={STORE_HEADER_ICON_LG}
-            strokeWidth={STORE_HEADER_ICON_STROKE}
-            aria-hidden
-          />
-        </button>
-
+          className="store-cart-drawer-backdrop fixed inset-0 z-[78] bg-black/45"
+          aria-label="Cerrar búsqueda"
+          onClick={closeDrawer}
+        />
         <div
-          ref={wrapRef}
-          className="relative hidden min-w-0 lg:block lg:max-w-[16rem]"
+          className="store-cart-drawer-panel fixed inset-y-0 right-0 z-[80] flex w-[min(100%,28rem)] flex-col bg-white shadow-[-12px_0_48px_rgba(15,23,42,0.12)]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
         >
-          <form
-            onSubmit={onSubmit}
-            className="flex items-end gap-2 border-b border-stone-400 pb-1 transition-colors focus-within:border-stone-600"
-          >
-            <Search
-              className={`mb-0.5 ${STORE_HEADER_ICON_SM}`}
-              strokeWidth={STORE_HEADER_ICON_STROKE}
-              aria-hidden
-            />
-            <input
-              name="q"
-              type="search"
-              autoComplete="off"
-              placeholder="Buscar producto o marca"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              onFocus={() => {
-                if (debounced.length >= 2) setOpen(true);
-              }}
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-stone-800 placeholder:text-stone-400 focus:outline-none"
-              aria-controls={desktopResultsId}
-              aria-autocomplete="list"
-              aria-haspopup="listbox"
-            />
-          </form>
-          {desktopResultsPanel}
-        </div>
+          <header className="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200/80 px-6 py-5 sm:px-8">
+            <h2
+              id={titleId}
+              className="text-[12px] font-semibold uppercase tracking-[0.18em] text-stone-900 sm:text-sm"
+            >
+              Buscar
+            </h2>
+            <button
+              type="button"
+              onClick={closeDrawer}
+              className="flex size-9 shrink-0 items-center justify-center border border-stone-900/80 text-stone-900 transition hover:bg-stone-900 hover:text-white"
+              aria-label="Cerrar búsqueda"
+            >
+              <X className="size-4" strokeWidth={1.5} aria-hidden />
+            </button>
+          </header>
 
-        {mobileOverlay}
-      </>
+          <div className="store-cart-drawer-body-scroll flex min-h-0 flex-1 flex-col">
+            <form
+              onSubmit={onSubmit}
+              className="shrink-0 border-b border-stone-200/80 px-6 py-5 sm:px-8"
+            >
+              <label className="flex items-center gap-3 border border-stone-200 bg-white px-3.5 py-3 focus-within:border-stone-400">
+                <MagnifyingGlass
+                  className="size-[18px] shrink-0 text-stone-900"
+                  weight={STORE_HEADER_ICON_WEIGHT}
+                  aria-hidden
+                />
+                <input
+                  ref={inputRef}
+                  name="q"
+                  type="search"
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder={SEARCH_PLACEHOLDER}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-[15px] text-stone-900 placeholder:text-stone-400 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+                  aria-controls={resultsId}
+                  aria-autocomplete="list"
+                />
+              </label>
+            </form>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-8">
+              {!isFiltering ? (
+                <section className="mb-8" aria-labelledby={`${baseId}-suggestions`}>
+                  <h3
+                    id={`${baseId}-suggestions`}
+                    className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900"
+                  >
+                    Sugerencias
+                  </h3>
+                  <ul className="mt-4 flex flex-wrap gap-2">
+                    {SUGGESTED_SEARCHES.map((term) => (
+                      <li key={term}>
+                        <button
+                          type="button"
+                          onClick={() => applySuggestion(term)}
+                          className="border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
+                        >
+                          {term}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              <section aria-labelledby={`${baseId}-products`}>
+                <div className="mb-4 flex items-end justify-between gap-3">
+                  <h3
+                    id={`${baseId}-products`}
+                    className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900"
+                  >
+                    {isFiltering ? "Resultados" : "Productos"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeDrawer();
+                      const q = query.trim();
+                      router.push(
+                        q
+                          ? `/products?q=${encodeURIComponent(q)}`
+                          : "/products",
+                      );
+                    }}
+                    className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone-600 underline decoration-stone-300 underline-offset-4 transition hover:text-stone-900"
+                  >
+                    Ver todos
+                  </button>
+                </div>
+
+                <div id={resultsId} role="listbox" aria-label="Productos">
+                  {loading ? (
+                    <ul className="space-y-0">
+                      {[1, 2, 3, 4].map((i) => (
+                        <li
+                          key={i}
+                          className="flex animate-pulse gap-4 border-b border-stone-100 py-4"
+                        >
+                          <div className="size-16 shrink-0 bg-stone-100 sm:size-20" />
+                          <div className="flex-1 space-y-2 pt-1">
+                            <div className="h-3 max-w-[14rem] bg-stone-100" />
+                            <div className="h-2 max-w-[6rem] bg-stone-100" />
+                            <div className="h-3 max-w-[4rem] bg-stone-100" />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : products.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-stone-500">
+                      {isFiltering
+                        ? `No hay productos que coincidan con “${debounced}”.`
+                        : "Aún no hay productos publicados."}
+                    </p>
+                  ) : (
+                    <ul>
+                      {products.map((p, idx) => {
+                        const img = storagePublicObjectUrl(p.image_path);
+                        return (
+                          <li
+                            key={p.id}
+                            className={
+                              idx < products.length - 1
+                                ? "border-b border-stone-100"
+                                : ""
+                            }
+                          >
+                            <Link
+                              href={`/products/${p.id}`}
+                              onClick={closeDrawer}
+                              className="flex items-center gap-4 py-4 transition hover:bg-stone-50"
+                            >
+                              <div className="relative size-16 shrink-0 overflow-hidden bg-stone-100 sm:size-20">
+                                {img ? (
+                                  <Image
+                                    src={img}
+                                    alt=""
+                                    fill
+                                    className="object-contain object-center"
+                                    sizes="80px"
+                                    unoptimized={shouldUnoptimizeStorageImageUrl(
+                                      img,
+                                    )}
+                                  />
+                                ) : (
+                                  <div className="flex h-full items-center justify-center text-xs text-stone-400">
+                                    —
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                {p.brand?.trim() ? (
+                                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+                                    {p.brand}
+                                  </p>
+                                ) : null}
+                                <p className="mt-0.5 line-clamp-2 text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900">
+                                  {p.name}
+                                </p>
+                                <p className="mt-1.5 text-[13px] font-medium tabular-nums text-stone-900">
+                                  {formatCop(p.price_cents)}
+                                </p>
+                              </div>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </>,
+      portalTarget,
     );
-  }
 
   return (
-    <div ref={wrapRef} className="relative min-w-0 w-full max-w-none flex-1 lg:min-w-[12rem]">
-      <form
-        onSubmit={onSubmit}
-        className="flex items-center gap-2 rounded-full border border-stone-200 bg-[#faf8f5] py-2 pl-4 pr-3 shadow-sm"
+    <>
+      <button
+        type="button"
+        onClick={openDrawer}
+        className={iconBtn}
+        aria-label="Buscar productos"
+        aria-expanded={drawerOpen}
+        aria-haspopup="dialog"
       >
-        <input
-          name="q"
-          type="search"
-          autoComplete="off"
-          placeholder="Buscar producto o marca"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          onFocus={() => {
-            if (debounced.length >= 2) setOpen(true);
-          }}
-          className="min-w-0 flex-1 bg-transparent text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none"
-          aria-controls={desktopResultsId}
-          aria-autocomplete="list"
-          aria-haspopup="listbox"
+        <MagnifyingGlass
+          className={STORE_HEADER_ICON_LG}
+          weight={STORE_HEADER_ICON_WEIGHT}
+          aria-hidden
         />
-        <button
-          type="submit"
-          className="flex shrink-0 items-center justify-center rounded-full p-1 text-stone-500 transition hover:bg-white/80 hover:text-stone-700"
-          aria-label="Buscar"
-        >
-          <Search className="size-5" strokeWidth={STORE_HEADER_ICON_STROKE} aria-hidden />
-        </button>
-      </form>
-      {desktopResultsPanel}
-    </div>
+      </button>
+      {drawer}
+    </>
   );
 }

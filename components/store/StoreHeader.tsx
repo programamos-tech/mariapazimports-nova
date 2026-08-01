@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
 import { StoreLogo } from "@/components/store/StoreLogo";
@@ -9,22 +8,6 @@ import { StoreHeaderShell } from "@/components/store/StoreHeaderShell";
 import { StoreNavDropdowns } from "@/components/store/StoreNavDropdowns";
 import { StoreSearch } from "@/components/store/StoreSearch";
 import { fetchStoreCategoriesWithCounts } from "@/lib/fetch-store-categories";
-
-function accountFirstNameFromUser(user: User | null): string | null {
-  if (!user) return null;
-  const meta = user.user_metadata as Record<string, unknown> | undefined;
-  const full =
-    typeof meta?.full_name === "string"
-      ? meta.full_name
-      : typeof meta?.name === "string"
-        ? meta.name
-        : null;
-  const part = full?.trim().split(/\s+/).filter(Boolean)[0];
-  if (part) return part.length > 18 ? `${part.slice(0, 18)}…` : part;
-  const local = user.email?.split("@")[0];
-  if (local) return local.length > 18 ? `${local.slice(0, 18)}…` : local;
-  return null;
-}
 
 export async function StoreHeader() {
   const supabase = await createSupabaseServerClient();
@@ -37,7 +20,6 @@ export async function StoreHeader() {
   const user = authResult.data.user;
   const userIconHref = user ? "/cuenta" : "/cuenta/entrar";
   const userIconLabel = user ? "Mi cuenta" : "Iniciar sesión";
-  const accountFirstName = accountFirstNameFromUser(user);
 
   return (
     <StoreHeaderShell>
@@ -73,11 +55,9 @@ export async function StoreHeader() {
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 bg-white sm:gap-0.5 lg:min-w-0 lg:shrink lg:gap-4 group-data-[home-overlay=true]/header:bg-transparent">
           <StoreSearch variant="minimal" />
           <StoreHeaderActions
-            isLoggedIn={!!user}
             cartItemCount={cartItemCount}
             userIconHref={userIconHref}
             userIconLabel={userIconLabel}
-            accountFirstName={accountFirstName}
             guestOpensAuthDrawer={!user}
           />
         </div>
