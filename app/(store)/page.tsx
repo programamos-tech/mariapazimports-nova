@@ -15,6 +15,7 @@ import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { storeBrand } from "@/lib/brand";
 import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
 import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
+import { StoreMariaPazBio } from "@/components/store/StoreMariaPazBio";
 import { StoreBestsellersRow } from "@/components/store/StoreBestsellersRow";
 import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
 import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
@@ -130,6 +131,8 @@ export default async function HomePage() {
       <StoreNetflixHero />
 
       <StoreNetflixCategories categories={homeCategories} />
+
+      <StoreMariaPazBio />
 
       {/* Highlights + productos destacados */}
       <section className="bg-white py-8 sm:py-10">
