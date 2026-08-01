@@ -103,6 +103,7 @@ export function toProductListingCardProps(
     variantMeta?: ListingProductWithVariantMeta["variantMeta"];
     listingPriceCents?: number;
     listingStockQuantity?: number;
+    categoryName?: string | null;
   },
 ) {
   const variantMeta =
@@ -112,6 +113,7 @@ export function toProductListingCardProps(
     id: p.id,
     name: p.name,
     brand: p.brand,
+    categoryName: p.categoryName ?? null,
     description: p.description,
     price_cents: p.price_cents,
     image_path: p.image_path,

@@ -33,7 +33,20 @@ export type StoreListingProductRow = {
   fragrance_options: string[] | null;
   variant_axis?: string | null;
   created_at: string;
+  category_id?: string | null;
 };
+
+/** Mezcla in-place (Fisher–Yates) para vitrinas “descubrimiento”. */
+export function shuffleStoreListingProducts<T>(items: T[]): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = out[i]!;
+    out[i] = out[j]!;
+    out[j] = tmp;
+  }
+  return out;
+}
 
 export type StoreListingQueryInput = {
   categoryFilterId: string | null;
@@ -78,7 +91,7 @@ export async function fetchPublishedProductsForListing(
     .from("products")
     .select(
       // Sin description: las cards no la muestran y ahorra payload HTML/RSC.
-      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at",
+      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at,category_id",
       { count: "exact" },
     )
     .eq("is_published", true);
@@ -142,19 +155,31 @@ export async function fetchPublishedProductsForListing(
   }
 
   if (input.unpaged) {
-    const { data: products, error: productsError } = await query;
-    if (productsError) {
-      console.error(
-        "[store-products-listing]",
-        productsError.message,
-        productsError.code,
+    // PostgREST `max_rows` (p. ej. 1000): paginar hasta vaciar el set.
+    const pageSize = 1000;
+    const all: StoreListingProductRow[] = [];
+    for (let from = 0; ; from += pageSize) {
+      const to = from + pageSize - 1;
+      const { data: products, error: productsError } = await query.range(
+        from,
+        to,
       );
+      if (productsError) {
+        console.error(
+          "[store-products-listing]",
+          productsError.message,
+          productsError.code,
+        );
+        break;
+      }
+      const batch = (products ?? []).map((p) => ({
+        ...p,
+        description: null,
+      })) as StoreListingProductRow[];
+      all.push(...batch);
+      if (batch.length < pageSize) break;
     }
-    const rows = (products ?? []).map((p) => ({
-      ...p,
-      description: null,
-    })) as StoreListingProductRow[];
-    return { products: rows, total: rows.length };
+    return { products: all, total: all.length };
   }
 
   const pageSize = Math.max(1, input.pageSize ?? STORE_CATALOG_PAGE_SIZE);

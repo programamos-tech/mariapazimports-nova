@@ -1,5 +1,4 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { CatalogBrowseSections } from "@/components/store/CatalogBrowseSections";
 import { CatalogListingHero } from "@/components/store/CatalogListingHero";
 import { CatalogPagination } from "@/components/store/CatalogPagination";
 import { CategoryListingHero } from "@/components/store/CategoryListingHero";
@@ -35,12 +34,12 @@ import {
 } from "@/lib/store-listing-variant-meta";
 import {
   fetchPublishedProductsForListing,
+  shuffleStoreListingProducts,
   STORE_CATALOG_PAGE_SIZE,
   type StoreListingProductRow,
 } from "@/lib/store-products-listing-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
-import { fetchCatalogBrowseSections } from "@/lib/catalog-browse-rows";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 
 export const dynamic = "force-dynamic";
@@ -204,46 +203,48 @@ export default async function ProductsPage({ searchParams }: Props) {
   const [
     listingFacetsFromQuery,
     productsBanners,
-    catalogBrowseData,
     listingResult,
     cartQtyByProductId,
     couponPctByProductId,
   ] = await Promise.all([
-    catalogBrowseMode ?
-      Promise.resolve(null)
-    : fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
+    fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
     categoryView ?
       Promise.resolve([] as Awaited<ReturnType<typeof fetchPublishedBanners>>)
     : fetchPublishedBanners(supabase, "products"),
-    catalogBrowseMode && allCategoryRows?.length ?
-      fetchCatalogBrowseSections(supabase, allCategoryRows)
-    : Promise.resolve(null),
-    catalogBrowseMode ?
-      Promise.resolve({ products: [] as StoreListingProductRow[], total: 0 })
-    : fetchPublishedProductsForListing(supabase, {
-        categoryFilterId,
-        filterCategoryIds,
-        activeBrands,
-        activeColors,
-        activeSizes,
-        priceMin,
-        priceMax,
-        q,
-        sort,
-        allCategoryRows,
-        page,
-      }),
+    fetchPublishedProductsForListing(supabase, {
+      categoryFilterId,
+      filterCategoryIds,
+      activeBrands,
+      activeColors,
+      activeSizes,
+      priceMin,
+      priceMax,
+      q,
+      sort,
+      allCategoryRows,
+      page: catalogBrowseMode ? 1 : page,
+      unpaged: catalogBrowseMode,
+    }),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
   ]);
 
-  let list = listingResult.products;
-  let listingTotal = listingResult.total;
-  let totalPages = Math.max(
-    1,
-    Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE),
+  const categoryNameById = new Map(
+    (allCategoryRows ?? []).map((c) => [c.id, c.name] as const),
   );
-  let currentPage = Math.min(page, totalPages);
+
+  let list: StoreListingProductRow[] = listingResult.products;
+  let listingTotal = listingResult.total;
+
+  if (catalogBrowseMode) {
+    list = shuffleStoreListingProducts(list);
+    listingTotal = list.length;
+  }
+
+  let totalPages = catalogBrowseMode
+    ? 1
+    : Math.max(1, Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE));
+  let currentPage = catalogBrowseMode ? 1 : Math.min(page, totalPages);
 
   if (
     !catalogBrowseMode &&
@@ -272,68 +273,16 @@ export default async function ProductsPage({ searchParams }: Props) {
     currentPage = totalPages;
   }
 
-  const catalogSections = catalogBrowseData?.sections ?? null;
   const listingFacets =
-    catalogBrowseMode && catalogBrowseData ?
-      catalogBrowseData.facets
-    : listingFacetsFromQuery ?? computeListingFacetsFromProductRows([]);
+    listingFacetsFromQuery ?? computeListingFacetsFromProductRows([]);
 
-  /** Si el modo “por categorías” no devolvió secciones pero hay filas publicadas (p. ej. error al leer categorías), mostrar grid plano. */
-  let browseFlatFallback: StoreListingProductRow[] = [];
-  let browseFlatTotal = 0;
-  let publishedProductHeadCount: number | null = null;
-  if (
-    catalogBrowseMode &&
-    (!catalogSections || catalogSections.length === 0)
-  ) {
-    const { count, error: countErr } = await supabase
-      .from("products")
-      .select("*", { count: "exact", head: true })
-      .eq("is_published", true);
-    if (countErr) {
-      console.error("[products] count published:", countErr.message, countErr.code);
-    } else {
-      publishedProductHeadCount = count ?? 0;
-    }
-    if ((publishedProductHeadCount ?? 0) > 0) {
-      const flat = await fetchPublishedProductsForListing(supabase, {
-        categoryFilterId: null,
-        filterCategoryIds: [],
-        activeBrands: [],
-        activeColors: [],
-        activeSizes: [],
-        priceMin: null,
-        priceMax: null,
-        q: "",
-        sort,
-        allCategoryRows,
-        page,
-      });
-      browseFlatFallback = flat.products;
-      browseFlatTotal = flat.total;
-    }
-  }
+  const enrichedList = await enrichListingProductsWithVariants(supabase, list);
 
-  const browseFlatTotalPages = Math.max(
-    1,
-    Math.ceil(browseFlatTotal / STORE_CATALOG_PAGE_SIZE),
-  );
-  const browseFlatCurrentPage = Math.min(page, browseFlatTotalPages);
-
-  const showCatalogBrowseSections =
-    catalogBrowseMode &&
-    Boolean(catalogSections && catalogSections.length > 0);
-  const showBrowseFlatFallback =
-    catalogBrowseMode &&
-    !showCatalogBrowseSections &&
-    browseFlatFallback.length > 0;
-
-  const enrichedList = catalogBrowseMode
-    ? []
-    : await enrichListingProductsWithVariants(supabase, list);
-  const enrichedBrowseFlat = showBrowseFlatFallback
-    ? await enrichListingProductsWithVariants(supabase, browseFlatFallback)
-    : [];
+  const withCategory = enrichedList.map((p) => ({
+    ...p,
+    categoryName:
+      p.category_id ? (categoryNameById.get(p.category_id) ?? null) : null,
+  }));
 
   const invalidCategory = Boolean(categoryId && !categoryName);
 
@@ -461,39 +410,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           />
         ) : null}
 
-        {showCatalogBrowseSections ? (
-          <CatalogBrowseSections
-            sections={catalogSections!}
-            cartQtyByProductId={cartQtyByProductId}
-            couponPctByProductId={couponPctByProductId}
-          />
-        ) : showBrowseFlatFallback ? (
-          <div className="space-y-10">
-            <ul className={storeProductGridClass}>
-              {browseFlatFallback.map((p, index) => (
-                <li key={p.id} className="h-full">
-                  <ProductListingCard
-                    imagePriority={storeProductCardImagePriority(index)}
-                    cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                    couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={toProductListingCardProps(enrichedBrowseFlat[index]!)}
-                  />
-                </li>
-              ))}
-            </ul>
-            <CatalogPagination
-              currentPage={browseFlatCurrentPage}
-              totalPages={browseFlatTotalPages}
-              baseQuery={paginationBaseQuery}
-            />
-          </div>
-        ) : catalogBrowseMode ? (
-          <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
-            {publishedProductHeadCount != null && publishedProductHeadCount > 0
-              ? "Hay productos publicados en la base de datos, pero no se pudieron agrupar para la vitrina. Revisa en Vercel que NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY sean del mismo proyecto Supabase donde ves los datos, y vuelve a desplegar tras cambiar variables."
-              : "Aún no hay productos publicados. Cárgalos desde el admin."}
-          </p>
-        ) : list.length === 0 ? (
+        {list.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-200/80 bg-white/80 p-12 text-center text-stone-500">
             {invalidCategory
               ? "Esa categoría no existe o fue eliminada. Vuelve a ver todos los productos."
@@ -506,22 +423,27 @@ export default async function ProductsPage({ searchParams }: Props) {
         ) : (
           <div className="space-y-10">
             <ul className={storeProductGridClass}>
-              {enrichedList.map((p, index) => (
+              {withCategory.map((p, index) => (
                 <li key={p.id} className="h-full">
                   <ProductListingCard
                     imagePriority={storeProductCardImagePriority(index)}
                     cartQuantity={cartQtyByProductId[p.id] ?? 0}
                     couponDiscountPercent={couponPctByProductId[p.id] ?? 0}
-                    product={toProductListingCardProps(p)}
+                    product={toProductListingCardProps({
+                      ...p,
+                      categoryName: catalogBrowseMode ? p.categoryName : null,
+                    })}
                   />
                 </li>
               ))}
             </ul>
-            <CatalogPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              baseQuery={paginationBaseQuery}
-            />
+            {!catalogBrowseMode ? (
+              <CatalogPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                baseQuery={paginationBaseQuery}
+              />
+            ) : null}
           </div>
         )}
       </div>

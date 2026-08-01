@@ -44,6 +44,8 @@ type Product = {
   image_paths?: unknown;
   stock_quantity: number;
   brand?: string | null;
+  /** Si viene, la card muestra la categoría en lugar de la marca. */
+  categoryName?: string | null;
   size_options?: unknown;
   size_value?: number | null;
   size_unit?: string | null;
@@ -80,7 +82,9 @@ function productShowsFromPrice(product: Product): boolean {
   return productRequiresVariantChoice(product);
 }
 
-function showcaseBrandLabel(product: Product): string {
+function showcaseEyebrowLabel(product: Product): string {
+  const cat = product.categoryName?.trim();
+  if (cat) return cat.toUpperCase();
   const b = product.brand?.trim();
   if (b) return b.toUpperCase();
   const beforeSep = product.name.split(/[•·|–—]/)[0]?.trim();
@@ -152,7 +156,7 @@ function ShowcaseProductCard({
                 : "text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400"
             }
           >
-            {showcaseBrandLabel(product)}
+            {showcaseEyebrowLabel(product)}
           </p>
           <p
             className={
@@ -317,7 +321,7 @@ function CatalogProductCard({
 
       <div className="flex min-h-0 flex-1 flex-col space-y-1.5 pt-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-          {showcaseBrandLabel(product)}
+          {showcaseEyebrowLabel(product)}
         </p>
         <Link
           href={`/products/${product.id}`}
