@@ -200,13 +200,9 @@ function VideoFrame({
 }) {
   return (
     <div
-      className={`relative aspect-[9/16] overflow-hidden bg-stone-300 ${className}`.trim()}
+      className={`relative aspect-[9/16] overflow-hidden bg-stone-200 ${className}`.trim()}
     >
       <SeamlessLoopVideo src={src} active={active} />
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-stone-900/20 via-transparent to-white/5"
-        aria-hidden
-      />
     </div>
   );
 }
@@ -236,24 +232,22 @@ export function StoreMariaPazBio() {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate overflow-hidden border-y border-stone-200/80 bg-[#f6f4f1]"
+      className="relative isolate overflow-hidden border-b border-stone-200/80 bg-white"
       aria-labelledby="mpi-bio-heading"
     >
-      <div
-        className="pointer-events-none absolute inset-0 store-bio-grain opacity-[0.35]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white to-transparent"
-        aria-hidden
-      />
+      <div className="relative bg-white px-6 pb-8 pt-10 text-center sm:pb-10 sm:pt-12">
+        <RevealLine>
+          <h2 className="text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
+            Conóceme
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-snug text-stone-500 sm:text-[13px]">
+            La persona detrás de María Paz Imports.
+          </p>
+        </RevealLine>
+      </div>
 
-      {/* Filmstrip a ancho completo, 4 clips pegados y más grandes */}
-      <div className="relative mt-14 w-full sm:mt-16 lg:mt-20">
+      {/* Filmstrip a ancho completo, 4 clips pegados */}
+      <div className="relative z-[1] w-full bg-white">
         <div className="hidden md:grid md:grid-cols-4">
           {MPI_BIO_VIDEOS.map((src, i) => (
             <RevealLine key={src} delayMs={70 + i * 80}>
@@ -271,7 +265,7 @@ export function StoreMariaPazBio() {
         </div>
       </div>
 
-      <div className={`${storeShellClass} relative pb-14 pt-12 sm:pb-16 sm:pt-16 lg:pb-20 lg:pt-20`}>
+      <div className={`${storeShellClass} relative bg-white pb-14 pt-12 sm:pb-16 sm:pt-16 lg:pb-20 lg:pt-20`}>
         <div className="mx-auto max-w-2xl text-center">
           <RevealLine delayMs={60}>
             <h2

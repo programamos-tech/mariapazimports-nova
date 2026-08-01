@@ -1,9 +1,13 @@
 import { preconnect } from "react-dom";
-import { CalendarDays, Headset, Star } from "lucide-react";
+import { AirplaneTilt } from "@phosphor-icons/react/dist/ssr/AirplaneTilt";
+import { User } from "@phosphor-icons/react/dist/ssr/User";
+import { Handshake } from "@phosphor-icons/react/dist/ssr/Handshake";
+import { SealCheck } from "@phosphor-icons/react/dist/ssr/SealCheck";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
 import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
+import { STORE_HEADER_ICON_WEIGHT } from "@/lib/store-header-icons";
 import {
   STORE_PRODUCT_CARD_IMAGE_SIZES,
   storeProductCardImagePriority,
@@ -12,7 +16,6 @@ import {
   REVEAL_BLOCK_DELAY_MS,
 } from "@/lib/store-reveal-timing";
 import { productCardDisplayImages } from "@/lib/product-card-display-images";
-import { storeBrand } from "@/lib/brand";
 import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
 import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
 import { StoreMariaPazBio } from "@/components/store/StoreMariaPazBio";
@@ -31,18 +34,25 @@ import {
 export const dynamic = "force-dynamic";
 
 const HOME_PRODUCTS_LIMIT = 8;
+const HIGHLIGHT_ICON_CLASS = "size-8 shrink-0 text-stone-900 sm:size-9";
+
 const STORE_HIGHLIGHTS = [
   {
-    title: "Productos 100% originales de la más alta calidad",
-    Icon: Star,
+    title: "Importamos directamente desde USA",
+    Icon: AirplaneTilt,
   },
   {
-    title: "Envíamos dentro de las 24 horas posteriores a tu compra",
-    Icon: CalendarDays,
+    title: "Atención personalizada",
+    Icon: User,
   },
   {
-    title: "Te asesoramos diariamente por WhatsApp",
-    Icon: Headset,
+    title:
+      "Te acompañamos antes, durante y después de tu compra",
+    Icon: Handshake,
+  },
+  {
+    title: "De la más alta calidad y al mejor precio",
+    Icon: SealCheck,
   },
 ] as const;
 
@@ -137,14 +147,16 @@ export default async function HomePage() {
       {/* Highlights + productos destacados */}
       <section className="bg-white py-8 sm:py-10">
         <div className={storeShellClass}>
-          <ul className="grid gap-5 border-y border-stone-200/70 py-5 sm:grid-cols-3 sm:gap-4 sm:py-6">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 py-6 sm:grid-cols-4 sm:gap-x-6 sm:py-8">
             {STORE_HIGHLIGHTS.map(({ title, Icon }) => (
               <li key={title}>
                 <div className="flex flex-col items-center text-center">
-                  <span className="inline-flex size-7 items-center justify-center text-zinc-900">
-                    <Icon className="size-4" strokeWidth={2.2} />
-                  </span>
-                  <p className="mt-2 max-w-[19rem] text-xs leading-snug text-stone-800 sm:text-[13px]">
+                  <Icon
+                    className={HIGHLIGHT_ICON_CLASS}
+                    weight={STORE_HEADER_ICON_WEIGHT}
+                    aria-hidden
+                  />
+                  <p className="mt-3.5 max-w-[14rem] text-xs leading-snug text-stone-800 sm:text-[13px]">
                     {title}
                   </p>
                 </div>
@@ -154,16 +166,9 @@ export default async function HomePage() {
 
           <div className="mt-6 sm:mt-8">
             <div className="mx-auto max-w-3xl text-center">
-              <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-                Destacado en {storeBrand.split(/\s+/)[0]}
-              </p>
-              <h2 className="mt-1 text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
+              <h2 className="text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
                 Productos destacados
               </h2>
-              <p className="mx-auto mt-1.5 max-w-lg text-xs leading-snug text-stone-500 sm:text-[13px]">
-                Versatilidad y estilo; abrí cada producto para ver detalle y
-                comprar.
-              </p>
             </div>
 
             {featuredProducts.length === 0 ? (

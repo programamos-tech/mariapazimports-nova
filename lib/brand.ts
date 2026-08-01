@@ -44,7 +44,7 @@ export const storeWhatsAppUrl: string = whatsappDigits
 /** Texto del anuncio superior (marquee). */
 export const storeAnnouncementMessage =
   process.env.NEXT_PUBLIC_STORE_ANNOUNCEMENT ??
-  "Productos 100% originales — envíos nacionales";
+  "Productos 100% originales · envíos nacionales";
 
 /** Mensaje corto del banner de bienvenida de la tienda. */
 export const storeWelcomeDiscountMessage =
