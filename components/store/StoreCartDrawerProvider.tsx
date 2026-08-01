@@ -18,6 +18,12 @@ import { setLineQuantity } from "@/app/actions/cart";
 import { formatCop } from "@/lib/money";
 import { productColorSwatchClass } from "@/lib/product-colors";
 import {
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
+  STORE_PRODUCT_IMAGE_IMG_CLASS,
+} from "@/lib/store-product-card-image";
+import { productCardImageSources } from "@/lib/storage-image-url";
+import {
   shouldUnoptimizeStorageImageUrl,
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
@@ -135,7 +141,8 @@ function CartDrawerSuggestionsRow({
         className="store-cart-suggestions-scroll -mx-1 flex list-none gap-3 px-1 pb-2"
       >
         {suggestions.map((s) => {
-          const img = storagePublicObjectUrl(s.imagePath);
+          const framed = productCardImageSources(s.imagePath);
+          const img = framed.src ?? storagePublicObjectUrl(s.imagePath);
           const swatches = s.colors.slice(0, 4);
           const extraColors = Math.max(0, s.colors.length - swatches.length);
           return (
@@ -145,13 +152,15 @@ function CartDrawerSuggestionsRow({
                 onClick={onPickProduct}
                 className="block outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-stone-900/25 focus-visible:ring-offset-2"
               >
-                <div className="relative aspect-[11/13] w-full bg-[#f4f4f3]">
+                <div
+                  className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
+                >
                   {img ? (
                     <Image
                       src={img}
                       alt=""
                       fill
-                      className="object-contain object-center"
+                      className={STORE_PRODUCT_IMAGE_IMG_CLASS}
                       sizes="130px"
                       unoptimized={shouldUnoptimizeStorageImageUrl(img)}
                     />

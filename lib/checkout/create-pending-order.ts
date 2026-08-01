@@ -133,7 +133,12 @@ export async function createPendingStoreOrderFromForm(
     }
   }
 
-  if (!isEmail(customerEmailForOrder)) {
+  // Correo opcional en transferencia; si viene, debe ser válido.
+  // Wompi sí lo exige para crear el pago en línea.
+  if (customerEmailForOrder && !isEmail(customerEmailForOrder)) {
+    redirect("/checkout?error=invalid_email");
+  }
+  if (paymentMethod === "wompi" && !isEmail(customerEmailForOrder)) {
     redirect("/checkout?error=invalid_email");
   }
 
@@ -295,24 +300,24 @@ export async function createPendingStoreOrderFromForm(
   const first = productById.get(normalized[0]!.productId);
   const currency = first?.currency ?? "COP";
 
-  const emailLc = customerEmailForOrder.toLowerCase();
+  const emailLc = customerEmailForOrder
+    ? customerEmailForOrder.toLowerCase()
+    : null;
 
   let customerId: string;
 
   if (linkedCustomerId) {
     customerId = linkedCustomerId;
-    await supabase
-      .from("customers")
-      .update({
-        name: resolvedName,
-        email: emailLc,
-        phone: shippingPhone,
-        shipping_address: shippingAddress,
-        shipping_city: resolvedShippingCity,
-        shipping_postal_code: shippingPostalCode || null,
-      })
-      .eq("id", customerId);
-  } else {
+    const linkedPatch: Record<string, unknown> = {
+      name: resolvedName,
+      phone: shippingPhone,
+      shipping_address: shippingAddress,
+      shipping_city: resolvedShippingCity,
+      shipping_postal_code: shippingPostalCode || null,
+    };
+    if (emailLc) linkedPatch.email = emailLc;
+    await supabase.from("customers").update(linkedPatch).eq("id", customerId);
+  } else if (emailLc) {
     const { data: existingCustomer } = await supabase
       .from("customers")
       .select("id, auth_user_id")
@@ -387,6 +392,26 @@ export async function createPendingStoreOrderFromForm(
         customerId = insertedCustomer.id as string;
       }
     }
+  } else {
+    const { data: insertedCustomer, error: cErr } = await supabase
+      .from("customers")
+      .insert({
+        name: resolvedName,
+        email: null,
+        phone: shippingPhone,
+        shipping_address: shippingAddress,
+        shipping_city: resolvedShippingCity,
+        shipping_postal_code: shippingPostalCode || null,
+        source: "storefront",
+        auth_user_id: storeSessionUserId,
+      })
+      .select("id")
+      .single();
+
+    if (cErr || !insertedCustomer) {
+      redirect("/checkout?error=order");
+    }
+    customerId = insertedCustomer.id as string;
   }
 
   const trackingToken =
@@ -396,7 +421,7 @@ export async function createPendingStoreOrderFromForm(
     .from("orders")
     .insert({
       customer_id: customerId,
-      customer_email: customerEmailForOrder,
+      customer_email: customerEmailForOrder || "",
       customer_name: resolvedName,
       total_cents: orderTotalCents,
       subtotal_cents: orderSubtotalCents,

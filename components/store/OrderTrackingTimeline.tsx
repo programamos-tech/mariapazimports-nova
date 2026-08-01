@@ -5,6 +5,9 @@ import {
   TRACKING_TIMELINE_STEPS,
 } from "@/lib/order-fulfillment";
 
+/**
+ * Timeline completa — solo después de subir comprobante (o estados posteriores).
+ */
 export function OrderTrackingTimeline({
   fulfillmentStatus,
   paymentStatus,
@@ -18,32 +21,23 @@ export function OrderTrackingTimeline({
 
   if (cancelled) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-900">
+      <div className="border border-red-200 bg-red-50/80 p-4 text-sm text-red-900">
         Este pedido fue cancelado.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-stone-200 bg-white p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">
-          Estado actual
-        </p>
-        <p className="mt-2 text-lg font-semibold text-stone-900">
-          {fulfillmentStatusLabel(fulfillmentStatus)}
-        </p>
-        <p className="mt-1 text-sm text-stone-600">
-          {fulfillmentStatusDescription(fulfillmentStatus)}
-        </p>
-      </div>
-
+    <div>
+      <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-500">
+        Cómo avanza tu pedido
+      </p>
       <ol className="space-y-0">
         {TRACKING_TIMELINE_STEPS.map((step, idx) => {
           const done = currentIdx >= idx;
           const active = currentIdx === idx;
           return (
-            <li key={step.key} className="relative flex gap-4 pb-8 last:pb-0">
+            <li key={step.key} className="relative flex gap-4 pb-6 last:pb-0">
               {idx < TRACKING_TIMELINE_STEPS.length - 1 ? (
                 <span
                   className={
@@ -76,11 +70,22 @@ export function OrderTrackingTimeline({
                 >
                   {step.label}
                 </p>
+                {active ? (
+                  <p className="mt-0.5 text-xs text-stone-500">
+                    {fulfillmentStatusDescription(fulfillmentStatus)}
+                  </p>
+                ) : null}
               </div>
             </li>
           );
         })}
       </ol>
+      <p className="mt-4 text-xs text-stone-500">
+        Estado actual:{" "}
+        <span className="font-medium text-stone-800">
+          {fulfillmentStatusLabel(fulfillmentStatus)}
+        </span>
+      </p>
     </div>
   );
 }

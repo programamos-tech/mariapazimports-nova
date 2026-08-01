@@ -32,7 +32,7 @@ import {
 } from "@/components/store/CheckoutShippingLocationFields";
 import { CheckoutLineControls } from "@/components/store/CheckoutLineControls";
 import { CheckoutPaymentMethods } from "@/components/store/CheckoutPaymentMethods";
-import { StoreCheckoutForm } from "@/components/store/StoreCheckoutForm";
+import { StoreCheckoutForm, CheckoutStep, CheckoutStepIndicator, CheckoutContinueToPaymentButton } from "@/components/store/StoreCheckoutForm";
 import { isBankTransferConfigured } from "@/lib/bank-transfer";
 import { isWompiWidgetConfigured } from "@/config/payments";
 
@@ -48,16 +48,6 @@ const primaryBtnClass =
   "w-full bg-stone-900 py-4 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800";
 const secondaryBtnClass =
   "flex w-full items-center justify-center border border-stone-900 bg-white py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-50";
-
-function firstColorLabel(colors: unknown): string | null {
-  if (!Array.isArray(colors) || colors.length === 0) return null;
-  const c = colors[0];
-  return typeof c === "string" && c.trim() ? c.trim() : null;
-}
-
-function productShortRef(id: string): string {
-  return `#${id.replace(/-/g, "").slice(0, 10).toUpperCase()}`;
-}
 
 function CheckoutErrorBanner({
   error,
@@ -75,7 +65,8 @@ function CheckoutErrorBanner({
       role="alert"
     >
       {error === "missing_name" && "Ingresa nombre y apellido."}
-      {error === "invalid_email" && "Email inválido."}
+      {error === "invalid_email" &&
+        "Ingresa un email válido. Es obligatorio si pagas en línea con Wompi."}
       {error === "missing_shipping" &&
         "Completa dirección, departamento, municipio y teléfono de contacto."}
       {error === "shipping_unavailable" &&
@@ -379,10 +370,10 @@ export default async function CheckoutPage({
   const total = rows.reduce((acc, r) => acc + r.sub, 0);
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] bg-white">
-      <div className={`${storeShellClass} pb-14 pt-10 lg:pb-16 lg:pt-12`}>
-        <nav aria-label="Migas de pan" className="mb-8 text-[11px] uppercase tracking-[0.12em] text-stone-400">
-          <ol className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:justify-start">
+    <div className="bg-white">
+      <div className={`${storeShellClass} pb-10 pt-5 sm:pt-6 lg:pb-12`}>
+        <nav aria-label="Migas de pan" className="mb-4 text-[11px] uppercase tracking-[0.12em] text-stone-400">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
               <Link href="/" className="transition hover:text-stone-800">
                 Inicio
@@ -391,17 +382,13 @@ export default async function CheckoutPage({
             <li aria-hidden className="text-stone-300">
               /
             </li>
-            <li className="text-stone-600">Bolsa de compras</li>
+            <li className="text-stone-600">Checkout</li>
           </ol>
         </nav>
 
-        <h1 className="text-center text-sm font-semibold uppercase tracking-[0.22em] text-stone-900 sm:text-left sm:text-[15px] sm:tracking-[0.26em]">
-          Bolsa de compras
-        </h1>
-
         {cartAdjusted ? (
           <div
-            className="mx-auto mb-8 max-w-3xl bg-stone-100 px-4 py-3 text-center text-[13px] text-stone-700 sm:text-left"
+            className="mb-4 bg-stone-100 px-3 py-2 text-[13px] text-stone-700"
             role="status"
           >
             Actualizamos tu pedido según stock y productos publicados en la tienda.
@@ -415,110 +402,21 @@ export default async function CheckoutPage({
         />
 
         <CheckoutShippingProvider>
-        <StoreCheckoutForm wompiEnabled={isWompiWidgetConfigured()}>
-          <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_min(100%,340px)] lg:items-start xl:gap-16">
-            <div className="min-w-0 space-y-14">
-              <section>
-                <ul className="divide-y divide-stone-200">
-                  {rows.map(({ line, p, sub, variant, unitPrice }) => {
-                    const row = p as typeof p & {
-                      colors?: unknown;
-                      fragrance_option_images?: unknown;
-                    };
-                    const variantLabel = variant?.label?.trim() || null;
-                    const linePath = imagePathForProductLine(
-                      p.image_path,
-                      row.fragrance_option_images,
-                      variantLabel ?? undefined,
-                      (p as { image_paths?: unknown }).image_paths,
-                      variant,
-                    );
-                    const img = storagePublicObjectUrl(linePath);
-                    const maxStock = resolveCartLineStock(
-                      p as CartNormalizeProduct,
-                      variant,
-                    );
-                    const color = firstColorLabel(row.colors);
+        <StoreCheckoutForm
+          wompiEnabled={isWompiWidgetConfigured()}
+          initialStep={error ? 2 : 1}
+        >
+          <CheckoutStepIndicator />
 
-                    return (
-                      <li
-                        key={`${p.id}-${line.variantId ?? ""}`}
-                        className="flex flex-col gap-6 py-10 first:pt-0 sm:flex-row sm:items-start sm:justify-between sm:gap-8"
-                      >
-                        <div className="flex min-w-0 flex-1 gap-5 sm:gap-8">
-                          <Link
-                            href={`/products/${p.id}`}
-                            className="relative size-[6.75rem] shrink-0 bg-[#f0eeeb] sm:size-28"
-                          >
-                            {img ? (
-                              <Image
-                                src={img}
-                                alt=""
-                                fill
-                                className="object-contain object-center"
-                                sizes="112px"
-                                unoptimized={shouldUnoptimizeStorageImageUrl(img)}
-                              />
-                            ) : (
-                              <div className="flex size-full items-center justify-center text-stone-300">
-                                ◆
-                              </div>
-                            )}
-                          </Link>
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={`/products/${p.id}`}
-                              className="text-[15px] font-semibold leading-snug text-stone-900 transition hover:text-stone-600"
-                            >
-                              {p.name}
-                            </Link>
-                            <ul className="mt-3 space-y-1 text-[13px] text-stone-600">
-                              {variantLabel ? (
-                                <li>
-                                  <span className="text-stone-500">
-                                    Presentación:
-                                  </span>{" "}
-                                  {variantLabel}
-                                </li>
-                              ) : null}
-                              {color ? (
-                                <li>
-                                  <span className="text-stone-500">Color:</span>{" "}
-                                  {color}
-                                </li>
-                              ) : null}
-                              <li className="tabular-nums text-stone-500">
-                                Ref.{" "}
-                                <span className="text-stone-700">
-                                  {productShortRef(p.id)}
-                                </span>
-                              </li>
-                            </ul>
-                            <CheckoutLineControls
-                              productId={p.id}
-                              quantity={line.quantity}
-                              maxStock={maxStock}
-                              variantId={line.variantId ?? null}
-                            />
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-left sm:pt-0.5 sm:text-right">
-                          <p className="text-[15px] font-medium tabular-nums text-stone-900">
-                            {formatCop(sub)}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-
-              <section className="border-t border-stone-200 pt-12">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
+          {/* Paso 1: solo envío */}
+          <CheckoutStep when={1}>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-10">
+              <section className="min-w-0">
+                <h1 className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">
                   Datos de envío
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                  Coordinamos la entrega en Colombia.
+                </h1>
+                <p className="mt-1 text-sm text-stone-500">
+                  Solo lo esencial para la entrega en Colombia.
                 </p>
 
                 {accountEmail ? (
@@ -531,7 +429,7 @@ export default async function CheckoutPage({
                     selectClass={selectClass}
                   />
                 ) : (
-                  <div className="mt-8 grid gap-6 sm:grid-cols-2">
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
                     <label className="block sm:col-span-1">
                       <span className={labelClass}>Nombre</span>
                       <input
@@ -570,15 +468,7 @@ export default async function CheckoutPage({
                         selectClass={selectClass}
                       />
                     </div>
-                    <label className="block sm:col-span-1">
-                      <span className={labelClass}>Código postal</span>
-                      <input
-                        name="zipCode"
-                        autoComplete="postal-code"
-                        placeholder="Opcional"
-                        className={inputClass}
-                      />
-                    </label>
+                    <input type="hidden" name="zipCode" defaultValue="" />
                     <label className="block sm:col-span-1">
                       <span className={labelClass}>Teléfono / WhatsApp</span>
                       <input
@@ -591,11 +481,10 @@ export default async function CheckoutPage({
                       />
                     </label>
                     <label className="block sm:col-span-1">
-                      <span className={labelClass}>Email</span>
+                      <span className={labelClass}>Email (opcional)</span>
                       <input
                         name="email"
                         type="email"
-                        required
                         autoComplete="email"
                         placeholder="correo@ejemplo.com"
                         className={inputClass}
@@ -605,56 +494,209 @@ export default async function CheckoutPage({
                 )}
               </section>
 
-              <section className="border-t border-stone-200 pt-12">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
-                  Método de pago
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                  Elige cómo quieres pagar tu pedido. Con transferencia, subirás
-                  el comprobante al finalizar.
+              <aside className="space-y-4 bg-[#f4f4f3] p-5 sm:p-6 lg:sticky lg:top-24">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
+                    Tu bolsa
+                  </p>
+                  <p className="mt-1 text-xs text-stone-500">
+                    {rows.length}{" "}
+                    {rows.length === 1 ? "producto" : "productos"}
+                  </p>
+                </div>
+
+                <ul className="max-h-[min(36vh,280px)] space-y-3 overflow-y-auto border-b border-stone-300/70 pb-4">
+                  {rows.map(({ line, p, sub, variant }) => {
+                    const row = p as typeof p & {
+                      fragrance_option_images?: unknown;
+                    };
+                    const variantLabel = variant?.label?.trim() || null;
+                    const linePath = imagePathForProductLine(
+                      p.image_path,
+                      row.fragrance_option_images,
+                      variantLabel ?? undefined,
+                      (p as { image_paths?: unknown }).image_paths,
+                      variant,
+                    );
+                    const img = storagePublicObjectUrl(linePath);
+
+                    return (
+                      <li
+                        key={`${p.id}-${line.variantId ?? ""}`}
+                        className="flex gap-3"
+                      >
+                        <div className="relative size-12 shrink-0 bg-[#ebe9e6]">
+                          {img ? (
+                            <Image
+                              src={img}
+                              alt=""
+                              fill
+                              className="object-contain object-center"
+                              sizes="48px"
+                              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                            />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-stone-300">
+                              ◆
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium leading-snug text-stone-900">
+                            {p.name}
+                          </p>
+                          {variantLabel ? (
+                            <p className="mt-0.5 truncate text-xs text-stone-500">
+                              {variantLabel}
+                            </p>
+                          ) : null}
+                          <p className="mt-0.5 text-xs text-stone-500">
+                            Cant. {line.quantity}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-sm tabular-nums text-stone-900">
+                          {formatCop(sub)}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <CheckoutSidebarTotals
+                  subtotalCents={total}
+                  itemCount={rows.length}
+                />
+
+                <CheckoutContinueToPaymentButton className={primaryBtnClass} />
+              </aside>
+            </div>
+          </CheckoutStep>
+
+          {/* Paso 2: resumen compacto + elegir método (sin datos bancarios) */}
+          <CheckoutStep when={2}>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-10">
+              <section className="min-w-0">
+                <h1 className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-900">
+                  Resumen del pedido
+                </h1>
+                <p className="mt-1 text-sm text-stone-500">
+                  Revisa los productos. El pago se confirma en el paso 3.
                 </p>
+                <ul className="mt-4 max-h-[min(52vh,420px)] divide-y divide-stone-200 overflow-y-auto">
+                  {rows.map(({ line, p, sub, variant }) => {
+                    const row = p as typeof p & {
+                      colors?: unknown;
+                      fragrance_option_images?: unknown;
+                    };
+                    const variantLabel = variant?.label?.trim() || null;
+                    const linePath = imagePathForProductLine(
+                      p.image_path,
+                      row.fragrance_option_images,
+                      variantLabel ?? undefined,
+                      (p as { image_paths?: unknown }).image_paths,
+                      variant,
+                    );
+                    const img = storagePublicObjectUrl(linePath);
+                    const maxStock = resolveCartLineStock(
+                      p as CartNormalizeProduct,
+                      variant,
+                    );
+
+                    return (
+                      <li
+                        key={`${p.id}-${line.variantId ?? ""}`}
+                        className="flex gap-3 py-3 first:pt-0"
+                      >
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="relative size-14 shrink-0 bg-[#f0eeeb] sm:size-16"
+                        >
+                          {img ? (
+                            <Image
+                              src={img}
+                              alt=""
+                              fill
+                              className="object-contain object-center"
+                              sizes="64px"
+                              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                            />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-stone-300">
+                              ◆
+                            </div>
+                          )}
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <Link
+                              href={`/products/${p.id}`}
+                              className="text-sm font-semibold leading-snug text-stone-900 transition hover:text-stone-600"
+                            >
+                              {p.name}
+                            </Link>
+                            <p className="shrink-0 text-sm font-medium tabular-nums text-stone-900">
+                              {formatCop(sub)}
+                            </p>
+                          </div>
+                          {variantLabel ? (
+                            <p className="mt-0.5 text-xs text-stone-500">
+                              {variantLabel}
+                            </p>
+                          ) : null}
+                          <CheckoutLineControls
+                            productId={p.id}
+                            quantity={line.quantity}
+                            maxStock={maxStock}
+                            variantId={line.variantId ?? null}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              <aside className="space-y-4 bg-[#f4f4f3] p-5 lg:sticky lg:top-24">
+                <details className="group border-b border-stone-300/80 pb-3">
+                  <summary className="cursor-pointer list-none text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 marker:hidden [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center justify-between gap-2">
+                      Código promocional
+                      <span className="text-stone-400 transition group-open:rotate-180">
+                        ▾
+                      </span>
+                    </span>
+                  </summary>
+                  <label className="mt-3 block">
+                    <span className="sr-only">Código promocional</span>
+                    <input
+                      name="couponCode"
+                      type="text"
+                      placeholder="Ingresa el código"
+                      className={sidebarInputClass}
+                    />
+                  </label>
+                </details>
+
+                <CheckoutSidebarTotals
+                  subtotalCents={total}
+                  itemCount={rows.length}
+                />
 
                 <CheckoutPaymentMethods
                   bankTransferEnabled={isBankTransferConfigured()}
                   wompiEnabled={isWompiWidgetConfigured()}
+                  compact
                 />
-              </section>
+
+                <button type="submit" className={primaryBtnClass}>
+                  Finalizar compra
+                </button>
+                <Link href="/products" className={secondaryBtnClass}>
+                  Seguir comprando
+                </Link>
+              </aside>
             </div>
-
-            <aside className="sticky top-28 space-y-6 bg-[#f4f4f3] p-6 lg:p-8">
-              <details className="group border-b border-stone-300/80 pb-5 open:pb-4">
-                <summary className="cursor-pointer list-none text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 marker:hidden [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-center justify-between gap-2">
-                    Código promocional
-                    <span className="text-stone-400 transition group-open:rotate-180">
-                      ▾
-                    </span>
-                  </span>
-                </summary>
-                <label className="mt-4 block">
-                  <span className="sr-only">Código promocional</span>
-                  <input
-                    name="couponCode"
-                    type="text"
-                    placeholder="Ingresa el código"
-                    className={sidebarInputClass}
-                  />
-                </label>
-                <p className="mt-2 text-[11px] leading-relaxed text-stone-500">
-                  Si tienes un cupón activo para estos productos, ingrésalo aquí antes de pagar.
-                </p>
-              </details>
-
-              <CheckoutSidebarTotals subtotalCents={total} itemCount={rows.length} />
-
-              <button type="submit" className={primaryBtnClass}>
-                Finalizar compra
-              </button>
-              <Link href="/products" className={secondaryBtnClass}>
-                Seguir comprando
-              </Link>
-            </aside>
-          </div>
+          </CheckoutStep>
         </StoreCheckoutForm>
         </CheckoutShippingProvider>
       </div>

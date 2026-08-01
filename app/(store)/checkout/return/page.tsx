@@ -14,7 +14,8 @@ const orderLabels: Record<string, string> = {
   paid: "Pagado",
   failed: "Pago rechazado o fallido",
   cancelled: "Cancelado",
-  awaiting_payment: "Esperando transferencia",
+  awaiting_payment: "Esperando comprobante",
+  payment_submitted: "Pendiente de aprobación de pago",
 };
 
 export default async function CheckoutReturnPage({

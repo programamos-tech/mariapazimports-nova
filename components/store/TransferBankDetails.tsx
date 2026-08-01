@@ -36,7 +36,7 @@ function CopyableValue({
         <button
           type="button"
           onClick={() => void onCopy()}
-          className="flex size-8 shrink-0 items-center justify-center rounded-md border border-stone-200 bg-white text-stone-600 transition hover:border-stone-300 hover:bg-stone-50 hover:text-stone-900"
+          className="flex size-8 shrink-0 items-center justify-center border border-stone-300 bg-white text-stone-600 transition hover:border-stone-900 hover:text-stone-900"
           aria-label={copyLabel}
           title={copied ? "Copiado" : "Copiar"}
         >
@@ -63,12 +63,14 @@ export function TransferBankDetails({
   const bank = getPublicBankTransferDetails();
   if (!bank) return null;
 
-  const boxClass = compact
-    ? "mt-4 rounded-lg border border-stone-200 bg-stone-50/80 p-4"
-    : "mt-4 rounded-xl border border-stone-200 bg-[#faf8f5] p-5";
-
   return (
-    <div className={boxClass}>
+    <div
+      className={
+        compact
+          ? "border border-stone-200 bg-white p-4"
+          : "border border-stone-200 bg-white p-5"
+      }
+    >
       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
         Datos para transferencia
       </p>
@@ -94,9 +96,9 @@ export function TransferBankDetails({
           />
         ) : null}
         {amountCents != null ? (
-          <div className="flex justify-between gap-4 border-t border-stone-200/80 pt-2">
+          <div className="flex justify-between gap-4 border-t border-stone-200 pt-2.5">
             <dt className="text-stone-500">Monto exacto</dt>
-            <dd className="text-right font-semibold text-[#556654]">
+            <dd className="text-right font-semibold tabular-nums text-stone-900">
               {formatCop(amountCents)}
             </dd>
           </div>
@@ -104,7 +106,9 @@ export function TransferBankDetails({
         {orderRef ? (
           <div className="flex justify-between gap-4">
             <dt className="text-stone-500">Referencia</dt>
-            <dd className="text-right font-mono text-xs">{orderRef}</dd>
+            <dd className="text-right font-mono text-xs text-stone-900">
+              {orderRef}
+            </dd>
           </div>
         ) : null}
       </dl>

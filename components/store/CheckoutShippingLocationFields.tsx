@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { formatCop } from "@/lib/money";
+import { CheckoutShippingMap } from "@/components/store/CheckoutShippingMap";
 
 type Department = { code: string; name: string };
 type Municipality = { code: string; name: string; cost_cents: number };
@@ -219,6 +220,12 @@ export function CheckoutShippingLocationFields({
           </select>
         </div>
       </div>
+
+      <CheckoutShippingMap
+        departmentCode={departmentCode}
+        municipalityCode={municipalityCode}
+        className="mt-4"
+      />
     </>
   );
 }

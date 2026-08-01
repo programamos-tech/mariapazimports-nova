@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -24,11 +23,7 @@ export function CheckoutLineControls({
   const vid = variantId?.trim() || undefined;
 
   return (
-    <div className="mt-5 space-y-3">
-      <p className="text-[13px] text-stone-600">
-        <span className="font-medium text-stone-800">Cant.:</span>{" "}
-        <span className="tabular-nums">{quantity}</span>
-      </p>
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
       <div className="inline-flex items-center gap-1 border border-stone-900/15 bg-white">
         <button
           type="button"
@@ -40,12 +35,12 @@ export function CheckoutLineControls({
               );
             })
           }
-          className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
+          className="flex size-7 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
           aria-label={quantity <= 1 ? "Quitar producto del pedido" : "Menos uno"}
         >
           <Minus className="size-3.5" strokeWidth={1.35} aria-hidden />
         </button>
-        <span className="min-w-[1.75rem] text-center text-xs font-semibold tabular-nums text-stone-900">
+        <span className="min-w-[1.5rem] text-center text-xs font-semibold tabular-nums text-stone-900">
           {quantity}
         </span>
         <button
@@ -58,34 +53,26 @@ export function CheckoutLineControls({
               );
             })
           }
-          className="flex size-8 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
+          className="flex size-7 items-center justify-center text-stone-600 transition hover:bg-stone-100 disabled:opacity-40"
           aria-label="Más uno"
         >
           <Plus className="size-3.5" strokeWidth={1.35} aria-hidden />
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px]">
-        <Link
-          href={`/products/${productId}`}
-          className="text-stone-700 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-950"
-        >
-          Editar
-        </Link>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            startTransition(() => {
-              void setLineQuantity(productId, 0, vid).then(() =>
-                router.refresh(),
-              );
-            })
-          }
-          className="text-stone-700 underline decoration-stone-400 underline-offset-4 transition hover:text-red-700 disabled:opacity-40"
-        >
-          Eliminar
-        </button>
-      </div>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(() => {
+            void setLineQuantity(productId, 0, vid).then(() =>
+              router.refresh(),
+            );
+          })
+        }
+        className="text-[11px] text-stone-500 underline decoration-stone-300 underline-offset-2 transition hover:text-stone-900 disabled:opacity-40"
+      >
+        Quitar
+      </button>
     </div>
   );
 }

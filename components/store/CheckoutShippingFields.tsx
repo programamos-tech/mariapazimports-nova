@@ -130,8 +130,7 @@ export function CheckoutShippingFields({
             ))}
           </select>
           <p className="mt-1.5 text-xs text-stone-500">
-            Elige una dirección guardada o la del perfil. Departamento, municipio y
-            teléfono los confirmas antes de pagar.
+            Elige una dirección guardada o completa los datos abajo.
           </p>
         </div>
       ) : null}
@@ -179,17 +178,7 @@ export function CheckoutShippingFields({
             selectClass={selectClass ?? inputClass}
           />
         </div>
-        <label className="block sm:col-span-1">
-          <span className={labelClass}>Código postal</span>
-          <input
-            name="zipCode"
-            autoComplete="postal-code"
-            placeholder="Opcional"
-            className={inputClass}
-            value={zipCode}
-            onChange={(e) => setZipCode(e.target.value)}
-          />
-        </label>
+        <input type="hidden" name="zipCode" value={zipCode} />
         <label className="block sm:col-span-1">
           <span className={labelClass}>Teléfono / WhatsApp</span>
           <input
@@ -204,11 +193,10 @@ export function CheckoutShippingFields({
           />
         </label>
         <label className="block sm:col-span-1">
-          <span className={labelClass}>Email</span>
+          <span className={labelClass}>Email (opcional)</span>
           <input
             name="email"
             type="email"
-            required
             autoComplete="email"
             placeholder="correo@ejemplo.com"
             className={inputClass}
@@ -223,8 +211,7 @@ export function CheckoutShippingFields({
         </label>
         {accountEmail ? (
           <p className="sm:col-span-2 text-xs text-stone-500">
-            Estás comprando con tu cuenta: el email no se puede cambiar en este
-            paso.
+            Comprás con tu cuenta: usamos este email para el pedido.
           </p>
         ) : null}
       </div>
