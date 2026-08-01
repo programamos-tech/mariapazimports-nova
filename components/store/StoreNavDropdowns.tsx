@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, X } from "lucide-react";
+import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
-import { usePathname } from "next/navigation";
+import { X } from "@phosphor-icons/react/dist/csr/X";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -13,6 +13,12 @@ import {
 } from "@/lib/store-header-icons";
 import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
 import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
+
+const linkRowClass =
+  "flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50";
+
+const linkLabelClass =
+  "text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900";
 
 export function StoreNavDropdowns({
   menuCategories,
@@ -27,10 +33,11 @@ export function StoreNavDropdowns({
   guestOpensAuthDrawer?: boolean;
 }) {
   const { openLogin } = useStoreAuthModals();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const baseId = useId();
+
+  const categoriesWithProducts = menuCategories.filter((c) => c.productCount > 0);
 
   useEffect(() => {
     setPortalTarget(document.body);
@@ -63,7 +70,6 @@ export function StoreNavDropdowns({
     portalTarget &&
     createPortal(
       <>
-        {/* Overlay */}
         <div
           className={`fixed inset-0 z-[75] bg-black/40 transition-opacity duration-300 ease-out ${
             open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
@@ -72,7 +78,6 @@ export function StoreNavDropdowns({
           onClick={close}
         />
 
-        {/* Drawer */}
         <div
           id={`${baseId}-shop-drawer`}
           role="dialog"
@@ -86,37 +91,35 @@ export function StoreNavDropdowns({
             <button
               type="button"
               onClick={close}
-              className="inline-flex size-10 items-center justify-center border border-dashed border-stone-400 text-stone-700 transition hover:bg-stone-50 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
+              className="inline-flex size-10 items-center justify-center border border-stone-900 text-stone-900 transition hover:bg-stone-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
               aria-label="Cerrar menú"
             >
-              <X className="size-5" strokeWidth={1.25} aria-hidden />
+              <X className="size-5" weight={STORE_HEADER_ICON_WEIGHT} aria-hidden />
             </button>
           </div>
 
           <h2 id={`${baseId}-shop-drawer-title`} className="sr-only">
-            Categorías y tienda
+            Menú de la tienda
           </h2>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-2">
-            {menuCategories.length === 0 ? (
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+            {categoriesWithProducts.length === 0 ? (
               <p className="py-6 text-sm text-stone-500">
-                Todavía no hay categorías. Creálas en Administración → Catálogo.
+                Todavía no hay categorías con productos.
               </p>
             ) : (
               <ul className="border-t border-stone-200">
-                {menuCategories.map((c) => (
-                  <li key={c.id} className="border-b border-stone-200">
+                {categoriesWithProducts.map((c) => (
+                  <li key={c.id}>
                     <Link
                       href={`/products?category=${c.id}`}
                       onClick={close}
-                      className="flex items-center justify-between gap-4 py-4 text-left transition hover:bg-stone-50"
+                      className={linkRowClass}
                     >
-                      <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
-                        {c.name}
-                      </span>
-                      <ChevronRight
+                      <span className={linkLabelClass}>{c.name}</span>
+                      <CaretRight
                         className="size-4 shrink-0 text-stone-400"
-                        strokeWidth={1.75}
+                        weight={STORE_HEADER_ICON_WEIGHT}
                         aria-hidden
                       />
                     </Link>
@@ -125,38 +128,17 @@ export function StoreNavDropdowns({
               </ul>
             )}
 
-            <Link
-              href="/marcas"
-              onClick={close}
-              className="mt-2 flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
-            >
-              <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
-                Marcas
-              </span>
-              <ChevronRight
+            <Link href="/products" onClick={close} className={linkRowClass}>
+              <span className={linkLabelClass}>Todos los productos</span>
+              <CaretRight
                 className="size-4 shrink-0 text-stone-400"
-                strokeWidth={1.75}
-                aria-hidden
-              />
-            </Link>
-
-            <Link
-              href="/products"
-              onClick={close}
-              className="flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50"
-            >
-              <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
-                Todos los productos
-              </span>
-              <ChevronRight
-                className="size-4 shrink-0 text-stone-400"
-                strokeWidth={1.75}
+                weight={STORE_HEADER_ICON_WEIGHT}
                 aria-hidden
               />
             </Link>
           </div>
 
-          <div className="shrink-0 border-t border-stone-200 px-4 py-5">
+          <div className="shrink-0 border-t border-stone-200 px-4 py-4">
             {guestOpensAuthDrawer ? (
               <button
                 type="button"
@@ -164,83 +146,33 @@ export function StoreNavDropdowns({
                   close();
                   openLogin();
                 }}
-                className="flex w-full items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
+                className="flex w-full items-center gap-3 py-2 text-left transition hover:opacity-70"
               >
-                <span className="flex items-center gap-3">
-                  <User
-                    className="size-5 shrink-0 text-stone-900"
-                    weight={STORE_HEADER_ICON_WEIGHT}
-                    aria-hidden
-                  />
-                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
-                    {accountLabel}
-                  </span>
-                </span>
-                <ChevronRight
-                  className="size-4 shrink-0 text-stone-400"
-                  strokeWidth={1.75}
+                <User
+                  className="size-5 shrink-0 text-stone-900"
+                  weight={STORE_HEADER_ICON_WEIGHT}
                   aria-hidden
                 />
+                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
+                  {accountLabel}
+                </span>
               </button>
             ) : (
               <Link
                 href={accountHref}
                 onClick={close}
-                className="flex items-center justify-between gap-4 py-1 text-left transition hover:opacity-80"
+                className="flex items-center gap-3 py-2 text-left transition hover:opacity-70"
               >
-                <span className="flex items-center gap-3">
-                  <User
-                    className="size-5 shrink-0 text-stone-900"
-                    weight={STORE_HEADER_ICON_WEIGHT}
-                    aria-hidden
-                  />
-                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
-                    {accountLabel}
-                  </span>
-                </span>
-                <ChevronRight
-                  className="size-4 shrink-0 text-stone-400"
-                  strokeWidth={1.75}
+                <User
+                  className="size-5 shrink-0 text-stone-900"
+                  weight={STORE_HEADER_ICON_WEIGHT}
                   aria-hidden
                 />
+                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
+                  {accountLabel}
+                </span>
               </Link>
             )}
-
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-100 pt-5 text-[12px] font-medium uppercase tracking-[0.08em] text-stone-600">
-              <Link
-                href="/"
-                onClick={close}
-                className={
-                  pathname === "/"
-                    ? "font-semibold text-stone-900"
-                    : "transition hover:text-stone-900"
-                }
-              >
-                Inicio
-              </Link>
-              <Link
-                href="/quien-soy"
-                onClick={close}
-                className={
-                  pathname === "/quien-soy"
-                    ? "font-semibold text-stone-900"
-                    : "transition hover:text-stone-900"
-                }
-              >
-                Quién soy
-              </Link>
-              <Link
-                href="/marcas"
-                onClick={close}
-                className={
-                  pathname === "/marcas"
-                    ? "font-semibold text-stone-900"
-                    : "transition hover:text-stone-900"
-                }
-              >
-                Marcas
-              </Link>
-            </div>
           </div>
         </div>
       </>,

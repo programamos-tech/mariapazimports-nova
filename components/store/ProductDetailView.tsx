@@ -255,8 +255,8 @@ export function ProductDetailView({
           onClick={() => toggle(productId)}
           className={
             favorite
-              ? "absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/95 text-rose-500 shadow-sm ring-1 ring-stone-200/80 transition hover:bg-white"
-              : "absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm ring-1 ring-stone-200/80 transition hover:bg-white hover:text-stone-900"
+              ? "absolute right-4 top-4 z-10 flex size-10 items-center justify-center text-rose-500 transition hover:opacity-70"
+              : "absolute right-4 top-4 z-10 flex size-10 items-center justify-center text-stone-700 transition hover:text-stone-900 hover:opacity-70"
           }
           aria-pressed={favorite}
           aria-label={favorite ? "Quitar de favoritos" : "Guardar en favoritos"}

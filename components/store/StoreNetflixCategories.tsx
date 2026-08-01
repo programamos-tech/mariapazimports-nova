@@ -21,18 +21,12 @@ export function StoreNetflixCategories({
     >
       <div className={storeShellClass}>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-            Explorá el catálogo
-          </p>
           <h2
             id="home-categories-heading"
-            className="mt-1 text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl"
+            className="text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl"
           >
             Categorías
           </h2>
-          <p className="mx-auto mt-1.5 max-w-lg text-xs leading-snug text-stone-500 sm:text-[13px]">
-            Elegí una categoría y mirá los productos disponibles.
-          </p>
         </div>
 
         <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 sm:gap-x-8 lg:gap-x-10">

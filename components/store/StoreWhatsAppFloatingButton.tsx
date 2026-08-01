@@ -31,15 +31,10 @@ export function StoreWhatsAppFloatingButton() {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[100] flex w-max max-w-[min(24rem,calc(100%-2rem))] items-center gap-2.5 rounded-2xl border border-stone-200/90 bg-white/95 py-2 pl-3.5 pr-2 shadow-[0_12px_40px_-14px_rgba(0,0,0,0.35)] ring-1 ring-black/[0.04] backdrop-blur-sm transition hover:border-stone-300 hover:bg-white hover:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 max-lg:p-2 lg:bottom-6 lg:right-6"
-      aria-label={`Atención Personalizada — WhatsApp ${storeSupportPhone}`}
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[100] flex size-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_28px_-8px_rgba(0,0,0,0.35)] transition hover:bg-[#20BD5A] hover:shadow-[0_10px_32px_-8px_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/60 focus-visible:ring-offset-2 lg:bottom-6 lg:right-6 lg:size-[3.75rem]"
+      aria-label={`WhatsApp ${storeSupportPhone}`}
     >
-      <span className="hidden min-w-0 select-none text-[12px] font-semibold leading-snug tracking-tight text-stone-800 lg:inline lg:text-[13px]">
-        Atención Personalizada
-      </span>
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-full border border-[#128C7E]/40 bg-[#25D366] text-white shadow-inner lg:size-[3.25rem]">
-        <WhatsAppGlyph className="size-[1.45rem] text-white opacity-[0.97]" />
-      </span>
+      <WhatsAppGlyph className="size-7 text-white lg:size-[1.85rem]" />
     </a>
   );
 }

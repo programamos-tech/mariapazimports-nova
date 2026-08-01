@@ -148,12 +148,6 @@ export default function PrivacidadPage() {
           Política de cookies
         </Link>
       </p>
-
-      <p className="rounded-lg border border-stone-200 bg-stone-50/80 p-4 text-xs text-stone-600">
-        Este texto es informativo y estándar para tiendas en línea. No sustituye
-        asesoría legal personalizada; conviene revisarlo con un abogado según tu
-        modelo de negocio y tratamiento real de datos.
-      </p>
     </LegalDocument>
   );
 }

@@ -93,21 +93,14 @@ export function StoreNetflixHero() {
 
       {/* CTA anclado al pie del hero */}
       <div className="relative z-[2] mx-auto flex min-h-[100svh] max-w-3xl flex-col items-center justify-end px-6 pb-10 text-center sm:pb-14">
-        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500">
-          Personal shopper · Originales
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl md:text-[2.75rem]">
+        <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl md:text-[2.75rem]">
           María Paz Imports
         </h1>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-600 sm:text-[15px]">
-          Curaduría de productos auténticos, con asesoría cercana para elegir lo
-          mejor para vos.
-        </p>
         <Link
           href="/products"
           className="mt-6 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900"
         >
-          Ver catálogo
+          Conoce mi tienda
         </Link>
       </div>
     </section>

@@ -15,8 +15,10 @@ import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { storeBrand } from "@/lib/brand";
 import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
 import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
+import { StoreBestsellersRow } from "@/components/store/StoreBestsellersRow";
 import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
 import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
+import { fetchHomeBestsellersWeek } from "@/lib/fetch-home-bestsellers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
@@ -61,11 +63,13 @@ export default async function HomePage() {
   const [
     homeCategories,
     { data: homeProducts, error: homeProductsError },
+    bestsellerRows,
     cartQtyByProductId,
     couponPctByProductId,
   ] = await Promise.all([
     fetchHomeCategoryCards(supabase),
     productsQuery,
+    fetchHomeBestsellersWeek(supabase),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
   ]);
@@ -79,10 +83,13 @@ export default async function HomePage() {
   }
 
   const featuredProducts = homeProducts ?? [];
-  const enrichedFeatured = await enrichListingProductsWithVariants(
-    supabase,
-    featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
-  );
+  const [enrichedFeatured, enrichedBestsellers] = await Promise.all([
+    enrichListingProductsWithVariants(
+      supabase,
+      featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
+    ),
+    enrichListingProductsWithVariants(supabase, bestsellerRows),
+  ]);
 
   const featuredImagePreloads = enrichedFeatured
     .slice(0, 2)
@@ -181,9 +188,7 @@ export default async function HomePage() {
                   delayMs={REVEAL_BLOCK_DELAY_MS}
                   className="mt-6 flex justify-center sm:mt-7"
                 >
-                  <ViewAllProductsLink
-                    className="inline-flex border border-stone-900 bg-white px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
-                  >
+                  <ViewAllProductsLink className="inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-stone-800">
                     Ver todos los productos
                   </ViewAllProductsLink>
                 </RevealOnScroll>
@@ -192,6 +197,11 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <StoreBestsellersRow
+        products={enrichedBestsellers}
+        couponPctByProductId={couponPctByProductId}
+      />
     </div>
   );
 }

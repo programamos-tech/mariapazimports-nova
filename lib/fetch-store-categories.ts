@@ -19,7 +19,7 @@ export type StoreCategoryMenuItem = {
 
 /**
  * Categorías del catálogo para el menú Shop (fusiona duplicados / sinónimos).
- * Siguen apareciendo aunque no tengan productos publicados.
+ * Incluye `productCount` para que la UI oculte las que no tienen productos.
  */
 export async function fetchStoreCategoriesWithCounts(
   supabase: SupabaseClient,

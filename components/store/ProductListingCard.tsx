@@ -14,7 +14,6 @@ import {
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { StoreProductCardImage } from "@/components/store/StoreProductCardImage";
-import { storeBrand } from "@/lib/brand";
 import { formatCop } from "@/lib/money";
 import {
   storefrontPriceAfterCouponCents,
@@ -82,14 +81,19 @@ function productShowsFromPrice(product: Product): boolean {
   return productRequiresVariantChoice(product);
 }
 
-function showcaseEyebrowLabel(product: Product): string {
+function showcaseEyebrowLabel(product: Product): string | null {
+  const nameUpper = product.name.trim().toUpperCase();
   const cat = product.categoryName?.trim();
-  if (cat) return cat.toUpperCase();
+  if (cat) {
+    const u = cat.toUpperCase();
+    return u === nameUpper ? null : u;
+  }
   const b = product.brand?.trim();
-  if (b) return b.toUpperCase();
-  const beforeSep = product.name.split(/[•·|–—]/)[0]?.trim();
-  if (beforeSep && beforeSep.length <= 32) return beforeSep.toUpperCase();
-  return storeBrand.split(/\s+/)[0]?.toUpperCase() ?? "MARCA";
+  if (b) {
+    const u = b.toUpperCase();
+    return u === nameUpper ? null : u;
+  }
+  return null;
 }
 
 /** Tarjeta solo lectura: imagen + marca + nombre + precio (sin bordes ni CTAs en superficie). */
@@ -98,12 +102,15 @@ function ShowcaseProductCard({
   couponDiscountPercent = 0,
   compact = false,
   imagePriority = false,
+  detailCtaLabel,
 }: {
   product: Product;
   couponDiscountPercent?: number;
   /** Variante más compacta para grillas densas. */
   compact?: boolean;
   imagePriority?: boolean;
+  /** Si se define, muestra un CTA bajo el precio hacia el detalle. */
+  detailCtaLabel?: string;
 }) {
   const {
     primary: cardImg,
@@ -126,11 +133,13 @@ function ShowcaseProductCard({
     ? storefrontPriceAfterCouponCents(cardPrice, pct)
     : cardPrice;
   const fromPrice = productShowsFromPrice(product);
+  const eyebrow = showcaseEyebrowLabel(product);
+  const href = `/products/${product.id}`;
 
   return (
-    <article className="h-full">
+    <article className="flex flex-col">
       <Link
-        href={`/products/${product.id}`}
+        href={href}
         className="group/image block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
         onMouseEnter={() => prefetchProductHeroImage(heroImg)}
         onFocus={() => prefetchProductHeroImage(heroImg)}
@@ -149,15 +158,17 @@ function ShowcaseProductCard({
           }
         />
         <div className={`text-left ${compact ? "space-y-0.5 pt-2" : "space-y-1.5 pt-4"}`}>
-          <p
-            className={
-              compact
-                ? "text-[9px] font-medium uppercase tracking-[0.12em] text-stone-400"
-                : "text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400"
-            }
-          >
-            {showcaseEyebrowLabel(product)}
-          </p>
+          {eyebrow ? (
+            <p
+              className={
+                compact
+                  ? "text-[9px] font-medium uppercase tracking-[0.12em] text-stone-400"
+                  : "text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400"
+              }
+            >
+              {eyebrow}
+            </p>
+          ) : null}
           <p
             className={
               compact
@@ -217,6 +228,14 @@ function ShowcaseProductCard({
           ) : null}
         </div>
       </Link>
+      {detailCtaLabel ? (
+        <Link
+          href={href}
+          className="mt-2.5 block border border-stone-900 bg-white py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
+        >
+          {detailCtaLabel}
+        </Link>
+      ) : null}
     </article>
   );
 }
@@ -271,6 +290,7 @@ function CatalogProductCard({
 
   const needsVariantOnPdp = productRequiresVariantChoice(product);
   const variantCta = variantChoiceCtaLabel(product);
+  const eyebrow = showcaseEyebrowLabel(product);
 
   return (
     <article className="flex h-full flex-col">
@@ -300,14 +320,14 @@ function CatalogProductCard({
           }}
           className={
             favorite
-              ? "absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/95 text-rose-500 shadow-none ring-1 ring-stone-200/80 transition hover:bg-white"
-              : "absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/95 text-stone-600 shadow-none ring-1 ring-stone-200/80 transition hover:bg-white hover:text-stone-900"
+              ? "absolute right-2.5 top-2.5 z-10 flex size-8 items-center justify-center text-rose-500 transition hover:opacity-70"
+              : "absolute right-2.5 top-2.5 z-10 flex size-8 items-center justify-center text-stone-700 transition hover:text-stone-900 hover:opacity-70"
           }
           aria-pressed={favorite}
           aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
         >
           <Heart
-            className="size-3.5"
+            className="size-4"
             strokeWidth={STORE_HEADER_ICON_STROKE}
             fill={favorite ? "currentColor" : "none"}
           />
@@ -320,9 +340,11 @@ function CatalogProductCard({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col space-y-1.5 pt-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-          {showcaseEyebrowLabel(product)}
-        </p>
+        {eyebrow ? (
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+            {eyebrow}
+          </p>
+        ) : null}
         <Link
           href={`/products/${product.id}`}
           className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"
@@ -437,6 +459,7 @@ export function ProductListingCard({
   presentation = "default",
   compact = false,
   imagePriority = false,
+  detailCtaLabel,
 }: {
   product: Product;
   cartQuantity?: number;
@@ -445,6 +468,7 @@ export function ProductListingCard({
   presentation?: "default" | "editorial";
   compact?: boolean;
   imagePriority?: boolean;
+  detailCtaLabel?: string;
 }) {
   if (presentation === "editorial") {
     return (
@@ -453,6 +477,7 @@ export function ProductListingCard({
         couponDiscountPercent={couponDiscountPercent}
         compact={compact}
         imagePriority={imagePriority}
+        detailCtaLabel={detailCtaLabel}
       />
     );
   }

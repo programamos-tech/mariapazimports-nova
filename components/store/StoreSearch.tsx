@@ -14,6 +14,10 @@ import {
   storagePublicObjectUrl,
 } from "@/lib/storage-public-url";
 import {
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_IMAGE_IMG_CLASS,
+} from "@/lib/store-product-card-image";
+import {
   STORE_HEADER_ICON_LG,
   STORE_HEADER_ICON_WEIGHT,
 } from "@/lib/store-header-icons";
@@ -261,9 +265,11 @@ export function StoreSearch({
                       {[1, 2, 3, 4].map((i) => (
                         <li
                           key={i}
-                          className="flex animate-pulse gap-4 border-b border-stone-100 py-4"
+                          className="flex animate-pulse gap-4 border-b border-stone-100 py-5"
                         >
-                          <div className="size-16 shrink-0 bg-stone-100 sm:size-20" />
+                          <div
+                            className={`w-[5.5rem] shrink-0 bg-stone-100 sm:w-24 ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+                          />
                           <div className="flex-1 space-y-2 pt-1">
                             <div className="h-3 max-w-[14rem] bg-stone-100" />
                             <div className="h-2 max-w-[6rem] bg-stone-100" />
@@ -294,16 +300,18 @@ export function StoreSearch({
                             <Link
                               href={`/products/${p.id}`}
                               onClick={closeDrawer}
-                              className="flex items-center gap-4 py-4 transition hover:bg-stone-50"
+                              className="flex items-start gap-4 py-5 transition hover:bg-stone-50"
                             >
-                              <div className="relative size-16 shrink-0 overflow-hidden bg-stone-100 sm:size-20">
+                              <div
+                                className={`relative w-[5.5rem] shrink-0 overflow-hidden bg-white sm:w-24 ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+                              >
                                 {img ? (
                                   <Image
                                     src={img}
                                     alt=""
                                     fill
-                                    className="object-contain object-center"
-                                    sizes="80px"
+                                    className={STORE_PRODUCT_IMAGE_IMG_CLASS}
+                                    sizes="96px"
                                     unoptimized={shouldUnoptimizeStorageImageUrl(
                                       img,
                                     )}
@@ -314,7 +322,7 @@ export function StoreSearch({
                                   </div>
                                 )}
                               </div>
-                              <div className="min-w-0 flex-1">
+                              <div className="min-w-0 flex-1 pt-1">
                                 {p.brand?.trim() ? (
                                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
                                     {p.brand}
