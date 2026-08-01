@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
-import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
+import { storeShellClass } from "@/lib/store-layout";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
-  STORE_PRODUCT_CARD_IMAGE_SIZES,
 } from "@/lib/store-product-card-image";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 
@@ -16,19 +15,13 @@ function CategoryPoster({
   priority?: boolean;
 }) {
   const href = `/products?category=${encodeURIComponent(category.id)}`;
-  const countLabel =
-    category.productCount === 1
-      ? "1 producto"
-      : category.productCount > 0
-        ? `${category.productCount} productos`
-        : category.sub;
 
   return (
     <li className="min-w-0">
       <article className="group/cat flex h-full flex-col">
         <div className="relative shrink-0">
           <div
-            className={`relative w-full overflow-hidden bg-[#faf8f5] ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+            className={`relative w-full overflow-hidden bg-stone-100 ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
           >
             {category.imageSrc ? (
               <Image
@@ -37,43 +30,27 @@ function CategoryPoster({
                 fill
                 priority={priority}
                 quality={90}
-                sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
-                className="object-contain object-center transition duration-500 ease-out group-hover/cat:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/cat:scale-100"
+                sizes="(max-width: 640px) 50vw, 33vw"
+                className="object-cover object-center transition duration-500 ease-out group-hover/cat:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/cat:scale-100"
                 unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
               />
             ) : (
               <div className={`absolute inset-0 ${category.tint}`} />
             )}
           </div>
-          <span className="pointer-events-none absolute left-3 top-3 z-10 border border-stone-900 bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-900">
-            Catálogo
-          </span>
           <Link
             href={href}
             className="absolute inset-0 z-[1] block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
-            aria-label={`Ver catálogo de ${category.name}`}
+            aria-label={category.name}
           />
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col space-y-1.5 pt-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-            Categoría
-          </p>
+        <div className="pt-4">
           <Link
             href={href}
-            className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"
+            className="block border border-stone-300 bg-white py-2.5 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
           >
-            <span className="line-clamp-3">{category.name}</span>
-          </Link>
-          <p className="pt-0.5 text-[13px] font-medium tabular-nums text-stone-900">
-            {countLabel}
-          </p>
-
-          <Link
-            href={href}
-            className="mt-auto block border border-stone-900 bg-stone-900 py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900"
-          >
-            Ver catálogo
+            <span className="line-clamp-1">{category.name}</span>
           </Link>
         </div>
       </article>
@@ -81,15 +58,17 @@ function CategoryPoster({
   );
 }
 
-/** Vitrina de categorías: misma card que productos, marcada como catálogo. */
+/** Vitrina de categorías: solo con stock, grilla 3×2. */
 export function StoreNetflixCategories({
   categories,
 }: {
   categories: HomeCategoryCard[];
 }) {
-  if (categories.length === 0) return null;
+  const visible = categories
+    .filter((c) => c.productCount > 0)
+    .slice(0, 6);
 
-  const visible = categories.slice(0, 8);
+  if (visible.length === 0) return null;
 
   return (
     <section
@@ -112,9 +91,9 @@ export function StoreNetflixCategories({
           </p>
         </div>
 
-        <ul className={`mt-8 ${storeProductGridClass}`}>
+        <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 sm:gap-x-8 lg:gap-x-10">
           {visible.map((c, i) => (
-            <CategoryPoster key={c.id} category={c} priority={i < 2} />
+            <CategoryPoster key={c.id} category={c} priority={i < 3} />
           ))}
         </ul>
       </div>
