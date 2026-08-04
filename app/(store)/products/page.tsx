@@ -395,6 +395,24 @@ export default async function ProductsPage({ searchParams }: Props) {
         </header>
       ) : null}
 
+      {q && !categoryView ? (
+        <header
+          className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-stone-500">
+            Resultados de búsqueda
+          </p>
+          <h1 className="mt-2 text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
+            «{q}»
+          </h1>
+          <p className="mt-2 text-sm text-stone-500">
+            {listingTotal === 1
+              ? "1 producto encontrado"
+              : `${listingTotal} productos encontrados`}
+          </p>
+        </header>
+      ) : null}
+
       <div className="w-full bg-white">
         <div className={storeShellClass}>
           <ProductsListingControls
