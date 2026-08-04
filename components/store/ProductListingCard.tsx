@@ -184,9 +184,6 @@ function ShowcaseProductCard({
   const {
     primary: cardImg,
     primarySrcSet: cardImgSrcSet,
-    hover: cardHoverImg,
-    hoverSrcSet: cardHoverImgSrcSet,
-    gallery,
   } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
@@ -207,9 +204,6 @@ function ShowcaseProductCard({
         <StoreProductCardImage
           src={cardImg}
           srcSet={cardImgSrcSet}
-          hoverSrc={cardHoverImg}
-          hoverSrcSet={cardHoverImgSrcSet}
-          gallery={gallery}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}
@@ -290,9 +284,6 @@ function CatalogProductCard({
   const {
     primary: cardImg,
     primarySrcSet: cardImgSrcSet,
-    hover: cardHoverImg,
-    hoverSrcSet: cardHoverImgSrcSet,
-    gallery,
   } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
@@ -328,9 +319,6 @@ function CatalogProductCard({
         <StoreProductCardImage
           src={cardImg}
           srcSet={cardImgSrcSet}
-          hoverSrc={cardHoverImg}
-          hoverSrcSet={cardHoverImgSrcSet}
-          gallery={gallery}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}
