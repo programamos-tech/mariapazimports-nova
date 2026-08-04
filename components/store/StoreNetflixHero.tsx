@@ -92,25 +92,25 @@ export function StoreNetflixHero() {
         aria-hidden
       />
 
-      {/* Copy + CTA sobre el collage */}
-      <div className="relative z-[2] mx-auto flex min-h-[100svh] max-w-xl flex-col items-center justify-center px-6 pb-16 pt-28 text-center sm:pb-20 sm:pt-32">
+      {/* Copy + CTA anclado al pie — deja ver el collage */}
+      <div className="relative z-[2] mx-auto flex min-h-[100svh] max-w-xl flex-col items-center justify-end px-6 pb-10 text-center sm:pb-14">
         <h1 className="sr-only">María Paz Imports</h1>
         <StoreLogo variant="hero" priority className="mx-auto" />
 
-        <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-900 sm:mt-7 sm:text-xs sm:tracking-[0.18em]">
+        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-900 sm:mt-5 sm:text-xs sm:tracking-[0.18em]">
           Tienda online · Personal shopper
         </p>
-        <p className="mt-2 text-[13px] font-medium leading-snug text-stone-800 sm:text-sm">
+        <p className="mt-1.5 text-[13px] font-medium leading-snug text-stone-800 sm:text-sm">
           Productos entrega inmediata y encargos
         </p>
 
-        <p className="mt-7 max-w-sm text-[13px] font-semibold uppercase leading-snug tracking-[0.1em] text-stone-900 sm:mt-8 sm:text-sm sm:tracking-[0.12em]">
+        <p className="mt-5 max-w-sm text-[13px] font-semibold uppercase leading-snug tracking-[0.1em] text-stone-900 sm:mt-6 sm:text-sm sm:tracking-[0.12em]">
           Encontramos lo extraordinario para ti
         </p>
 
         <Link
           href="/products"
-          className="mt-8 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-9"
+          className="mt-6 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-7"
         >
           Ver catálogo
         </Link>
