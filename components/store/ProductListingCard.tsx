@@ -186,6 +186,7 @@ function ShowcaseProductCard({
     primarySrcSet: cardImgSrcSet,
     hover: cardHoverImg,
     hoverSrcSet: cardHoverImgSrcSet,
+    gallery,
   } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
@@ -196,10 +197,10 @@ function ShowcaseProductCard({
   const href = `/products/${product.id}`;
 
   return (
-    <article className="flex flex-col">
+    <article className="flex h-full flex-col">
       <Link
         href={href}
-        className="group/image block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
+        className="group/image flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
         onMouseEnter={() => prefetchProductHeroImage(heroImg)}
         onFocus={() => prefetchProductHeroImage(heroImg)}
       >
@@ -208,6 +209,7 @@ function ShowcaseProductCard({
           srcSet={cardImgSrcSet}
           hoverSrc={cardHoverImg}
           hoverSrcSet={cardHoverImgSrcSet}
+          gallery={gallery}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}
@@ -216,7 +218,9 @@ function ShowcaseProductCard({
             compact ? "text-2xl text-stone-200" : "text-3xl text-stone-200"
           }
         />
-        <div className={`text-left ${compact ? "space-y-0.5 pt-2" : "space-y-1.5 pt-4"}`}>
+        <div
+          className={`flex flex-1 flex-col text-left ${compact ? "space-y-0.5 pt-2" : "space-y-1.5 pt-4"}`}
+        >
           {eyebrow ? (
             <p
               className={
@@ -261,7 +265,7 @@ function ShowcaseProductCard({
       {detailCtaLabel ? (
         <Link
           href={href}
-          className="mt-2.5 block border border-stone-900 bg-white py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
+          className="mt-2.5 block shrink-0 border border-stone-900 bg-white py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
         >
           {detailCtaLabel}
         </Link>
@@ -288,6 +292,7 @@ function CatalogProductCard({
     primarySrcSet: cardImgSrcSet,
     hover: cardHoverImg,
     hoverSrcSet: cardHoverImgSrcSet,
+    gallery,
   } = productCardDisplayImages(product.image_path, product.image_paths);
   const heroImg = productPrimaryPublicImageUrl(
     product.image_path,
@@ -325,6 +330,7 @@ function CatalogProductCard({
           srcSet={cardImgSrcSet}
           hoverSrc={cardHoverImg}
           hoverSrcSet={cardHoverImgSrcSet}
+          gallery={gallery}
           alt={product.name}
           sizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
           priority={imagePriority}

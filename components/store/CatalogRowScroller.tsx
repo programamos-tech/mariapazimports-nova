@@ -112,7 +112,7 @@ export function CatalogRowScroller({
 
       <div ref={viewportRef} className="min-w-0 overflow-hidden">
         <div
-          className="flex"
+          className="flex items-stretch"
           style={{
             gap: GAP_PX,
             transform:
@@ -129,13 +129,13 @@ export function CatalogRowScroller({
                   ? String(child.key)
                   : i
               }
-              className="min-w-0 shrink-0"
+              className="flex min-w-0 shrink-0 flex-col"
               style={{
                 width: cardW > 0 ? cardW : undefined,
                 flex: cardW > 0 ? `0 0 ${cardW}px` : "0 0 42%",
               }}
             >
-              {child}
+              <div className="flex h-full min-h-0 flex-col">{child}</div>
             </div>
           ))}
         </div>

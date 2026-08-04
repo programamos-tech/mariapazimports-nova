@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
@@ -9,11 +9,18 @@ import {
   STORE_PRODUCT_CARD_IMAGE_PREFETCH_MARGIN,
 } from "@/lib/store-product-card-image";
 
+export type StoreProductCardGalleryItem = {
+  src: string;
+  srcSet?: string | null;
+};
+
 type Props = {
   src: string | null;
   srcSet?: string | null;
   hoverSrc?: string | null;
   hoverSrcSet?: string | null;
+  /** Si hay 2+, rota las fotos del producto en la card. */
+  gallery?: StoreProductCardGalleryItem[];
   alt: string;
   sizes: string;
   outOfStock?: boolean;
@@ -60,7 +67,9 @@ function CardPhoto({
 }
 
 const IMAGE_FADE =
-  "transition-opacity duration-300 ease-out motion-reduce:transition-none";
+  "transition-opacity duration-500 ease-out motion-reduce:transition-none";
+
+const GALLERY_INTERVAL_MS = 3200;
 
 function usePrefetchWhenNear(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -94,46 +103,112 @@ export function StoreProductCardImage({
   srcSet,
   hoverSrc,
   hoverSrcSet,
+  gallery,
   alt,
   sizes,
   outOfStock = false,
   placeholderClassName = "text-3xl text-stone-200",
   priority = false,
 }: Props) {
+  const slides =
+    gallery && gallery.length > 1
+      ? gallery
+      : src
+        ? [{ src, srcSet }]
+        : [];
+  const canCycle = slides.length > 1;
+
+  const [index, setIndex] = useState(0);
   const [hoverActive, setHoverActive] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const { ref, prefetch } = usePrefetchWhenNear(priority);
 
-  const activateHover = useCallback(() => {
-    if (hoverSrc) setHoverActive(true);
-  }, [hoverSrc]);
+  const onIntersect = useEffectEvent((entry: IntersectionObserverEntry) => {
+    setInView(entry.isIntersecting);
+  });
 
-  const shouldLoad = Boolean(src) && (priority || prefetch);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(mq.matches);
+    const onChange = () => setReduceMotion(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !canCycle) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry) onIntersect(entry);
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [canCycle, ref]);
+
+  useEffect(() => {
+    if (!canCycle || !inView || reduceMotion || hoverActive) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length);
+    }, GALLERY_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [canCycle, inView, reduceMotion, hoverActive, slides.length]);
+
+  const activateHover = useCallback(() => {
+    if (hoverSrc || canCycle) setHoverActive(true);
+  }, [hoverSrc, canCycle]);
+
+  const deactivateHover = useCallback(() => {
+    setHoverActive(false);
+  }, []);
+
+  const shouldLoad = slides.length > 0 && (priority || prefetch);
+  const active = slides[Math.min(index, slides.length - 1)];
+  const hoverSlide =
+    hoverSrc && !canCycle
+      ? { src: hoverSrc, srcSet: hoverSrcSet }
+      : null;
+  const showHover = Boolean(hoverActive && hoverSlide);
 
   return (
     <div
       ref={ref}
       className={`group/image relative w-full shrink-0 overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS} transition-colors duration-300 ${outOfStock ? "opacity-[0.78]" : ""}`}
       onMouseEnter={activateHover}
+      onMouseLeave={deactivateHover}
       onFocus={activateHover}
+      onBlur={deactivateHover}
     >
-      {src && shouldLoad ? (
+      {shouldLoad && active ? (
         <>
-          <CardPhoto
-            src={src}
-            srcSet={srcSet}
-            sizes={sizes}
-            alt={alt}
-            className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${STORE_PRODUCT_IMAGE_IMG_CLASS} ${IMAGE_FADE} ${
-              hoverActive && hoverSrc ? "opacity-0" : "opacity-100"
-            }`}
-            priority={priority}
-            fetchPriority={priority ? "high" : "auto"}
-            loading={priority ? "eager" : "lazy"}
-          />
-          {hoverActive && hoverSrc ? (
+          {slides.map((slide, i) => {
+            const isActive = !showHover && i === index;
+            const isNear = Math.abs(i - index) <= 1 || i === 0;
+            if (!isNear && !isActive) return null;
+            return (
+              <CardPhoto
+                key={`${slide.src}-${i}`}
+                src={slide.src}
+                srcSet={slide.srcSet}
+                sizes={sizes}
+                alt={i === 0 ? alt : ""}
+                className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${STORE_PRODUCT_IMAGE_IMG_CLASS} ${IMAGE_FADE} ${
+                  isActive ? "opacity-100" : "opacity-0"
+                }`}
+                priority={priority && i === 0}
+                fetchPriority={priority && i === 0 ? "high" : "auto"}
+                loading={priority && i === 0 ? "eager" : "lazy"}
+                hidden={!isActive}
+              />
+            );
+          })}
+          {showHover && hoverSlide ? (
             <CardPhoto
-              src={hoverSrc}
-              srcSet={hoverSrcSet}
+              src={hoverSlide.src}
+              srcSet={hoverSlide.srcSet}
               sizes={sizes}
               alt=""
               className={`${STORE_PRODUCT_CARD_IMAGE_LAYER_CLASS} ${STORE_PRODUCT_IMAGE_IMG_CLASS} ${IMAGE_FADE}`}
@@ -141,6 +216,21 @@ export function StoreProductCardImage({
               loading="lazy"
               hidden
             />
+          ) : null}
+          {canCycle ? (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-2 z-[1] flex justify-center gap-1"
+              aria-hidden
+            >
+              {slides.map((_, i) => (
+                <span
+                  key={i}
+                  className={`size-1 rounded-full transition ${
+                    i === index ? "bg-stone-800" : "bg-stone-300/90"
+                  }`}
+                />
+              ))}
+            </div>
           ) : null}
         </>
       ) : src ? null : (
