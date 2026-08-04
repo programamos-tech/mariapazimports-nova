@@ -69,7 +69,7 @@ export function ProductImportOriginMark({
         className={`mt-2.5 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500 ${className}`.trim()}
         title={label}
       >
-        <Flag className="h-[11px] w-4 shrink-0 rounded-[1px] opacity-45 shadow-[0_0_0_1px_rgba(0,0,0,0.06)]" />
+        <Flag className="h-[11px] w-4 shrink-0 rounded-[1px] opacity-90 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]" />
         <span>{label}</span>
       </p>
     );
@@ -77,10 +77,10 @@ export function ProductImportOriginMark({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.1em] text-stone-400 ${className}`.trim()}
+      className={`inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-[0.1em] text-stone-500 ${className}`.trim()}
       title={label}
     >
-      <Flag className="h-[9px] w-[13px] shrink-0 rounded-[1px] opacity-40 shadow-[0_0_0_1px_rgba(0,0,0,0.05)]" />
+      <Flag className="h-[9px] w-[13px] shrink-0 rounded-[1px] opacity-85 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]" />
       <span>{short}</span>
     </span>
   );
