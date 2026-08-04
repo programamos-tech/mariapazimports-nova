@@ -93,7 +93,7 @@ export function StoreNetflixHero() {
 
       {/* CTA anclado al pie del hero */}
       <div className="relative z-[2] mx-auto flex min-h-[100svh] max-w-3xl flex-col items-center justify-end px-6 pb-10 text-center sm:pb-14">
-        <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl md:text-[2.75rem]">
+        <h1 className="font-store-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl md:text-[2.75rem]">
           María Paz Imports
         </h1>
         <Link

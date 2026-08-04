@@ -8,16 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Cormorant_Garamond } from "next/font/google";
 import { MPI_BIO_VIDEOS } from "@/lib/mpi-bio-videos";
 import { storeShellClass } from "@/lib/store-layout";
-
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
 
 const BIO_PARAGRAPHS = [
   "Soy Ingeniera Civil de profesión y fundadora de María Paz Imports.",
@@ -270,7 +262,7 @@ export function StoreMariaPazBio() {
           <RevealLine delayMs={60}>
             <h2
               id="mpi-bio-heading"
-              className={`${display.className} text-[2.15rem] font-medium leading-[1.12] tracking-tight text-stone-900 sm:text-5xl lg:text-[3.35rem]`}
+              className="font-store-display text-[2.15rem] font-medium leading-[1.12] tracking-tight text-stone-900 sm:text-5xl lg:text-[3.35rem]"
             >
               Hola, soy{" "}
               <span className="italic font-normal text-stone-800">
@@ -286,7 +278,7 @@ export function StoreMariaPazBio() {
                 <p
                   className={
                     i === 0
-                      ? `${display.className} text-xl leading-snug text-stone-800 sm:text-2xl`
+                      ? "font-store-display text-xl leading-snug text-stone-800 sm:text-2xl"
                       : "text-[15px] leading-relaxed text-stone-600 sm:text-base sm:leading-relaxed"
                   }
                 >

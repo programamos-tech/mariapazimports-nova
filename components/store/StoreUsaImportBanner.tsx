@@ -1,14 +1,6 @@
 import Image from "next/image";
-import { Cormorant_Garamond } from "next/font/google";
 import { RevealOnScroll } from "@/components/store/RevealOnScroll";
 import { storeShellClass } from "@/lib/store-layout";
-
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
 
 export const USA_FLAG_IMAGE = "/mpi/usa-flag.jpg";
 
@@ -41,7 +33,7 @@ export function StoreUsaImportBanner() {
           </p>
           <h2
             id="usa-import-heading"
-            className={`${display.className} mt-3 text-[2.15rem] font-medium leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]`}
+            className="font-store-display mt-3 text-[2.15rem] font-medium leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]"
           >
             Importamos desde{" "}
             <span className="italic font-normal">Estados Unidos</span>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { Geist_Mono, Montserrat } from "next/font/google";
+import { Geist_Mono, Montserrat, Playfair_Display } from "next/font/google";
 import { storeBrand, storeShortDescription } from "@/lib/brand";
 import { ADMIN_SIDEBAR_BG, STORE_CHROME_BG } from "@/lib/admin-theme";
 import { STORE_ACCENT, STORE_ACCENT_HOVER } from "@/lib/store-theme";
@@ -9,6 +9,14 @@ import "./globals.css";
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -49,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${playfair.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

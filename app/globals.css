@@ -15,12 +15,19 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
+  --font-store-display: var(--font-playfair), ui-serif, Georgia, Cambria, "Times New Roman",
+    serif;
 }
 
 body {
   background: #ffffff;
   color: var(--foreground);
   font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-store-display {
+  font-family: var(--font-playfair), ui-serif, Georgia, Cambria, "Times New Roman",
+    serif;
 }
 
 .font-berea-nova {

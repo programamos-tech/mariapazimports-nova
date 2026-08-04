@@ -1,14 +1,6 @@
 import Link from "next/link";
-import { Cormorant_Garamond } from "next/font/google";
 import { storeBrand } from "@/lib/brand";
 import { storeShellClass } from "@/lib/store-layout";
-
-const display = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
 
 export const metadata = {
   title: `Quién Soy | ${storeBrand}`,
@@ -21,15 +13,11 @@ export default function QuienSoyPage() {
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500">
           Bio · {storeBrand}
         </p>
-        <h1
-          className={`${display.className} mt-4 text-4xl font-medium leading-tight tracking-tight text-stone-900 sm:text-5xl`}
-        >
+        <h1 className="font-store-display mt-4 text-4xl font-medium leading-tight tracking-tight text-stone-900 sm:text-5xl">
           Hola, soy{" "}
           <span className="italic font-normal">María Paz Estrada</span>.
         </h1>
-        <p
-          className={`${display.className} mt-8 text-xl leading-snug text-stone-800 sm:text-2xl`}
-        >
+        <p className="font-store-display mt-8 text-xl leading-snug text-stone-800 sm:text-2xl">
           Soy Ingeniera Civil de profesión y fundadora de María Paz Imports.
         </p>
         <p className="mt-6 text-[15px] leading-relaxed text-stone-600 sm:text-base">
