@@ -1,6 +1,6 @@
 import { preconnect } from "react-dom";
 import { AirplaneTilt } from "@phosphor-icons/react/dist/ssr/AirplaneTilt";
-import { User } from "@phosphor-icons/react/dist/ssr/User";
+import { CalendarBlank } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
 import { Handshake } from "@phosphor-icons/react/dist/ssr/Handshake";
 import { SealCheck } from "@phosphor-icons/react/dist/ssr/SealCheck";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
@@ -19,6 +19,10 @@ import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
 import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
 import { StoreMariaPazBio } from "@/components/store/StoreMariaPazBio";
+import {
+  StoreUsaImportBanner,
+  USA_FLAG_IMAGE,
+} from "@/components/store/StoreUsaImportBanner";
 import { StoreBestsellersRow } from "@/components/store/StoreBestsellersRow";
 import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
 import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
@@ -38,20 +42,24 @@ const HIGHLIGHT_ICON_CLASS = "size-8 shrink-0 text-stone-900 sm:size-9";
 
 const STORE_HIGHLIGHTS = [
   {
-    title: "Importamos directamente desde USA",
+    title: "Envíos nacionales",
+    description: "Enviamos dentro de las 24h posteriores a tu compra.",
+    Icon: CalendarBlank,
+  },
+  {
+    title: "Productos 100% originales",
+    description: "Importamos directamente desde USA.",
     Icon: AirplaneTilt,
   },
   {
     title: "Atención personalizada",
-    Icon: User,
-  },
-  {
-    title:
-      "Te acompañamos antes, durante y después de tu compra",
+    description:
+      "Te acompañamos antes, durante y después de tu compra.",
     Icon: Handshake,
   },
   {
-    title: "De la más alta calidad y al mejor precio",
+    title: "Los mejores productos",
+    description: "De la más alta calidad y al mejor precio.",
     Icon: SealCheck,
   },
 ] as const;
@@ -127,6 +135,7 @@ export default async function HomePage() {
           fetchPriority="high"
         />
       ))}
+      <link rel="preload" as="image" href={USA_FLAG_IMAGE} />
       {featuredImagePreloads.map(({ href, srcSet }) => (
         <link
           key={href}
@@ -144,11 +153,13 @@ export default async function HomePage() {
 
       <StoreMariaPazBio />
 
+      <StoreUsaImportBanner />
+
       {/* Highlights + productos destacados */}
       <section className="bg-white py-8 sm:py-10">
         <div className={storeShellClass}>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-8 py-6 sm:grid-cols-4 sm:gap-x-6 sm:py-8">
-            {STORE_HIGHLIGHTS.map(({ title, Icon }) => (
+            {STORE_HIGHLIGHTS.map(({ title, description, Icon }) => (
               <li key={title}>
                 <div className="flex flex-col items-center text-center">
                   <Icon
@@ -156,8 +167,11 @@ export default async function HomePage() {
                     weight={STORE_HEADER_ICON_WEIGHT}
                     aria-hidden
                   />
-                  <p className="mt-3.5 max-w-[14rem] text-xs leading-snug text-stone-800 sm:text-[13px]">
+                  <p className="mt-3.5 max-w-[14rem] text-xs font-semibold uppercase tracking-[0.04em] text-stone-900 sm:text-[13px]">
                     {title}
+                  </p>
+                  <p className="mt-1.5 max-w-[14rem] text-xs leading-snug text-stone-600 sm:text-[13px]">
+                    {description}
                   </p>
                 </div>
               </li>

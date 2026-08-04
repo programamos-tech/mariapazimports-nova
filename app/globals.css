@@ -254,3 +254,25 @@ body {
     transition: none;
   }
 }
+
+/* Banner USA — leve deriva de la bandera */
+@keyframes store-usa-flag-drift {
+  from {
+    transform: scale(1.06) translate3d(-1.5%, 0, 0);
+  }
+  to {
+    transform: scale(1.12) translate3d(1.5%, 0, 0);
+  }
+}
+
+.store-usa-flag-drift {
+  animation: store-usa-flag-drift 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-usa-flag-drift {
+    animation: none;
+    transform: scale(1.05);
+  }
+}
