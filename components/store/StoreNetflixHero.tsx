@@ -96,11 +96,14 @@ export function StoreNetflixHero() {
         aria-labelledby="store-hero-intro-heading"
       >
         <div className="mx-auto max-w-3xl">
-          <h1 id="store-hero-intro-heading" className="sr-only">
+          <h1
+            id="store-hero-intro-heading"
+            className="text-[clamp(1.75rem,5.5vw,2.5rem)] font-semibold tracking-tight text-stone-900"
+          >
             María Paz Imports
           </h1>
 
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-900 sm:text-xs sm:tracking-[0.2em]">
+          <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-900 sm:mt-5 sm:text-xs sm:tracking-[0.2em]">
             Tienda online · Personal shopper
           </p>
           <p className="mt-2 text-[14px] font-medium leading-snug text-stone-800 sm:text-[15px]">
