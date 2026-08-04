@@ -110,18 +110,15 @@ export function StoreNetflixHero() {
             Productos entrega inmediata y encargos
           </p>
 
-          <p className="font-store-display mx-auto mt-5 text-[clamp(1.15rem,4.2vw,1.75rem)] font-semibold uppercase leading-[1.2] tracking-[0.04em] text-stone-900 sm:mt-6">
-            <span className="block whitespace-nowrap">
-              Encuentro lo extraordinario
-            </span>
-            <span className="block whitespace-nowrap">para ti</span>
+          <p className="mx-auto mt-5 text-[clamp(0.95rem,3.2vw,1.2rem)] font-medium uppercase leading-snug tracking-[0.06em] text-stone-900 sm:mt-6">
+            Encuentro lo extraordinario para ti
           </p>
 
           <Link
             href="/products"
             className="mt-8 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-9"
           >
-            Ver catálogo
+            Descubre mi tienda
           </Link>
         </div>
       </section>
