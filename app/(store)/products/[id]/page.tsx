@@ -40,17 +40,19 @@ function catalogHref(categoryId: string | null, brand: string | null): string {
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
-  const [{ data: product }, variantsRaw] = await Promise.all([
-    supabase
-      .from("products")
-      .select(
-        "id,name,description,price_cents,stock_quantity,image_path,image_paths,variant_axis,size_options,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent,brand,category_id,import_origin,categories(name)",
-      )
-      .eq("id", id)
-      .eq("is_published", true)
-      .maybeSingle(),
-    fetchProductVariantsForProduct(supabase, id),
-  ]);
+  const [{ data: product }, variantsRaw, couponDiscountPercent] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "id,name,description,price_cents,stock_quantity,image_path,image_paths,variant_axis,size_options,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent,brand,category_id,import_origin,categories(name)",
+        )
+        .eq("id", id)
+        .eq("is_published", true)
+        .maybeSingle(),
+      fetchProductVariantsForProduct(supabase, id),
+      fetchStorefrontCouponDiscountPercentForProduct(supabase, id),
+    ]);
 
   if (!product) notFound();
 
@@ -78,9 +80,6 @@ export default async function ProductDetailPage({ params }: Props) {
   const imageUrls = catalogPaths
     .map((path) => storagePublicObjectUrl(path))
     .filter((u): u is string => Boolean(u));
-
-  const couponDiscountPercent =
-    await fetchStorefrontCouponDiscountPercentForProduct(supabase, product.id);
 
   const sizeLabels = normalizeSizeOptionsFromRow({
     size_options: product.size_options,

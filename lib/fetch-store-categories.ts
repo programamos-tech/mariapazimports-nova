@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCategoryIconKey, type CategoryIconKey } from "@/lib/category-icons";
 import {
@@ -8,6 +10,7 @@ import {
   getStoreCategoryVisual,
   type StoreCategoryVisual,
 } from "@/lib/store-category-visuals";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type StoreCategoryMenuItem = {
   id: string;
@@ -17,31 +20,33 @@ export type StoreCategoryMenuItem = {
   productCount: number;
 } & StoreCategoryVisual;
 
-/**
- * Categorías del catálogo para el menú Shop (fusiona duplicados / sinónimos).
- * Incluye `productCount` para que la UI oculte las que no tienen productos.
- */
-export async function fetchStoreCategoriesWithCounts(
+async function loadStoreCategoriesWithCounts(
   supabase: SupabaseClient,
 ): Promise<StoreCategoryMenuItem[]> {
-  const [{ data: categories, error: catErr }, { data: products, error: prodErr }] =
-    await Promise.all([
-      supabase
-        .from("categories")
-        .select("id,name,sort_order,icon_key")
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true }),
-      supabase.from("products").select("category_id").eq("is_published", true),
-    ]);
+  const [{ data: categories, error: catErr }, countsRes] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id,name,sort_order,icon_key")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase.rpc("store_category_product_counts"),
+  ]);
 
   if (catErr || !categories?.length) return [];
 
   const countByCategory = new Map<string, number>();
-  if (!prodErr) {
-    for (const row of products ?? []) {
+  const { data: countRows, error: countErr } = countsRes;
+  if (countErr) {
+    console.error(
+      "[store-categories] counts rpc:",
+      countErr.message,
+      countErr.code,
+    );
+  } else {
+    for (const row of countRows ?? []) {
       const cid = row.category_id as string | null;
       if (!cid) continue;
-      countByCategory.set(cid, (countByCategory.get(cid) ?? 0) + 1);
+      countByCategory.set(cid, Number(row.product_count) || 0);
     }
   }
 
@@ -86,3 +91,29 @@ export async function fetchStoreCategoriesWithCounts(
 
   return merged;
 }
+
+/** Cache entre requests (menú Shop casi estático). */
+const getCachedStoreCategoriesWithCounts = unstable_cache(
+  async () => {
+    const supabase = createSupabaseServiceClient();
+    return loadStoreCategoriesWithCounts(supabase);
+  },
+  ["store-categories-with-counts-v1"],
+  { revalidate: 60 },
+);
+
+/**
+ * Categorías del catálogo para el menú Shop (fusiona duplicados / sinónimos).
+ * Dedup por request + cache 60s entre navegaciones.
+ */
+export const fetchStoreCategoriesWithCounts = cache(
+  async (_supabase?: SupabaseClient): Promise<StoreCategoryMenuItem[]> => {
+    try {
+      return await getCachedStoreCategoriesWithCounts();
+    } catch (err) {
+      console.error("[store-categories] cache fallback", err);
+      const supabase = _supabase ?? createSupabaseServiceClient();
+      return loadStoreCategoriesWithCounts(supabase);
+    }
+  },
+);

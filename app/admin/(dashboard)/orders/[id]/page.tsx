@@ -71,7 +71,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const { data: proofRows } = isBankTransfer
     ? await supabase
         .from("order_payment_proofs")
-        .select("id, file_name, storage_path, uploaded_at")
+        .select("id, file_name, storage_path, uploaded_at, mime_type")
         .eq("order_id", id)
         .order("uploaded_at", { ascending: false })
     : { data: [] as const };
@@ -80,6 +80,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     (proofRows ?? []).map(async (row) => ({
       id: String(row.id),
       fileName: String(row.file_name),
+      mimeType:
+        "mime_type" in row && row.mime_type != null
+          ? String(row.mime_type)
+          : null,
       signedUrl: await getOrderPaymentProofSignedUrl(String(row.storage_path)),
       uploadedAt: String(row.uploaded_at),
     })),

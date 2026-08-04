@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { useFormStatus } from "react-dom";
-import { uploadOrderPaymentProofAction } from "@/app/actions/order-payment-proof";
+import { useRouter } from "next/navigation";
 import { TransferBankDetails } from "@/components/store/TransferBankDetails";
+import { preparePaymentProofFile } from "@/lib/prepare-payment-proof-file";
 
 function isImageFile(file: File) {
   if (file.type.startsWith("image/")) return true;
@@ -22,33 +22,6 @@ function isImageFile(file: File) {
 function isPdfFile(file: File) {
   return (
     file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
-  );
-}
-
-function ProofSubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="bg-stone-900 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-stone-800 disabled:opacity-50"
-    >
-      {pending ? "Subiendo…" : "Enviar comprobante"}
-    </button>
-  );
-}
-
-function ProofCancelButton({ onClose }: { onClose: () => void }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={onClose}
-      className="border border-stone-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-800 transition hover:bg-stone-50 disabled:opacity-50"
-    >
-      Cancelar
-    </button>
   );
 }
 
@@ -71,11 +44,15 @@ export function OrderPaymentProofUpload({
   amountCents?: number;
   showBankDetails?: boolean;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewKind, setPreviewKind] = useState<"image" | "pdf" | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     setMounted(true);
@@ -88,6 +65,7 @@ export function OrderPaymentProofUpload({
     });
     setPreviewKind(null);
     setFileName(null);
+    setSelectedFile(null);
   });
 
   useEffect(() => {
@@ -100,12 +78,17 @@ export function OrderPaymentProofUpload({
   }, [open]);
 
   useEffect(() => {
-    if (!open) clearPreview();
+    if (!open) {
+      clearPreview();
+      setError(null);
+    }
   }, [open, clearPreview]);
 
   function onFileChange(file: File | null) {
     clearPreview();
+    setError(null);
     if (!file) return;
+    setSelectedFile(file);
     setFileName(file.name);
     if (isImageFile(file)) {
       setPreviewKind("image");
@@ -118,7 +101,108 @@ export function OrderPaymentProofUpload({
   }
 
   function close() {
+    if (pending) return;
     setOpen(false);
+  }
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!selectedFile || pending) return;
+    setError(null);
+
+    startTransition(async () => {
+      try {
+        const fileToSend = await preparePaymentProofFile(selectedFile);
+        if (fileToSend.size > 8 * 1024 * 1024) {
+          setError(
+            "El archivo supera 8 MB. Prueba con otra foto o un PDF más liviano.",
+          );
+          return;
+        }
+
+        const prepareRes = await fetch("/api/store/payment-proof", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            intent: "prepare",
+            order_id: orderId,
+            token,
+            file_name: fileToSend.name,
+            mime_type: fileToSend.type || "application/octet-stream",
+            size: fileToSend.size,
+          }),
+        });
+        const prepareData = (await prepareRes.json().catch(() => null)) as {
+          ok?: boolean;
+          message?: string;
+          upload?: {
+            storageKey: string;
+            signedUrl: string;
+            contentType: string;
+            fileName: string;
+          };
+        } | null;
+
+        if (!prepareRes.ok || !prepareData?.ok || !prepareData.upload) {
+          setError(
+            prepareData?.message ??
+              "No se pudo preparar la subida. Intenta de nuevo.",
+          );
+          return;
+        }
+
+        const { storageKey, signedUrl, contentType, fileName } =
+          prepareData.upload;
+
+        const putRes = await fetch(signedUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": contentType,
+          },
+          body: fileToSend,
+        });
+
+        if (!putRes.ok) {
+          console.error("[payment-proof] put", putRes.status);
+          setError("No se pudo subir el archivo. Intenta de nuevo.");
+          return;
+        }
+
+        const confirmRes = await fetch("/api/store/payment-proof", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            intent: "confirm",
+            order_id: orderId,
+            token,
+            storage_key: storageKey,
+            file_name: fileName,
+            content_type: contentType,
+          }),
+        });
+        const confirmData = (await confirmRes.json().catch(() => null)) as {
+          ok?: boolean;
+          message?: string;
+        } | null;
+
+        if (!confirmRes.ok || !confirmData?.ok) {
+          setError(
+            confirmData?.message ??
+              "No se pudo registrar el comprobante. Intenta de nuevo.",
+          );
+          return;
+        }
+
+        setOpen(false);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("error");
+        url.searchParams.set("uploaded", "1");
+        router.replace(url.pathname + url.search);
+        router.refresh();
+      } catch {
+        setError("No se pudo subir el comprobante. Revisa tu conexión.");
+      }
+    });
   }
 
   const modal =
@@ -164,12 +248,7 @@ export function OrderPaymentProofUpload({
                 </div>
               ) : null}
 
-              <form
-                className="mt-4 space-y-3"
-                action={uploadOrderPaymentProofAction}
-              >
-                <input type="hidden" name="order_id" value={orderId} />
-                <input type="hidden" name="token" value={token} />
+              <form className="mt-4 space-y-3" onSubmit={onSubmit}>
                 <label className="block">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900">
                     Comprobante
@@ -178,11 +257,12 @@ export function OrderPaymentProofUpload({
                     type="file"
                     name="file"
                     required
-                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                    disabled={pending}
+                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf"
                     onChange={(e) =>
                       onFileChange(e.target.files?.[0] ?? null)
                     }
-                    className="mt-2 block w-full border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-700 file:mr-3 file:border-0 file:bg-stone-900 file:px-3 file:py-2 file:text-[10px] file:font-semibold file:uppercase file:tracking-[0.12em] file:text-white"
+                    className="mt-2 block w-full border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-700 file:mr-3 file:border-0 file:bg-stone-900 file:px-3 file:py-2 file:text-[10px] file:font-semibold file:uppercase file:tracking-[0.12em] file:text-white disabled:opacity-50"
                   />
                 </label>
 
@@ -214,11 +294,34 @@ export function OrderPaymentProofUpload({
                 ) : null}
 
                 <p className="text-xs text-stone-500">
-                  JPG, PNG, WebP o PDF · máximo 8 MB
+                  JPG, PNG, WebP, HEIC o PDF · máximo 8 MB
                 </p>
+
+                {error ? (
+                  <p
+                    className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                    role="alert"
+                  >
+                    {error}
+                  </p>
+                ) : null}
+
                 <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
-                  <ProofCancelButton onClose={close} />
-                  <ProofSubmitButton />
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={close}
+                    className="border border-stone-300 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-800 transition hover:bg-stone-50 disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={pending || !selectedFile}
+                    className="bg-stone-900 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-stone-800 disabled:opacity-50"
+                  >
+                    {pending ? "Subiendo…" : "Enviar comprobante"}
+                  </button>
                 </div>
               </form>
             </div>

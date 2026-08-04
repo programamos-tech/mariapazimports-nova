@@ -73,41 +73,44 @@ export default async function HomePage() {
   const productsQuery = supabase
     .from("products")
     .select(
-      "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,import_origin,size_options,size_value,size_unit,created_at",
+      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,import_origin,size_options,size_value,size_unit,created_at",
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(HOME_PRODUCTS_LIMIT);
 
+  // Enriquecer variantes en paralelo apenas llegan los productos (sin esperar cupones/carrito).
+  const featuredWithVariantsPromise = productsQuery.then(async (result) => {
+    if (result.error) {
+      console.error(
+        "[home] products:",
+        result.error.message,
+        result.error.code,
+      );
+    }
+    const rows = (result.data ?? []).map((p) => ({
+      ...p,
+      description: null,
+    })) as Parameters<typeof enrichListingProductsWithVariants>[1];
+    return enrichListingProductsWithVariants(supabase, rows);
+  });
+
+  const bestsellersWithVariantsPromise = fetchHomeBestsellersWeek(
+    supabase,
+  ).then((rows) => enrichListingProductsWithVariants(supabase, rows));
+
   const [
     homeCategories,
-    { data: homeProducts, error: homeProductsError },
-    bestsellerRows,
+    enrichedFeatured,
+    enrichedBestsellers,
     cartQtyByProductId,
     couponPctByProductId,
   ] = await Promise.all([
     fetchHomeCategoryCards(supabase),
-    productsQuery,
-    fetchHomeBestsellersWeek(supabase),
+    featuredWithVariantsPromise,
+    bestsellersWithVariantsPromise,
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
-  ]);
-
-  if (homeProductsError) {
-    console.error(
-      "[home] products:",
-      homeProductsError.message,
-      homeProductsError.code,
-    );
-  }
-
-  const featuredProducts = homeProducts ?? [];
-  const [enrichedFeatured, enrichedBestsellers] = await Promise.all([
-    enrichListingProductsWithVariants(
-      supabase,
-      featuredProducts as Parameters<typeof enrichListingProductsWithVariants>[1],
-    ),
-    enrichListingProductsWithVariants(supabase, bestsellerRows),
   ]);
 
   const featuredImagePreloads = enrichedFeatured
@@ -189,7 +192,7 @@ export default async function HomePage() {
               </h2>
             </div>
 
-            {featuredProducts.length === 0 ? (
+            {enrichedFeatured.length === 0 ? (
               <p className="mt-6 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-8 text-center text-sm text-stone-600">
                 Aún no hay productos publicados. Cárgalos desde el admin para que
                 aparezcan aquí.

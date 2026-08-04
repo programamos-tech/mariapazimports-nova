@@ -39,6 +39,16 @@ import {
   type ProductImportOrigin,
 } from "@/lib/product-import-origin";
 
+/** Precarga ruta RSC + imagen hero al pasar el mouse (entrada rápida al detalle). */
+function prefetchProductDetail(
+  router: ReturnType<typeof useRouter>,
+  productId: string,
+  heroImg: string | null,
+) {
+  void router.prefetch(`/products/${productId}`);
+  prefetchProductHeroImage(heroImg);
+}
+
 type Product = {
   id: string;
   name: string;
@@ -192,14 +202,15 @@ function ShowcaseProductCard({
   const outOfStock = displayStockQuantity(product) <= 0;
   const eyebrow = showcaseEyebrowLabel(product);
   const href = `/products/${product.id}`;
+  const router = useRouter();
 
   return (
     <article className="flex h-full flex-col">
       <Link
         href={href}
         className="group/image flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50 focus-visible:ring-offset-2"
-        onMouseEnter={() => prefetchProductHeroImage(heroImg)}
-        onFocus={() => prefetchProductHeroImage(heroImg)}
+        onMouseEnter={() => prefetchProductDetail(router, product.id, heroImg)}
+        onFocus={() => prefetchProductDetail(router, product.id, heroImg)}
       >
         <StoreProductCardImage
           src={cardImg}
@@ -327,8 +338,10 @@ function CatalogProductCard({
         <Link
           href={`/products/${product.id}`}
           className="absolute inset-0 z-[1] block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
-          onMouseEnter={() => prefetchProductHeroImage(heroImg)}
-          onFocus={() => prefetchProductHeroImage(heroImg)}
+          onMouseEnter={() =>
+            prefetchProductDetail(router, product.id, heroImg)
+          }
+          onFocus={() => prefetchProductDetail(router, product.id, heroImg)}
           aria-label={product.name}
         />
         <button

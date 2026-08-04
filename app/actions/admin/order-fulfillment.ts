@@ -12,7 +12,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 
-async function assertVentasCrear() {
+async function assertVentasVer() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -27,11 +27,23 @@ async function assertVentasCrear() {
   if (!profile) return { ok: false as const, error: "auth" as const };
 
   const perm = await loadAdminPermissions();
-  if (!perm?.permissions.ventas_crear) {
+  if (!perm?.permissions.ventas_ver) {
     return { ok: false as const, error: "forbidden" as const };
   }
 
   return { ok: true as const, supabase, userId: user.id };
+}
+
+async function assertVentasCrear() {
+  const gate = await assertVentasVer();
+  if (!gate.ok) return gate;
+
+  const perm = await loadAdminPermissions();
+  if (!perm?.permissions.ventas_crear) {
+    return { ok: false as const, error: "forbidden" as const };
+  }
+
+  return gate;
 }
 
 export async function acceptBankTransferOrder(orderId: string) {
@@ -172,7 +184,7 @@ function revalidatePathsForOrder(orderId: string) {
 }
 
 export async function getOrderPaymentProofSignedUrl(storagePath: string) {
-  const gate = await assertVentasCrear();
+  const gate = await assertVentasVer();
   if (!gate.ok) return null;
 
   const key = storagePath.replace(/^order-payment-proofs\//, "");
@@ -181,6 +193,9 @@ export async function getOrderPaymentProofSignedUrl(storagePath: string) {
     .from("order-payment-proofs")
     .createSignedUrl(key, 60 * 10);
 
-  if (error || !data?.signedUrl) return null;
+  if (error || !data?.signedUrl) {
+    console.error("[payment-proof] signed url", error?.message);
+    return null;
+  }
   return data.signedUrl;
 }

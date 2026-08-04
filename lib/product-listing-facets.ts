@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import { normalizeSizeOptionsFromRow } from "@/lib/product-size-options";
 import {
   categoryGroupKey,
@@ -149,6 +150,22 @@ export async function fetchListingFacets(
   supabase: SupabaseClient,
   options: { categoryIds: string[] | null },
 ): Promise<ListingFacets> {
+  // Facetas del catálogo completo (sin filtro de categoría): cache 60s.
+  if (!options.categoryIds?.length) {
+    try {
+      return await getCachedGlobalListingFacets();
+    } catch (err) {
+      console.error("[listing-facets] cache fallback", err);
+    }
+  }
+
+  return loadListingFacets(supabase, options);
+}
+
+async function loadListingFacets(
+  supabase: SupabaseClient,
+  options: { categoryIds: string[] | null },
+): Promise<ListingFacets> {
   let q = supabase
     .from("products")
     .select("brand, colors, size_options, size_value, size_unit, price_cents")
@@ -163,3 +180,16 @@ export async function fetchListingFacets(
 
   return computeListingFacetsFromProductRows(data);
 }
+
+const getCachedGlobalListingFacets = unstable_cache(
+  async () => {
+    const { createSupabaseServiceClient } = await import(
+      "@/lib/supabase/service"
+    );
+    return loadListingFacets(createSupabaseServiceClient(), {
+      categoryIds: null,
+    });
+  },
+  ["store-listing-facets-global-v1"],
+  { revalidate: 60 },
+);

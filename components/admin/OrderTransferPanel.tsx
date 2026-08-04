@@ -7,9 +7,24 @@ import { acceptBankTransferOrder } from "@/app/actions/admin/order-fulfillment";
 type Proof = {
   id: string;
   fileName: string;
+  mimeType?: string | null;
   signedUrl: string | null;
   uploadedAt: string;
 };
+
+function isImageProof(proof: Proof) {
+  const mime = (proof.mimeType ?? "").toLowerCase();
+  if (mime.startsWith("image/")) return true;
+  const name = proof.fileName.toLowerCase();
+  return (
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".png") ||
+    name.endsWith(".webp") ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  );
+}
 
 export function OrderTransferPanel({
   orderId,
@@ -61,27 +76,44 @@ export function OrderTransferPanel({
       ) : null}
 
       {proofs.length > 0 ? (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-4 space-y-3">
           {proofs.map((proof) => (
             <li
               key={proof.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="overflow-hidden rounded-lg border border-zinc-200/80 bg-white dark:border-zinc-700 dark:bg-zinc-900"
             >
-              <span className="truncate text-zinc-800 dark:text-zinc-200">
-                {proof.fileName}
-              </span>
-              {proof.signedUrl ? (
+              {proof.signedUrl && isImageProof(proof) ? (
                 <a
                   href={proof.signedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 font-semibold text-sky-700 underline underline-offset-2 dark:text-sky-300"
+                  className="block bg-zinc-50 dark:bg-zinc-950"
                 >
-                  Ver comprobante
+                  {/* eslint-disable-next-line @next/next/no-img-element -- signed storage URL */}
+                  <img
+                    src={proof.signedUrl}
+                    alt={`Comprobante ${proof.fileName}`}
+                    className="mx-auto max-h-72 w-full object-contain object-center"
+                  />
                 </a>
-              ) : (
-                <span className="text-xs text-zinc-500">Sin vista previa</span>
-              )}
+              ) : null}
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                <span className="truncate text-zinc-800 dark:text-zinc-200">
+                  {proof.fileName}
+                </span>
+                {proof.signedUrl ? (
+                  <a
+                    href={proof.signedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 font-semibold text-sky-700 underline underline-offset-2 dark:text-sky-300"
+                  >
+                    {isImageProof(proof) ? "Abrir imagen" : "Ver comprobante"}
+                  </a>
+                ) : (
+                  <span className="text-xs text-zinc-500">Sin vista previa</span>
+                )}
+              </div>
             </li>
           ))}
         </ul>

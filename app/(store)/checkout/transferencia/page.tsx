@@ -21,7 +21,7 @@ function uploadErrorMessage(error?: string) {
     case "archivo":
       return "Selecciona un archivo válido.";
     case "tipo":
-      return "Formato no permitido. Usa JPG, PNG, WebP o PDF.";
+      return "Formato no permitido. Usa JPG, PNG, WebP, HEIC o PDF.";
     case "limite":
       return "Ya subiste el máximo de comprobantes para este pedido.";
     case "subida":

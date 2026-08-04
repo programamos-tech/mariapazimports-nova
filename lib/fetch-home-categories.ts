@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   resolveCategoryIconKey,
@@ -12,6 +14,7 @@ import { normalizeProductImagePaths } from "@/lib/product-images";
 import { storageOriginalObjectUrl } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type HomeCategoryCard = {
   id: string;
@@ -34,35 +37,38 @@ function resolveProductCoverUrl(
   if (/^https?:\/\//i.test(first)) return first;
   if (first.startsWith("/")) return first;
   const pub = storagePublicObjectUrl(first);
-  // Original de Storage (sin resize agresivo) para póster HD.
   return storageOriginalObjectUrl(pub) ?? pub ?? resolveCategoryListingHeroSrc(first);
 }
 
-/**
- * Categorías para la vitrina Netflix del home.
- * Imagen: preferimos la de un producto publicado de esa categoría
- * (incluye IDs sinónimos/duplicados). Fallback: listing_hero.
- */
-export async function fetchHomeCategoryCards(
+async function loadHomeCategoryCards(
   supabase: SupabaseClient,
 ): Promise<HomeCategoryCard[]> {
-  const [{ data: categories, error: catErr }, { data: products, error: prodErr }] =
-    await Promise.all([
-      supabase
-        .from("categories")
-        .select("id,name,sort_order,icon_key,listing_hero_image_path")
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true }),
-      supabase
-        .from("products")
-        .select("category_id,image_path,image_paths,created_at")
-        .eq("is_published", true)
-        .not("category_id", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(400),
-    ]);
+  const [{ data: categories, error: catErr }, countsRes] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id,name,sort_order,icon_key,listing_hero_image_path")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase.rpc("store_category_product_counts"),
+  ]);
 
   if (catErr || !categories?.length) return [];
+
+  const countByCategoryId = new Map<string, number>();
+  const { data: countRows, error: countErr } = countsRes;
+  if (countErr) {
+    console.error(
+      "[home-categories] counts rpc:",
+      countErr.message,
+      countErr.code,
+    );
+  } else {
+    for (const row of countRows ?? []) {
+      const cid = row.category_id as string | null;
+      if (!cid) continue;
+      countByCategoryId.set(cid, Number(row.product_count) || 0);
+    }
+  }
 
   const groups = new Map<string, typeof categories>();
   for (const c of categories) {
@@ -77,24 +83,46 @@ export async function fetchHomeCategoryCards(
     idToGroupKey.set(c.id, categoryGroupKey(c.name));
   }
 
-  /** groupKey → URL de portada tomada de un producto del grupo. */
+  /** Grupos sin listing_hero: rellenamos portada con un producto reciente. */
+  const groupsNeedingProductCover = new Set<string>();
+  for (const [gKey, arr] of groups) {
+    const hasHero = arr.some(
+      (c) =>
+        typeof c.listing_hero_image_path === "string" &&
+        c.listing_hero_image_path.trim(),
+    );
+    if (!hasHero) groupsNeedingProductCover.add(gKey);
+  }
+
   const productCoverByGroup = new Map<string, string>();
-  const countByCategoryId = new Map<string, number>();
+  if (groupsNeedingProductCover.size > 0) {
+    const { data: products, error: prodErr } = await supabase
+      .from("products")
+      .select("category_id,image_path,image_paths")
+      .eq("is_published", true)
+      .not("category_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(120);
 
-  if (!prodErr) {
-    for (const row of products ?? []) {
-      const cid = row.category_id as string | null;
-      if (!cid) continue;
-      countByCategoryId.set(cid, (countByCategoryId.get(cid) ?? 0) + 1);
-
-      const gKey = idToGroupKey.get(cid);
-      if (!gKey || productCoverByGroup.has(gKey)) continue;
-
-      const cover = resolveProductCoverUrl(
-        row.image_path as string | null,
-        row.image_paths,
+    if (prodErr) {
+      console.error(
+        "[home-categories] product covers:",
+        prodErr.message,
+        prodErr.code,
       );
-      if (cover) productCoverByGroup.set(gKey, cover);
+    } else {
+      for (const row of products ?? []) {
+        const cid = row.category_id as string | null;
+        if (!cid) continue;
+        const gKey = idToGroupKey.get(cid);
+        if (!gKey || !groupsNeedingProductCover.has(gKey)) continue;
+        if (productCoverByGroup.has(gKey)) continue;
+        const cover = resolveProductCoverUrl(
+          row.image_path as string | null,
+          row.image_paths,
+        );
+        if (cover) productCoverByGroup.set(gKey, cover);
+      }
     }
   }
 
@@ -113,12 +141,12 @@ export async function fetchHomeCategoryCards(
     const visual = getStoreCategoryVisual(winner.name, visualIndex);
     visualIndex += 1;
 
-    const productCover = productCoverByGroup.get(gKey) ?? null;
     const heroFallback = resolveCategoryListingHeroSrc(
       typeof winner.listing_hero_image_path === "string"
         ? winner.listing_hero_image_path
         : null,
     );
+    const productCover = productCoverByGroup.get(gKey) ?? null;
 
     merged.push({
       id: canonicalId,
@@ -126,7 +154,7 @@ export async function fetchHomeCategoryCards(
       sort_order: Math.min(...arr.map((c) => c.sort_order)),
       iconKey: resolveCategoryIconKey(winner.icon_key),
       productCount,
-      imageSrc: productCover ?? heroFallback,
+      imageSrc: heroFallback ?? productCover,
       ...visual,
     });
   }
@@ -138,3 +166,28 @@ export async function fetchHomeCategoryCards(
 
   return merged.map(({ sort_order: _, ...card }) => card);
 }
+
+const getCachedHomeCategoryCards = unstable_cache(
+  async () => {
+    const supabase = createSupabaseServiceClient();
+    return loadHomeCategoryCards(supabase);
+  },
+  ["home-category-cards-v2"],
+  { revalidate: 60 },
+);
+
+/**
+ * Categorías para la vitrina Netflix del home.
+ * Preferimos listing_hero; solo pedimos productos si falta portada.
+ */
+export const fetchHomeCategoryCards = cache(
+  async (_supabase?: SupabaseClient): Promise<HomeCategoryCard[]> => {
+    try {
+      return await getCachedHomeCategoryCards();
+    } catch (err) {
+      console.error("[home-categories] cache fallback", err);
+      const supabase = _supabase ?? createSupabaseServiceClient();
+      return loadHomeCategoryCards(supabase);
+    }
+  },
+);

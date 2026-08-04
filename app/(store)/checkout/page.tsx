@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { syncStoreCustomerFromSession } from "@/app/actions/store-customer";
@@ -15,10 +14,7 @@ import { fetchProductVariantsByProductIds } from "@/lib/product-variants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { imagePathForProductLine } from "@/lib/product-line-image";
-import {
-  shouldUnoptimizeStorageImageUrl,
-  storagePublicObjectUrl,
-} from "@/lib/storage-public-url";
+import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { storeShellClass } from "@/lib/store-layout";
 import {
   CheckoutShippingFields,
@@ -527,13 +523,13 @@ export default async function CheckoutPage({
                       >
                         <div className="relative size-12 shrink-0 bg-[#ebe9e6]">
                           {img ? (
-                            <Image
+                            // eslint-disable-next-line @next/next/no-img-element -- Storage directo, igual que vitrina
+                            <img
                               src={img}
                               alt=""
-                              fill
-                              className="object-contain object-center"
-                              sizes="48px"
-                              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                              className="absolute inset-0 size-full object-contain object-center"
+                              loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <div className="flex size-full items-center justify-center text-stone-300">
@@ -612,13 +608,13 @@ export default async function CheckoutPage({
                           className="relative size-14 shrink-0 bg-[#f0eeeb] sm:size-16"
                         >
                           {img ? (
-                            <Image
+                            // eslint-disable-next-line @next/next/no-img-element -- Storage directo, igual que vitrina
+                            <img
                               src={img}
                               alt=""
-                              fill
-                              className="object-contain object-center"
-                              sizes="64px"
-                              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                              className="absolute inset-0 size-full object-contain object-center"
+                              loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <div className="flex size-full items-center justify-center text-stone-300">

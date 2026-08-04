@@ -68,9 +68,22 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={storageOrigin} />
           </>
         ) : null}
+        {/* display=swap + media print→all: no bloquea LCP de fotos de producto */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap"
           rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap"
+          media="print"
+        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&display=swap"
+          />
+        </noscript>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=document.querySelector('link[href*="Stack+Sans+Notch"][media=print]');if(l)l.media='all';})();`,
+          }}
         />
       </head>
       <body

@@ -226,8 +226,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       q,
       sort,
       allCategoryRows,
-      page: catalogBrowseMode ? 1 : page,
-      unpaged: catalogBrowseMode,
+      page,
     }),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
@@ -241,21 +240,10 @@ export default async function ProductsPage({ searchParams }: Props) {
   let list: StoreListingProductRow[] = listingResult.products;
   let listingTotal = listingResult.total;
 
-  if (catalogBrowseMode) {
-    list = shuffleStoreListingProducts(list);
-    listingTotal = list.length;
-  }
+  let totalPages = Math.max(1, Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE));
+  let currentPage = Math.min(page, totalPages);
 
-  let totalPages = catalogBrowseMode
-    ? 1
-    : Math.max(1, Math.ceil(listingTotal / STORE_CATALOG_PAGE_SIZE));
-  let currentPage = catalogBrowseMode ? 1 : Math.min(page, totalPages);
-
-  if (
-    !catalogBrowseMode &&
-    page > totalPages &&
-    listingTotal > 0
-  ) {
+  if (page > totalPages && listingTotal > 0) {
     const clamped = await fetchPublishedProductsForListing(supabase, {
       categoryFilterId,
       filterCategoryIds,
@@ -486,13 +474,11 @@ export default async function ProductsPage({ searchParams }: Props) {
                 </li>
               ))}
             </ul>
-            {!catalogBrowseMode ? (
-              <CatalogPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                baseQuery={paginationBaseQuery}
-              />
-            ) : null}
+            <CatalogPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              baseQuery={paginationBaseQuery}
+            />
           </div>
         )}
 

@@ -125,7 +125,7 @@ function SeamlessLoopVideo({ src, active }: { src: string; active: boolean }) {
         className={`${layer} ${frontIsA ? "opacity-100" : "opacity-0"}`}
         muted
         playsInline
-        preload="auto"
+        preload={active ? "metadata" : "none"}
         aria-hidden
       />
       <video
@@ -134,7 +134,7 @@ function SeamlessLoopVideo({ src, active }: { src: string; active: boolean }) {
         className={`${layer} ${frontIsA ? "opacity-0" : "opacity-100"}`}
         muted
         playsInline
-        preload="auto"
+        preload={active ? "metadata" : "none"}
         aria-hidden
       />
     </>

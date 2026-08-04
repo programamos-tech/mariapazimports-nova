@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   createContext,
@@ -23,10 +22,7 @@ import {
   STORE_PRODUCT_IMAGE_IMG_CLASS,
 } from "@/lib/store-product-card-image";
 import { productCardImageSources } from "@/lib/storage-image-url";
-import {
-  shouldUnoptimizeStorageImageUrl,
-  storagePublicObjectUrl,
-} from "@/lib/storage-public-url";
+import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 
 export type StoreCartDrawerItem = {
   productId: string;
@@ -141,8 +137,9 @@ function CartDrawerSuggestionsRow({
         className="store-cart-suggestions-scroll -mx-1 flex list-none gap-3 px-1 pb-2"
       >
         {suggestions.map((s) => {
-          const framed = productCardImageSources(s.imagePath);
-          const img = framed.src ?? storagePublicObjectUrl(s.imagePath);
+          const img =
+            productCardImageSources(storagePublicObjectUrl(s.imagePath)).src ??
+            storagePublicObjectUrl(s.imagePath);
           const swatches = s.colors.slice(0, 4);
           const extraColors = Math.max(0, s.colors.length - swatches.length);
           return (
@@ -156,13 +153,13 @@ function CartDrawerSuggestionsRow({
                   className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
                 >
                   {img ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element -- Storage directo, igual que vitrina
+                    <img
                       src={img}
                       alt=""
-                      fill
                       className={STORE_PRODUCT_IMAGE_IMG_CLASS}
-                      sizes="130px"
-                      unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="flex size-full items-center justify-center text-xl text-stone-200">
@@ -238,13 +235,13 @@ function DrawerLine({
           className="relative size-24 shrink-0 overflow-hidden bg-[#f0eeeb]"
         >
           {img ? (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element -- Storage directo, igual que vitrina
+            <img
               src={img}
               alt=""
-              fill
-              className="object-contain object-center"
-              sizes="96px"
-              unoptimized={shouldUnoptimizeStorageImageUrl(img)}
+              className="absolute inset-0 size-full object-contain object-center"
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="flex size-full items-center justify-center text-2xl text-stone-200">
