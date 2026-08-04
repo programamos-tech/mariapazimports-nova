@@ -258,8 +258,9 @@ function SidebarLogo() {
       <Image
         src={storeLogoPath}
         alt={storeBrand}
-        width={781}
-        height={217}
+        width={966}
+        height={306}
+        unoptimized
         className="h-auto w-full max-w-[9.5rem] object-contain object-center"
         priority
       />

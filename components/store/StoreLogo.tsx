@@ -3,10 +3,14 @@ import { storeBrand, storeLogoPath } from "@/lib/brand";
 
 type Variant = "header" | "footer" | "hero";
 
+/** Dimensiones intrínsecas del PNG (2× Canva, fondo transparente). */
+const LOGO_WIDTH = 966;
+const LOGO_HEIGHT = 306;
+
 const variantClass: Record<Variant, string> = {
-  header: "h-8 w-auto max-w-full sm:h-9 md:h-10 lg:h-11",
-  footer: "h-10 w-auto sm:h-11 lg:h-12 max-w-[14rem]",
-  hero: "h-14 w-auto max-w-[16rem] sm:h-16 sm:max-w-[18rem] md:h-[4.5rem] md:max-w-[22rem]",
+  header: "h-8 w-auto max-h-8 sm:h-9 sm:max-h-9 md:h-10 md:max-h-10 lg:h-11 lg:max-h-11",
+  footer: "h-10 w-auto max-h-10 sm:h-11 sm:max-h-11 lg:h-12 lg:max-h-12",
+  hero: "h-12 w-auto max-h-12 sm:h-14 sm:max-h-14 md:h-16 md:max-h-16",
 };
 
 type Props = {
@@ -25,9 +29,10 @@ export function StoreLogo({
     <Image
       src={storeLogoPath}
       alt={storeBrand}
-      width={475}
-      height={145}
+      width={LOGO_WIDTH}
+      height={LOGO_HEIGHT}
       priority={priority}
+      unoptimized
       className={`object-contain object-center ${variantClass[variant]} ${className}`.trim()}
     />
   );

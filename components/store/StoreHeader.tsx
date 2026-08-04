@@ -39,16 +39,12 @@ export async function StoreHeader() {
           />
         </div>
 
-        <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-2 lg:max-w-[11.5rem] lg:px-0">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-2">
           <Link
             href="/"
-            className="block w-full max-w-full leading-none outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
+            className="inline-flex max-w-full shrink items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
           >
-            <StoreLogo
-              variant="header"
-              priority
-              className="mx-auto w-full max-w-full lg:max-w-none"
-            />
+            <StoreLogo variant="header" priority />
           </Link>
         </div>
 

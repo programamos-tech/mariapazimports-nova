@@ -95,7 +95,7 @@ export function StoreNetflixHero() {
       {/* Copy + CTA anclado al pie — deja ver el collage */}
       <div className="relative z-[2] mx-auto flex min-h-[100svh] max-w-xl flex-col items-center justify-end px-6 pb-10 text-center sm:pb-14">
         <h1 className="sr-only">María Paz Imports</h1>
-        <StoreLogo variant="hero" priority className="mx-auto" />
+        <StoreLogo variant="hero" priority />
 
         <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-900 sm:mt-5 sm:text-xs sm:tracking-[0.18em]">
           Tienda online · Personal shopper
