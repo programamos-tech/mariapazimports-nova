@@ -30,6 +30,9 @@ function AnnouncementSegment({ isDuplicate }: { isDuplicate: boolean }) {
       >
         {storeSupportPhone}
       </a>
+      <span className="text-stone-400" aria-hidden>
+        ·
+      </span>
     </span>
   );
 }

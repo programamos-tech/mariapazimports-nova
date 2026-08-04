@@ -1,34 +1,34 @@
-type Variant = "header" | "footer";
+import Image from "next/image";
+import { storeBrand, storeLogoPath } from "@/lib/brand";
+
+type Variant = "header" | "footer" | "hero";
 
 const variantClass: Record<Variant, string> = {
-  header: "text-[1.05rem] leading-none sm:text-[1.15rem] md:text-[1.25rem] lg:text-[1.4rem]",
-  footer: "text-[1.2rem] leading-none sm:text-[1.3rem] lg:text-[1.4rem]",
+  header: "h-8 w-auto max-w-full sm:h-9 md:h-10 lg:h-11",
+  footer: "h-10 w-auto sm:h-11 lg:h-12 max-w-[14rem]",
+  hero: "h-14 w-auto max-w-[16rem] sm:h-16 sm:max-w-[18rem] md:h-[4.5rem] md:max-w-[22rem]",
 };
 
 type Props = {
   variant?: Variant;
-  /** Conservado por compatibilidad con usos previos del <Image>. */
   priority?: boolean;
   className?: string;
 };
 
-/**
- * Wordmark tipográfico (Playfair Display seminegrita), como en Canva:
- * MARÍA PAZ + IMPORTS.
- */
+/** Wordmark oficial (Canva): MARÍA PAZ + IMPORTS. */
 export function StoreLogo({
   variant = "header",
+  priority = false,
   className = "",
 }: Props) {
   return (
-    <span
-      className={`font-store-display inline-flex flex-col items-center justify-center text-center font-semibold uppercase text-stone-900 ${variantClass[variant]} ${className}`.trim()}
-      aria-label="María Paz Imports"
-    >
-      <span className="tracking-[0.04em]">María Paz</span>
-      <span className="mt-[0.2em] text-[0.42em] font-semibold tracking-[0.42em]">
-        Imports
-      </span>
-    </span>
+    <Image
+      src={storeLogoPath}
+      alt={storeBrand}
+      width={475}
+      height={145}
+      priority={priority}
+      className={`object-contain object-center ${variantClass[variant]} ${className}`.trim()}
+    />
   );
 }
