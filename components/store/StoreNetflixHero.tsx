@@ -80,13 +80,13 @@ export function StoreNetflixHero() {
           </div>
         </div>
 
-        {/* Velo suave: header arriba + transición al mensaje abajo */}
+        {/* Velos más difuminados: header arriba + transición al mensaje abajo */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(32vh,14rem)] bg-gradient-to-b from-white/85 via-white/35 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(42vh,20rem)] bg-gradient-to-b from-white via-white/70 to-transparent"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-t from-white via-white/50 to-transparent sm:h-28"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(36vh,16rem)] bg-gradient-to-t from-white via-white/75 to-transparent sm:h-[min(40vh,18rem)]"
           aria-hidden
         />
       </section>
@@ -105,11 +105,6 @@ export function StoreNetflixHero() {
           </p>
           <p className="mt-2 text-[14px] font-medium leading-snug text-stone-800 sm:text-[15px]">
             Productos entrega inmediata y encargos
-          </p>
-
-          <p className="mx-auto mt-5 max-w-md text-[13px] leading-relaxed text-stone-600 sm:mt-6 sm:text-sm">
-            Curaduría personalizada en tus pedidos, con asesoría de moda para
-            elegir lo mejor para vos.
           </p>
 
           <p className="font-store-display mx-auto mt-5 max-w-md text-[1.65rem] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6 sm:text-3xl md:text-[2.15rem]">
