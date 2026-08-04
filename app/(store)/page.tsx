@@ -149,16 +149,9 @@ export default async function HomePage() {
 
       <StoreNetflixHero />
 
-      <StoreNetflixCategories categories={homeCategories} />
-
-      <StoreMariaPazBio />
-
-      <StoreUsaImportBanner />
-
-      {/* Highlights + productos destacados */}
-      <section className="bg-white py-8 sm:py-10">
+      <section className="bg-white pb-10 sm:pb-12" aria-label="Beneficios">
         <div className={storeShellClass}>
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 py-6 sm:grid-cols-4 sm:gap-x-6 sm:py-8">
+          <ul className="grid grid-cols-2 gap-x-4 gap-y-8 py-2 sm:grid-cols-4 sm:gap-x-6 sm:py-4">
             {STORE_HIGHLIGHTS.map(({ title, description, Icon }) => (
               <li key={title}>
                 <div className="flex flex-col items-center text-center">
@@ -177,8 +170,19 @@ export default async function HomePage() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
 
-          <div className="mt-6 sm:mt-8">
+      <StoreNetflixCategories categories={homeCategories} />
+
+      <StoreMariaPazBio />
+
+      <StoreUsaImportBanner />
+
+      {/* Productos destacados */}
+      <section className="bg-white py-8 sm:py-10">
+        <div className={storeShellClass}>
+          <div className="mt-2 sm:mt-4">
             <div className="mx-auto max-w-3xl text-center">
               <h2 className="text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
                 Productos destacados

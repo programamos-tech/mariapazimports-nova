@@ -107,8 +107,10 @@ export function StoreNetflixHero() {
             Productos entrega inmediata y encargos
           </p>
 
-          <p className="font-store-display mx-auto mt-5 max-w-md text-[1.65rem] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6 sm:text-3xl md:text-[2.15rem]">
-            Encontramos lo extraordinario para ti
+          <p className="font-store-display mx-auto mt-5 max-w-2xl text-[1.65rem] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6 sm:text-3xl md:text-[2.15rem]">
+            Encontramos lo extraordinario
+            <br />
+            para ti
           </p>
 
           <Link
