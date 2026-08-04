@@ -87,8 +87,67 @@ function variantChoiceCtaLabel(product: Product): string {
   return `Elegir ${title.toLowerCase()}`;
 }
 
-function productShowsFromPrice(product: Product): boolean {
-  return productRequiresVariantChoice(product);
+/** Precios únicos de presentaciones (ordenados), o un solo precio de listado. */
+function listingPriceCentsList(product: Product): number[] {
+  const variants = product.variantMeta?.variants ?? [];
+  if (productRequiresVariantChoice(product) && variants.length > 1) {
+    const unique = [
+      ...new Set(
+        variants.map((v) => Math.max(0, Math.floor(Number(v.priceCents) || 0))),
+      ),
+    ].sort((a, b) => a - b);
+    if (unique.length > 0) return unique;
+  }
+  return [displayPriceCents(product)];
+}
+
+function formatListingPrices(
+  prices: number[],
+  couponPct = 0,
+): { strikethrough: string | null; main: string } {
+  const pct = Math.max(0, Math.min(100, Math.floor(Number(couponPct) || 0)));
+  const apply = (cents: number) =>
+    pct > 0 ? storefrontPriceAfterCouponCents(cents, pct) : cents;
+  const join = (list: number[]) => list.map((c) => formatCop(c)).join(" · ");
+  if (pct > 0) {
+    return {
+      strikethrough: join(prices),
+      main: join(prices.map(apply)),
+    };
+  }
+  return { strikethrough: null, main: join(prices) };
+}
+
+function ListingPrices({
+  product,
+  couponDiscountPercent = 0,
+  compact = false,
+}: {
+  product: Product;
+  couponDiscountPercent?: number;
+  compact?: boolean;
+}) {
+  const prices = listingPriceCentsList(product);
+  const { strikethrough, main } = formatListingPrices(
+    prices,
+    couponDiscountPercent,
+  );
+  const mainClass = compact
+    ? "text-[11px] font-medium tabular-nums text-stone-900"
+    : "text-[13px] font-medium tabular-nums text-stone-900";
+  const strikeClass = compact
+    ? "text-[10px] tabular-nums text-stone-400 line-through decoration-stone-300"
+    : "text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300";
+
+  if (strikethrough) {
+    return (
+      <>
+        <p className={strikeClass}>{strikethrough}</p>
+        <p className={mainClass}>{main}</p>
+      </>
+    );
+  }
+  return <p className={mainClass}>{main}</p>;
 }
 
 function showcaseEyebrowLabel(product: Product): string | null {
@@ -133,16 +192,6 @@ function ShowcaseProductCard({
     product.image_paths,
   );
   const outOfStock = displayStockQuantity(product) <= 0;
-  const cardPrice = displayPriceCents(product);
-  const pct = Math.max(
-    0,
-    Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
-  );
-  const hasCouponPrice = pct > 0;
-  const priceAfterCoupon = hasCouponPrice
-    ? storefrontPriceAfterCouponCents(cardPrice, pct)
-    : cardPrice;
-  const fromPrice = productShowsFromPrice(product);
   const eyebrow = showcaseEyebrowLabel(product);
   const href = `/products/${product.id}`;
 
@@ -190,41 +239,11 @@ function ShowcaseProductCard({
             {product.name}
           </p>
           <div className={compact ? "pt-0" : "space-y-0.5 pt-0.5"}>
-            {hasCouponPrice ? (
-              <>
-                <p
-                  className={
-                    compact
-                      ? "text-[10px] tabular-nums text-stone-400 line-through decoration-stone-300"
-                      : "text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300"
-                  }
-                >
-                  {fromPrice ? "Desde " : ""}
-                  {formatCop(cardPrice)}
-                </p>
-                <p
-                  className={
-                    compact
-                      ? "text-[11px] font-medium tabular-nums text-stone-900"
-                      : "text-[13px] font-medium tabular-nums text-stone-900"
-                  }
-                >
-                  {fromPrice ? "Desde " : ""}
-                  {formatCop(priceAfterCoupon)}
-                </p>
-              </>
-            ) : (
-              <p
-                className={
-                  compact
-                    ? "text-[11px] font-medium tabular-nums text-stone-900"
-                    : "text-[13px] font-medium tabular-nums text-stone-900"
-                }
-              >
-                {fromPrice ? "Desde " : ""}
-                {formatCop(cardPrice)}
-              </p>
-            )}
+            <ListingPrices
+              product={product}
+              couponDiscountPercent={couponDiscountPercent}
+              compact={compact}
+            />
           </div>
           {outOfStock ? (
             <p
@@ -286,7 +305,6 @@ function CatalogProductCard({
   };
 
   const inCart = cartQuantity > 0;
-  const cardPrice = displayPriceCents(product);
   const cardStock = displayStockQuantity(product);
   const maxQty = Math.max(0, Math.floor(cardStock));
   const pct = Math.max(
@@ -294,10 +312,6 @@ function CatalogProductCard({
     Math.min(100, Math.floor(Number(couponDiscountPercent) || 0)),
   );
   const hasCouponPrice = pct > 0;
-  const priceAfterCoupon = hasCouponPrice
-    ? storefrontPriceAfterCouponCents(cardPrice, pct)
-    : cardPrice;
-  const fromPrice = productShowsFromPrice(product);
 
   const needsVariantOnPdp = productRequiresVariantChoice(product);
   const variantCta = variantChoiceCtaLabel(product);
@@ -364,26 +378,15 @@ function CatalogProductCard({
           <span className="line-clamp-3">{product.name}</span>
         </Link>
         <div className="space-y-0.5 pt-0.5">
+          <ListingPrices
+            product={product}
+            couponDiscountPercent={couponDiscountPercent}
+          />
           {hasCouponPrice ? (
-            <>
-              <p className="text-[11px] tabular-nums text-stone-400 line-through decoration-stone-300">
-                {fromPrice ? "Desde " : ""}
-                {formatCop(cardPrice)}
-              </p>
-              <p className="text-[13px] font-medium tabular-nums text-stone-900">
-                {fromPrice ? "Desde " : ""}
-                {formatCop(priceAfterCoupon)}
-              </p>
-              <p className="text-[9px] font-medium uppercase leading-tight tracking-[0.08em] text-stone-500">
-                Con cupón en el pago
-              </p>
-            </>
-          ) : (
-            <p className="text-[13px] font-medium tabular-nums text-stone-900">
-              {fromPrice ? "Desde " : ""}
-              {formatCop(cardPrice)}
+            <p className="text-[9px] font-medium uppercase leading-tight tracking-[0.08em] text-stone-500">
+              Con cupón en el pago
             </p>
-          )}
+          ) : null}
         </div>
 
         {outOfStock ? (
