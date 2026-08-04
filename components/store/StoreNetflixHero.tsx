@@ -95,7 +95,7 @@ export function StoreNetflixHero() {
         className="relative z-[1] bg-white px-6 py-14 text-center sm:py-16 md:py-20"
         aria-labelledby="store-hero-intro-heading"
       >
-        <div className="mx-auto max-w-xl">
+        <div className="mx-auto max-w-3xl">
           <h1 id="store-hero-intro-heading" className="sr-only">
             María Paz Imports
           </h1>
@@ -107,10 +107,11 @@ export function StoreNetflixHero() {
             Productos entrega inmediata y encargos
           </p>
 
-          <p className="font-store-display mx-auto mt-5 max-w-2xl text-[1.65rem] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6 sm:text-3xl md:text-[2.15rem]">
-            Encontramos lo extraordinario
-            <br />
-            para ti
+          <p className="font-store-display mx-auto mt-5 text-[clamp(1.35rem,5.8vw,2.15rem)] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6">
+            <span className="block whitespace-nowrap">
+              Encontramos lo extraordinario
+            </span>
+            <span className="block whitespace-nowrap">para ti</span>
           </p>
 
           <Link
