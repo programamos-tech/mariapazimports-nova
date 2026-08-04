@@ -27,6 +27,10 @@ import {
   STOCK_LOCAL_SHORT_LABEL,
   STOCK_WAREHOUSE_SHORT_LABEL,
 } from "@/lib/stock-locations";
+import {
+  parseProductImportOrigin,
+  type ProductImportOrigin,
+} from "@/lib/product-import-origin";
 
 export type ProductCategoryOption = { id: string; name: string };
 
@@ -46,6 +50,8 @@ export function NewProductForm({
   const [description, setDescription] = useState("");
   const [brand, setBrand] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [importOrigin, setImportOrigin] =
+    useState<ProductImportOrigin>("US");
   const [stockLocal, setStockLocal] = useState(0);
   const [stockWarehouse, setStockWarehouse] = useState(0);
   const [costCents, setCostCents] = useState(0);
@@ -173,6 +179,29 @@ export function NewProductForm({
                     ))}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label htmlFor="np-import-origin" className={labelClass}>
+                  Origen de importación
+                </label>
+                <select
+                  id="np-import-origin"
+                  name="import_origin"
+                  value={importOrigin}
+                  onChange={(e) =>
+                    setImportOrigin(
+                      parseProductImportOrigin(e.target.value),
+                    )
+                  }
+                  className={inputClass}
+                >
+                  <option value="US">Estados Unidos (USA)</option>
+                  <option value="EU">Europa</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+                <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  Se muestra una banderita sutil en la tienda para USA y Europa.
+                </p>
               </div>
               <ProductVariantRows onVariantTotalsChange={handleVariantTotalsChange} />
               <div className="grid gap-4 sm:grid-cols-2">

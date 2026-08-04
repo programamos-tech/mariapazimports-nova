@@ -23,6 +23,7 @@ import {
   fetchProductVariantsForProduct,
   parseProductVariantAxis,
 } from "@/lib/product-variants";
+import { parseProductImportOrigin } from "@/lib/product-import-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function ProductDetailPage({ params }: Props) {
     supabase
       .from("products")
       .select(
-        "id,name,description,price_cents,stock_quantity,image_path,image_paths,variant_axis,size_options,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent,brand,category_id,categories(name)",
+        "id,name,description,price_cents,stock_quantity,image_path,image_paths,variant_axis,size_options,size_value,size_unit,has_expiration,expiration_date,colors,has_vat,vat_percent,brand,category_id,import_origin,categories(name)",
       )
       .eq("id", id)
       .eq("is_published", true)
@@ -207,6 +208,7 @@ export default async function ProductDetailPage({ params }: Props) {
         colors={Array.isArray(product.colors) ? product.colors : []}
         hasVat={product.has_vat}
         vatPercent={product.vat_percent}
+        importOrigin={parseProductImportOrigin(product.import_origin)}
         couponDiscountPercent={couponDiscountPercent}
       >
         {initialHeroSrc ? (

@@ -15,6 +15,7 @@ import {
 } from "@/lib/product-variants";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { requireAdminPermission } from "@/lib/require-admin-permission";
+import { parseProductImportOrigin } from "@/lib/product-import-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ type ProductRow = {
   has_vat?: boolean | null;
   vat_percent?: number | null;
   variant_axis?: string | null;
+  import_origin?: string | null;
 };
 
 async function variantRowsForEditForm(
@@ -184,6 +186,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           description: p.description ?? "",
           brand: p.brand ?? "",
           categoryId,
+          importOrigin: parseProductImportOrigin(p.import_origin),
           priceCents: p.price_cents,
           costCents: p.cost_cents ?? 0,
           stockLocal: p.stock_local ?? 0,

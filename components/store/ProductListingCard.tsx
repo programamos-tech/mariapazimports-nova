@@ -33,6 +33,11 @@ import {
 import {
   prefetchProductHeroImage,
 } from "@/lib/storage-image-url";
+import { ProductImportOriginMark } from "@/components/store/ProductImportOriginMark";
+import {
+  parseProductImportOrigin,
+  type ProductImportOrigin,
+} from "@/lib/product-import-origin";
 
 type Product = {
   id: string;
@@ -45,6 +50,7 @@ type Product = {
   brand?: string | null;
   /** Si viene, la card muestra la categoría en lugar de la marca. */
   categoryName?: string | null;
+  import_origin?: ProductImportOrigin | string | null;
   size_options?: unknown;
   size_value?: number | null;
   size_unit?: string | null;
@@ -54,6 +60,10 @@ type Product = {
   listingStockQuantity?: number;
   variantMeta?: StorefrontProductVariantMeta;
 };
+
+function productOrigin(product: Product): ProductImportOrigin {
+  return parseProductImportOrigin(product.import_origin);
+}
 
 function displayPriceCents(product: Product): number {
   return product.listingPriceCents ?? product.price_cents;
@@ -169,6 +179,7 @@ function ShowcaseProductCard({
               {eyebrow}
             </p>
           ) : null}
+          <ProductImportOriginMark origin={productOrigin(product)} />
           <p
             className={
               compact
@@ -345,6 +356,7 @@ function CatalogProductCard({
             {eyebrow}
           </p>
         ) : null}
+        <ProductImportOriginMark origin={productOrigin(product)} />
         <Link
           href={`/products/${product.id}`}
           className="text-[13px] font-medium uppercase leading-snug tracking-wide text-stone-900 transition hover:text-stone-600"

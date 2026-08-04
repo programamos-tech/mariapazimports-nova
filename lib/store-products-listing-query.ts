@@ -32,6 +32,7 @@ export type StoreListingProductRow = {
   size_unit: string | null;
   fragrance_options: string[] | null;
   variant_axis?: string | null;
+  import_origin?: string | null;
   created_at: string;
   category_id?: string | null;
 };
@@ -91,7 +92,7 @@ export async function fetchPublishedProductsForListing(
     .from("products")
     .select(
       // Sin description: las cards no la muestran y ahorra payload HTML/RSC.
-      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at,category_id",
+      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,import_origin,created_at,category_id",
       { count: "exact" },
     )
     .eq("is_published", true);

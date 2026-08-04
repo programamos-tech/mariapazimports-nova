@@ -5,7 +5,7 @@ import { enrichListingProductsWithVariants } from "@/lib/store-listing-variant-m
 import { expandCategoryIdsFromRows } from "@/lib/store-category-group";
 
 const PRODUCT_SELECT =
-  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,created_at";
+  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,import_origin,created_at";
 
 /** Incluye `category_id` solo para armar la vitrina en servidor (no se expone al card). */
 const PRODUCT_SELECT_WITH_CATEGORY = `${PRODUCT_SELECT},category_id,colors`;
@@ -26,6 +26,7 @@ export type CatalogBrowseProductRow = {
   size_unit: string | null;
   fragrance_options: string[] | null;
   variant_axis?: string | null;
+  import_origin?: string | null;
   created_at: string;
 };
 

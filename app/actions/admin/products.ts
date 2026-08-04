@@ -29,6 +29,7 @@ import {
 } from "@/lib/product-stock";
 import { assertActionPermission } from "@/lib/require-admin-permission";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseProductImportOrigin } from "@/lib/product-import-origin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
@@ -272,7 +273,7 @@ function isSchemaColumnError(err: { message?: string; code?: string } | null) {
   if (/column .* does not exist/i.test(m)) return true;
   if (
     /column/i.test(m) &&
-    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|image_paths|has_vat|vat_percent|variant_axis/i.test(m)
+    /reference|brand|cost_cents|stock_warehouse|stock_local|category_id|size_value|size_unit|size_options|has_expiration|expiration_date|colors|fragrance_options|fragrance_option_images|image_paths|has_vat|vat_percent|variant_axis|import_origin/i.test(m)
   ) {
     return true;
   }
@@ -422,6 +423,7 @@ export async function createProduct(formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
+  const import_origin = parseProductImportOrigin(formData.get("import_origin"));
   const size_options = parseSizeOptionsFromFormData(formData);
   const { size_value, size_unit } = legacySizeFromOptions(size_options);
   const has_expiration = formData.get("has_expiration") === "on";
@@ -467,6 +469,7 @@ export async function createProduct(formData: FormData) {
     reference,
     brand,
     cost_cents,
+    import_origin,
   };
 
   const { size_options: _omitSizeExt, ...extendedRowNoSizeOptions } =
@@ -596,6 +599,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const isPublished = formData.get("is_published") === "on";
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
   const category_id = categoryRaw ? categoryRaw : null;
+  const import_origin = parseProductImportOrigin(formData.get("import_origin"));
   const size_options = parseSizeOptionsFromFormData(formData);
   const { size_value, size_unit } = legacySizeFromOptions(size_options);
   const has_expiration = formData.get("has_expiration") === "on";
@@ -652,6 +656,7 @@ export async function updateProduct(productId: string, formData: FormData) {
     reference,
     brand,
     cost_cents,
+    import_origin,
   };
 
   let { error } = await supabase

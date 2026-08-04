@@ -49,6 +49,7 @@ type Product = {
   image_path: string | null;
   image_paths?: unknown;
   stock_quantity: number;
+  import_origin?: string | null;
   size_value?: number | null;
   size_unit?: string | null;
   fragrance_options?: string[] | null;

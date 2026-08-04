@@ -26,11 +26,13 @@ import {
 import { productColorSwatchClass } from "@/lib/product-colors";
 import { ProductVariantPicker } from "@/components/store/ProductVariantPicker";
 import { ProductDetailHeroImage } from "@/components/store/ProductDetailHeroImage";
+import { ProductImportOriginMark } from "@/components/store/ProductImportOriginMark";
 import type { ProductVariantAxis } from "@/lib/product-variants";
 import {
   getVariantPickerTitle,
   hasStorefrontVariants,
 } from "@/lib/product-variants";
+import type { ProductImportOrigin } from "@/lib/product-import-origin";
 
 export type ProductDetailVariant = {
   id: string;
@@ -57,6 +59,7 @@ type Props = {
   colors: string[];
   hasVat: boolean | null;
   vatPercent: number | null;
+  importOrigin?: ProductImportOrigin;
   couponDiscountPercent?: number;
   children?: ReactNode;
 };
@@ -109,6 +112,7 @@ export function ProductDetailView({
   colors,
   hasVat,
   vatPercent,
+  importOrigin = "US",
   couponDiscountPercent = 0,
   children: ssrHero,
 }: Props) {
@@ -334,6 +338,7 @@ export function ProductDetailView({
         <h1 className="text-xl font-semibold uppercase leading-snug tracking-[0.06em] text-stone-900 sm:text-2xl">
           {name}
         </h1>
+        <ProductImportOriginMark origin={importOrigin} variant="detail" />
 
         <div className="mt-4">
           {hasCouponPrice ? (

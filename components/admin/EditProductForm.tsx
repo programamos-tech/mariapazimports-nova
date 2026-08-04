@@ -24,6 +24,10 @@ import {
   STOCK_TOTAL_SUMMARY,
   STOCK_WAREHOUSE_LABEL,
 } from "@/lib/stock-locations";
+import {
+  parseProductImportOrigin,
+  type ProductImportOrigin,
+} from "@/lib/product-import-origin";
 
 const cardClass =
   "rounded-xl border border-zinc-200 bg-white p-6 shadow-sm ring-1 ring-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -37,6 +41,7 @@ type Initial = {
   description: string;
   brand: string;
   categoryId: string;
+  importOrigin: ProductImportOrigin;
   priceCents: number;
   costCents: number;
   stockLocal: number;
@@ -74,6 +79,9 @@ export function EditProductForm({
   const [description, setDescription] = useState(initial.description);
   const [brand, setBrand] = useState(initial.brand);
   const [categoryId, setCategoryId] = useState(initial.categoryId);
+  const [importOrigin, setImportOrigin] = useState<ProductImportOrigin>(
+    initial.importOrigin,
+  );
   const [costCents, setCostCents] = useState(initial.costCents);
   const [priceCents, setPriceCents] = useState(initial.priceCents);
   const [isPublished, setIsPublished] = useState(initial.isPublished);
@@ -221,6 +229,29 @@ export function EditProductForm({
                     ))}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label htmlFor="ep-import-origin" className={labelClass}>
+                  Origen de importación
+                </label>
+                <select
+                  id="ep-import-origin"
+                  name="import_origin"
+                  value={importOrigin}
+                  onChange={(e) =>
+                    setImportOrigin(
+                      parseProductImportOrigin(e.target.value),
+                    )
+                  }
+                  className={inputClass}
+                >
+                  <option value="US">Estados Unidos (USA)</option>
+                  <option value="EU">Europa</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+                <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  Se muestra una banderita sutil en la tienda para USA y Europa.
+                </p>
               </div>
               <ProductVariantRows
                 initialAxis={initial.variantAxis}

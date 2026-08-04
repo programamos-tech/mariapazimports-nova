@@ -114,6 +114,7 @@ export function toProductListingCardProps(
     name: p.name,
     brand: p.brand,
     categoryName: p.categoryName ?? null,
+    import_origin: p.import_origin ?? "US",
     description: p.description,
     price_cents: p.price_cents,
     image_path: p.image_path,

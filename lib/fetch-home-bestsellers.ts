@@ -3,7 +3,7 @@ import type { StoreListingProductRow } from "@/lib/store-products-listing-query"
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 const PRODUCT_SELECT =
-  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,size_options,size_value,size_unit,created_at,category_id";
+  "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,import_origin,size_options,size_value,size_unit,created_at,category_id";
 
 const HOME_BESTSELLERS_LIMIT = 12;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
