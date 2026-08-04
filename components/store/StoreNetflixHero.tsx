@@ -40,22 +40,20 @@ function HeroCard({
 }
 
 /**
- * Hero editorial: collage full-bleed arriba + franja blanca de mensaje abajo.
- * El texto nunca se monta sobre las fotos → legible y pro.
+ * Hero a pantalla completa (solo collage) + mensaje editorial al hacer scroll.
  */
 export function StoreNetflixHero() {
   return (
-    <section
-      className="relative isolate flex min-h-[100svh] w-full flex-col bg-white"
-      aria-label="Presentación María Paz Imports"
-    >
-      {/* Collage — solo imagen */}
-      <div className="relative min-h-[52svh] flex-1 overflow-hidden bg-[#eceae6] sm:min-h-[56svh]">
+    <>
+      <section
+        className="relative isolate min-h-[100svh] w-full overflow-hidden bg-[#eceae6]"
+        aria-label="Presentación visual María Paz Imports"
+      >
         <div
-          className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-3 py-10 sm:gap-4 sm:py-14 lg:gap-5"
+          className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-3 py-16 sm:gap-4 sm:py-20 lg:gap-5"
           aria-hidden
         >
-          <div className="flex origin-center scale-[1.1] -rotate-[4deg] flex-col gap-3 sm:gap-4 lg:gap-5">
+          <div className="flex origin-center scale-[1.08] -rotate-[4deg] flex-col gap-3 sm:gap-4 lg:gap-5">
             {ROWS.map((row, rowIdx) => {
               const imgs = rowImages(row.offset);
               const animClass =
@@ -82,43 +80,50 @@ export function StoreNetflixHero() {
           </div>
         </div>
 
-        {/* Velo superior (header) + fundido al panel blanco */}
+        {/* Velo suave: header arriba + transición al mensaje abajo */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(28vh,12rem)] bg-gradient-to-b from-white via-white/55 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(32vh,14rem)] bg-gradient-to-b from-white/85 via-white/35 to-transparent"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-28 bg-gradient-to-t from-white via-white/90 to-transparent sm:h-36"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-t from-white via-white/50 to-transparent sm:h-28"
           aria-hidden
         />
-      </div>
+      </section>
 
-      {/* Mensaje — superficie blanca sólida */}
-      <div className="relative z-[2] -mt-6 bg-white px-6 pb-12 pt-2 text-center sm:-mt-8 sm:pb-14 sm:pt-3">
+      <section
+        className="relative z-[1] bg-white px-6 py-14 text-center sm:py-16 md:py-20"
+        aria-labelledby="store-hero-intro-heading"
+      >
         <div className="mx-auto max-w-xl">
-          <h1 className="sr-only">María Paz Imports</h1>
+          <h1 id="store-hero-intro-heading" className="sr-only">
+            María Paz Imports
+          </h1>
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-500 sm:text-[11px]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-900 sm:text-xs sm:tracking-[0.2em]">
             Tienda online · Personal shopper
           </p>
-
-          <p className="font-store-display mt-4 text-[1.85rem] font-semibold leading-[1.12] tracking-tight text-stone-900 sm:mt-5 sm:text-4xl md:text-[2.65rem]">
-            Encontramos lo extraordinario para ti
+          <p className="mt-2 text-[14px] font-medium leading-snug text-stone-800 sm:text-[15px]">
+            Productos entrega inmediata y encargos
           </p>
 
-          <p className="mx-auto mt-4 max-w-md text-[14px] leading-relaxed text-stone-600 sm:mt-5 sm:text-[15px]">
-            Productos con entrega inmediata y encargos. Curaduría personalizada
-            y asesoría para elegir lo mejor para vos.
+          <p className="mx-auto mt-5 max-w-md text-[13px] leading-relaxed text-stone-600 sm:mt-6 sm:text-sm">
+            Curaduría personalizada en tus pedidos, con asesoría de moda para
+            elegir lo mejor para vos.
+          </p>
+
+          <p className="font-store-display mx-auto mt-5 max-w-md text-[1.65rem] font-semibold uppercase leading-[1.15] tracking-[0.04em] text-stone-900 sm:mt-6 sm:text-3xl md:text-[2.15rem]">
+            Encontramos lo extraordinario para ti
           </p>
 
           <Link
             href="/products"
-            className="mt-8 inline-flex border border-stone-900 bg-stone-900 px-11 py-3.5 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-9"
+            className="mt-8 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-9"
           >
             Ver catálogo
           </Link>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
