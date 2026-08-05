@@ -1,4 +1,9 @@
-import { storeBrand } from "@/lib/brand";
+import {
+  storeBrand,
+  storeSupportEmail,
+  storeSupportPhone,
+  storeTagline,
+} from "@/lib/brand";
 import { formatCop } from "@/lib/money";
 import { ventaNumeroReferencia } from "@/lib/ventas-sales";
 import {
@@ -28,11 +33,16 @@ export type OrderReceivedEmailPayload = {
 };
 
 function siteBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
-    ""
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (site) return site;
+  const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (base) return base;
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(
+    /\/$/,
+    "",
   );
+  if (vercelHost) return `https://${vercelHost}`;
+  return "";
 }
 
 function paymentLabel(method: string) {
@@ -41,16 +51,32 @@ function paymentLabel(method: string) {
   return method;
 }
 
-function buildBodies(payload: OrderReceivedEmailPayload) {
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildBodies(
+  payload: OrderReceivedEmailPayload,
+  opts?: { includeAdminLink?: boolean },
+) {
   const orderRef = ventaNumeroReferencia(payload.orderId);
   const base = siteBaseUrl();
+  const logoUrl = base
+    ? `${base}/logo-maria-paz-imports-sm.png`
+    : "";
+  const shopUrl = base || "#";
   const trackingUrl =
     payload.trackingToken && base
       ? `${base}/pedidos/seguimiento/${encodeURIComponent(payload.trackingToken)}`
       : null;
-  const adminUrl = base
-    ? `${base}/admin/orders/${payload.orderId}`
-    : null;
+  const adminUrl =
+    opts?.includeAdminLink && base
+      ? `${base}/admin/orders/${payload.orderId}`
+      : null;
 
   const itemLines = payload.lines.map((l) => {
     const variant = l.variantLabel?.trim();
@@ -68,6 +94,11 @@ function buildBodies(payload: OrderReceivedEmailPayload) {
   const shipping =
     payload.shippingCents ?? Math.max(0, payload.totalCents - subtotal);
 
+  const paymentHint =
+    payload.paymentMethod === "bank_transfer"
+      ? "Si elegiste transferencia, subí el comprobante desde el enlace de seguimiento cuando lo tengas."
+      : "Si elegiste pago en línea, completá el pago en la ventana de Wompi (o desde el enlace que te mostramos al finalizar).";
+
   const text = [
     `Hola ${payload.customerName.trim() || "hola"},`,
     "",
@@ -81,9 +112,7 @@ function buildBodies(payload: OrderReceivedEmailPayload) {
     `Total: ${formatCop(payload.totalCents)}`,
     `Pago: ${paymentLabel(payload.paymentMethod)}`,
     "",
-    payload.paymentMethod === "bank_transfer"
-      ? "Si elegiste transferencia, subí el comprobante desde el enlace de seguimiento cuando lo tengas."
-      : "Si elegiste pago en línea, completá el pago en la ventana de Wompi (o desde el enlace que te mostramos al finalizar).",
+    paymentHint,
     trackingUrl ? `Seguimiento: ${trackingUrl}` : null,
     "",
     "Gracias por confiar en nosotros.",
@@ -93,46 +122,143 @@ function buildBodies(payload: OrderReceivedEmailPayload) {
     .filter((x) => x != null)
     .join("\n");
 
-  const itemsHtml = payload.lines
+  const itemRows = payload.lines
     .map((l) => {
       const variant = l.variantLabel?.trim();
       const label = variant ? `${l.name} (${variant})` : l.name;
       const lineTotal = l.unitPriceCents * l.quantity;
-      return `<li style="margin:0 0 6px">${escapeHtml(label)} × ${l.quantity} — <strong>${escapeHtml(formatCop(lineTotal))}</strong></li>`;
+      return `
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #e7e5e4;font-size:14px;color:#292524;vertical-align:top">
+            ${escapeHtml(label)}
+            <div style="margin-top:4px;font-size:12px;color:#78716c">Cant. ${l.quantity}</div>
+          </td>
+          <td style="padding:12px 0;border-bottom:1px solid #e7e5e4;font-size:14px;color:#1c1917;text-align:right;white-space:nowrap;vertical-align:top;font-weight:600">
+            ${escapeHtml(formatCop(lineTotal))}
+          </td>
+        </tr>`;
     })
     .join("");
+
+  const logoBlock = logoUrl
+    ? `<a href="${escapeHtml(shopUrl)}" style="text-decoration:none">
+        <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(storeBrand)}" width="180" height="57" style="display:block;margin:0 auto;width:180px;height:auto;border:0;outline:none" />
+      </a>`
+    : `<p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1c1917">${escapeHtml(storeBrand)}</p>`;
 
   const html = `
 <!DOCTYPE html>
 <html lang="es">
-<body style="margin:0;padding:0;background:#f5f5f4;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1c1917">
-  <div style="max-width:560px;margin:24px auto;background:#fff;border:1px solid #e7e5e4;padding:28px 24px">
-    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#78716c">${escapeHtml(storeBrand)}</p>
-    <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Pedido recibido</h1>
-    <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#44403c">
-      Hola <strong>${escapeHtml(payload.customerName.trim() || "hola")}</strong>,
-      recibimos tu pedido <strong>#${escapeHtml(orderRef)}</strong>.
-    </p>
-    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#78716c">Resumen</p>
-    <ul style="margin:0 0 16px;padding-left:18px;font-size:14px;color:#292524">${itemsHtml}</ul>
-    <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:16px">
-      <tr><td style="padding:4px 0;color:#78716c">Subtotal</td><td style="padding:4px 0;text-align:right">${escapeHtml(formatCop(subtotal))}</td></tr>
-      <tr><td style="padding:4px 0;color:#78716c">Envío</td><td style="padding:4px 0;text-align:right">${escapeHtml(shipping > 0 ? formatCop(shipping) : "Incluido")}</td></tr>
-      <tr><td style="padding:8px 0 0;font-weight:700;border-top:1px solid #e7e5e4">Total</td><td style="padding:8px 0 0;text-align:right;font-weight:700;border-top:1px solid #e7e5e4">${escapeHtml(formatCop(payload.totalCents))}</td></tr>
-      <tr><td style="padding:4px 0;color:#78716c">Pago</td><td style="padding:4px 0;text-align:right">${escapeHtml(paymentLabel(payload.paymentMethod))}</td></tr>
-    </table>
-    ${
-      trackingUrl
-        ? `<p style="margin:0 0 16px"><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#fff;text-decoration:none;padding:12px 18px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600">Ver seguimiento</a></p>`
-        : ""
-    }
-    <p style="margin:0;font-size:12px;line-height:1.5;color:#78716c;white-space:pre-line">${escapeHtml(storeEmailFooterText())}</p>
-    ${
-      adminUrl
-        ? `<p style="margin:16px 0 0;font-size:11px;color:#a8a29e">Copia tienda · <a href="${escapeHtml(adminUrl)}" style="color:#78716c">Abrir en el panel</a></p>`
-        : ""
-    }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(storeBrand)} · Pedido #${escapeHtml(orderRef)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f4;font-family:Georgia,'Times New Roman',serif;color:#1c1917">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">
+    Pedido #${escapeHtml(orderRef)} · Total ${escapeHtml(formatCop(payload.totalCents))}
   </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f4;padding:28px 12px">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e7e5e4">
+          <tr>
+            <td style="padding:28px 28px 20px;text-align:center;border-bottom:1px solid #e7e5e4;background:#fafaf9">
+              ${logoBlock}
+              <p style="margin:12px 0 0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#78716c">
+                ${escapeHtml(storeTagline)}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 28px 8px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+              <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#78716c">Confirmación de pedido</p>
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;letter-spacing:0.02em;color:#1c1917">Pedido recibido</h1>
+              <p style="margin:0 0 20px;font-size:14px;line-height:1.55;color:#44403c">
+                Hola <strong>${escapeHtml(payload.customerName.trim() || "hola")}</strong>,
+                registramos tu pedido
+                <strong style="letter-spacing:0.04em">#${escapeHtml(orderRef)}</strong>.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#fafaf9;border:1px solid #e7e5e4">
+                <tr>
+                  <td style="padding:14px 16px;font-size:12px;color:#78716c;width:50%">
+                    N.º de pedido<br />
+                    <strong style="display:inline-block;margin-top:4px;font-size:15px;color:#1c1917;letter-spacing:0.06em">#${escapeHtml(orderRef)}</strong>
+                  </td>
+                  <td style="padding:14px 16px;font-size:12px;color:#78716c;width:50%;text-align:right;border-left:1px solid #e7e5e4">
+                    Total<br />
+                    <strong style="display:inline-block;margin-top:4px;font-size:18px;color:#1c1917">${escapeHtml(formatCop(payload.totalCents))}</strong>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#78716c">Detalle</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+                ${itemRows}
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 24px;font-size:14px">
+                <tr>
+                  <td style="padding:6px 0;color:#78716c">Subtotal</td>
+                  <td style="padding:6px 0;text-align:right;color:#292524">${escapeHtml(formatCop(subtotal))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#78716c">Envío</td>
+                  <td style="padding:6px 0;text-align:right;color:#292524">${escapeHtml(shipping > 0 ? formatCop(shipping) : "Incluido")}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#78716c">Pago</td>
+                  <td style="padding:6px 0;text-align:right;color:#292524">${escapeHtml(paymentLabel(payload.paymentMethod))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0 0;border-top:1px solid #1c1917;font-weight:700;font-size:15px">Total</td>
+                  <td style="padding:12px 0 0;border-top:1px solid #1c1917;text-align:right;font-weight:700;font-size:15px">${escapeHtml(formatCop(payload.totalCents))}</td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px;font-size:13px;line-height:1.55;color:#57534e">${escapeHtml(paymentHint)}</p>
+
+              ${
+                trackingUrl
+                  ? `<p style="margin:0 0 8px;text-align:center">
+                      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">Ver seguimiento del pedido</a>
+                    </p>`
+                  : ""
+              }
+              ${
+                base
+                  ? `<p style="margin:12px 0 0;text-align:center">
+                      <a href="${escapeHtml(shopUrl)}" style="font-size:12px;color:#78716c;text-decoration:underline">Ir a la tienda</a>
+                    </p>`
+                  : ""
+              }
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 28px;border-top:1px solid #e7e5e4;background:#fafaf9;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;text-align:center">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#1c1917">${escapeHtml(storeBrand)}</p>
+              ${
+                storeSupportPhone
+                  ? `<p style="margin:0 0 2px;font-size:12px;color:#78716c">${escapeHtml(storeSupportPhone)}</p>`
+                  : ""
+              }
+              ${
+                storeSupportEmail
+                  ? `<p style="margin:0;font-size:12px;color:#78716c"><a href="mailto:${escapeHtml(storeSupportEmail)}" style="color:#78716c;text-decoration:none">${escapeHtml(storeSupportEmail)}</a></p>`
+                  : ""
+              }
+              ${
+                adminUrl
+                  ? `<p style="margin:16px 0 0;font-size:11px;color:#a8a29e">Copia tienda · <a href="${escapeHtml(adminUrl)}" style="color:#78716c">Abrir en el panel</a></p>`
+                  : ""
+              }
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`.trim();
 
@@ -142,14 +268,6 @@ function buildBodies(payload: OrderReceivedEmailPayload) {
     html,
     orderRef,
   };
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 /**
@@ -168,11 +286,11 @@ export async function sendOrderReceivedEmails(
     return;
   }
 
-  const { subject, text, html, orderRef } = buildBodies(payload);
-  const copyTo = orderNotifyCopyTo();
   const customerEmail = payload.customerEmail.trim().toLowerCase();
+  const copyTo = orderNotifyCopyTo();
 
   if (customerEmail && customerEmail.includes("@")) {
+    const { subject, text, html } = buildBodies(payload);
     await sendStoreEmail({
       to: customerEmail,
       bcc: copyTo && copyTo.toLowerCase() !== customerEmail ? copyTo : undefined,
@@ -183,8 +301,10 @@ export async function sendOrderReceivedEmails(
     return;
   }
 
-  // Sin email del cliente: aviso solo a la tienda
   if (copyTo) {
+    const { subject, text, html, orderRef } = buildBodies(payload, {
+      includeAdminLink: true,
+    });
     await sendStoreEmail({
       to: copyTo,
       subject: `[Sin email cliente] ${storeBrand} · Pedido #${orderRef}`,
