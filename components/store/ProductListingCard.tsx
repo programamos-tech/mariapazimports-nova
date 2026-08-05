@@ -11,6 +11,7 @@ import {
   addToCartFromForm,
   setLineQuantity,
 } from "@/app/actions/cart";
+import { StoreAddToBagButton } from "@/components/store/StoreAddToBagButton";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { StoreProductCardImage } from "@/components/store/StoreProductCardImage";
@@ -409,8 +410,9 @@ function CatalogProductCard({
           </Link>
         ) : inCart ? (
           <div
-            className="mt-auto flex w-full items-center gap-0.5 border border-stone-900 bg-white p-0.5"
+            className={`mt-auto flex w-full items-center gap-0.5 border border-stone-900 bg-white p-0.5 transition ${cartPending ? "store-cart-qty-pending border-stone-700" : ""}`}
             role="group"
+            aria-busy={cartPending}
             aria-label="Cantidad en la bolsa"
           >
             <button
@@ -423,15 +425,23 @@ function CatalogProductCard({
                   );
                 })
               }
-              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition hover:bg-stone-100 disabled:opacity-40"
+              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition active:scale-90 hover:bg-stone-100 disabled:opacity-40"
               aria-label={
                 cartQuantity <= 1 ? "Quitar de la bolsa" : "Restar una unidad"
               }
             >
               <Minus className="size-4" strokeWidth={1.5} aria-hidden />
             </button>
-            <span className="min-w-0 flex-1 text-center text-xs font-semibold tabular-nums text-stone-900">
-              {cartQuantity}
+            <span className="relative min-w-0 flex-1 text-center text-xs font-semibold tabular-nums text-stone-900">
+              {cartPending ? (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <span className="store-add-to-bag-spinner size-3" />
+                  <span className="sr-only">Actualizando</span>
+                  <span aria-hidden>{cartQuantity}</span>
+                </span>
+              ) : (
+                cartQuantity
+              )}
             </span>
             <button
               type="button"
@@ -443,7 +453,7 @@ function CatalogProductCard({
                   );
                 })
               }
-              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition hover:bg-stone-100 disabled:opacity-40"
+              className="flex size-9 shrink-0 items-center justify-center text-stone-900 transition active:scale-90 hover:bg-stone-100 disabled:opacity-40"
               aria-label="Sumar una unidad"
             >
               <Plus className="size-4" strokeWidth={1.5} aria-hidden />
@@ -460,12 +470,7 @@ function CatalogProductCard({
           >
             <input type="hidden" name="productId" value={product.id} />
             <input type="hidden" name="quantity" value="1" />
-            <button
-              type="submit"
-              className="w-full border border-stone-900 bg-white py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition hover:bg-stone-900 hover:text-white"
-            >
-              Añadir a la bolsa
-            </button>
+            <StoreAddToBagButton />
           </form>
         )}
       </div>

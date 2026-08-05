@@ -70,7 +70,7 @@ export function ProductImportOriginMark({
         title={label}
       >
         <Flag className="h-[11px] w-4 shrink-0 rounded-[1px] opacity-90 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]" />
-        <span>{label}</span>
+        <span>{short}</span>
       </p>
     );
   }

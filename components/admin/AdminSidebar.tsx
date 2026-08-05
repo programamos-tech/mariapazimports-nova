@@ -350,9 +350,9 @@ function AdminSidebarInner({
           </span>
           <Image
             src={bereaSignaturePath}
-            alt="Berea — agencia de software"
-            width={1536}
-            height={1024}
+            alt="Berea House — desarrollo de software"
+            width={680}
+            height={319}
             className="h-14 w-auto max-w-[min(100%,13rem)] object-contain object-center opacity-90"
           />
         </div>

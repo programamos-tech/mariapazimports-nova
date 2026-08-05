@@ -40,88 +40,85 @@ function HeroCard({
 }
 
 /**
- * Hero a pantalla completa (solo collage) + mensaje editorial al hacer scroll.
+ * Hero a pantalla completa: collage en movimiento + mensaje editorial centrado encima.
  */
 export function StoreNetflixHero() {
   return (
-    <>
-      <section
-        className="relative isolate min-h-[100svh] w-full overflow-hidden bg-[#eceae6]"
-        aria-label="Presentación visual María Paz Imports"
+    <section
+      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-[#eceae6]"
+      aria-labelledby="store-hero-intro-heading"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-3 py-16 sm:gap-4 sm:py-20 lg:gap-5"
+        aria-hidden
       >
-        <div
-          className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-3 py-16 sm:gap-4 sm:py-20 lg:gap-5"
-          aria-hidden
-        >
-          <div className="flex origin-center scale-[1.08] -rotate-[4deg] flex-col gap-3 sm:gap-4 lg:gap-5">
-            {ROWS.map((row, rowIdx) => {
-              const imgs = rowImages(row.offset);
-              const animClass =
-                row.direction === "left"
-                  ? "store-mpi-marquee-left"
-                  : "store-mpi-marquee-right";
-              return (
-                <div key={rowIdx} className="overflow-hidden">
-                  <div
-                    className={`flex w-max gap-3 sm:gap-4 ${animClass}`}
-                    style={{ animationDuration: `${row.durationSec}s` }}
-                  >
-                    {imgs.map((src, i) => (
-                      <HeroCard
-                        key={`${rowIdx}-${i}`}
-                        src={src}
-                        priority={rowIdx === 1 && i < 3}
-                      />
-                    ))}
-                  </div>
+        <div className="flex origin-center scale-[1.08] -rotate-[4deg] flex-col gap-3 sm:gap-4 lg:gap-5">
+          {ROWS.map((row, rowIdx) => {
+            const imgs = rowImages(row.offset);
+            const animClass =
+              row.direction === "left"
+                ? "store-mpi-marquee-left"
+                : "store-mpi-marquee-right";
+            return (
+              <div key={rowIdx} className="overflow-hidden">
+                <div
+                  className={`flex w-max gap-3 sm:gap-4 ${animClass}`}
+                  style={{ animationDuration: `${row.durationSec}s` }}
+                >
+                  {imgs.map((src, i) => (
+                    <HeroCard
+                      key={`${rowIdx}-${i}`}
+                      src={src}
+                      priority={rowIdx === 1 && i < 3}
+                    />
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Velos más difuminados: header arriba + transición al mensaje abajo */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(42vh,20rem)] bg-gradient-to-b from-white via-white/70 to-transparent"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(36vh,16rem)] bg-gradient-to-t from-white via-white/75 to-transparent sm:h-[min(40vh,18rem)]"
-          aria-hidden
-        />
-      </section>
+      {/* Velos suaves para legibilidad del mensaje centrado */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(28vh,12rem)] bg-gradient-to-b from-white/90 via-white/40 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(28vh,12rem)] bg-gradient-to-t from-white/85 via-white/35 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-[1] bg-white/25"
+        aria-hidden
+      />
 
-      <section
-        className="relative z-[1] bg-white px-6 py-14 text-center sm:py-16 md:py-20"
-        aria-labelledby="store-hero-intro-heading"
-      >
-        <div className="mx-auto max-w-3xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-900 sm:text-xs sm:tracking-[0.2em]">
-            Tienda online * Personal shopper
-          </p>
-          <p className="mt-2 text-[14px] font-bold leading-snug normal-case tracking-normal text-stone-800 sm:text-[15px]">
-            productos entrega inmediata y encargos
-          </p>
-
-          <h1
-            id="store-hero-intro-heading"
-            className="mt-4 text-[clamp(2rem,6vw,2.85rem)] font-bold tracking-tight text-stone-900 sm:mt-5"
-          >
-            María Paz Imports
-          </h1>
-
-          <p className="mx-auto mt-5 whitespace-pre-line text-[11px] font-bold uppercase leading-snug tracking-[0.18em] text-stone-900 sm:mt-6 sm:text-xs sm:tracking-[0.2em]">
-            {`Encuentro lo extraordinario\npara ti`}
-          </p>
+      <div className="relative z-[2] flex min-h-[100svh] items-center justify-center px-5 pb-16 pt-[max(6.5rem,18vw)] sm:px-8">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center text-center sm:max-w-lg">
+          <div className="w-full rounded-2xl bg-white/70 px-6 py-7 shadow-[0_20px_60px_-28px_rgba(28,25,23,0.35)] ring-1 ring-white/60 backdrop-blur-md sm:px-10 sm:py-9">
+            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 sm:text-[11px] sm:tracking-[0.24em]">
+              Personal shopper · Originales
+            </p>
+            <h1
+              id="store-hero-intro-heading"
+              className="mt-3 text-[clamp(1.85rem,7vw,2.65rem)] font-semibold leading-[1.1] tracking-tight text-stone-900"
+            >
+              María Paz Imports
+            </h1>
+            <p className="mx-auto mt-3 max-w-[22rem] text-[13px] leading-relaxed text-stone-600 sm:mt-4 sm:text-[14px]">
+              Curaduría de productos auténticos, con asesoría cercana para elegir
+              lo mejor para vos.
+            </p>
+          </div>
 
           <Link
             href="/products"
-            className="mt-8 inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-stone-900 sm:mt-9"
+            className="mt-5 inline-flex w-full max-w-[16rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800 active:scale-[0.98] sm:mt-6 sm:max-w-[17rem]"
           >
-            Descubre mi tienda
+            Ver catálogo
           </Link>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

@@ -4,6 +4,7 @@ import { StoreLogo } from "@/components/store/StoreLogo";
 import { StoreWompiPaymentLogos } from "@/components/store/StoreWompiPaymentLogos";
 import { storeShellClass } from "@/lib/store-layout";
 import {
+  bereaSignaturePathSm,
   storeCopyrightHolder,
   storeInstagramUrl,
   storeSupportHours,
@@ -125,14 +126,17 @@ export function StoreFooter() {
                 Backoffice
               </Link>
             </nav>
-            <Image
-              src="/logo-berea-agencia-sm.png"
-              alt="Berea — agencia de software"
-              width={320}
-              height={213}
-              sizes="128px"
-              className="h-9 w-auto max-w-[7rem] object-contain opacity-80 transition-opacity hover:opacity-100 sm:h-10 sm:max-w-[8rem]"
-            />
+            <div className="inline-flex items-center gap-2 text-[11px] text-stone-500 sm:text-xs">
+              <span className="whitespace-nowrap">Diseñado por</span>
+              <Image
+                src={bereaSignaturePathSm}
+                alt="Berea House — desarrollo de software"
+                width={320}
+                height={150}
+                sizes="112px"
+                className="h-7 w-auto max-w-[6.5rem] object-contain object-left opacity-90 sm:h-8 sm:max-w-[7.5rem]"
+              />
+            </div>
           </div>
         </div>
       </div>

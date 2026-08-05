@@ -92,9 +92,9 @@ export function StoreCookiesBanner() {
               </span>
               <Image
                 src={bereaSignaturePath}
-                alt="Berea"
-                width={200}
-                height={52}
+                alt="Berea House"
+                width={680}
+                height={319}
                 className="h-7 w-auto max-w-[5.5rem] object-contain object-left opacity-80 sm:h-8 sm:max-w-[6.5rem]"
               />
             </div>

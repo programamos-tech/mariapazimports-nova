@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
+import {
+  StoreAddToBagButton,
+  StoreFormPendingButton,
+} from "@/components/store/StoreAddToBagButton";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
 import { formatCop } from "@/lib/money";
@@ -129,6 +133,7 @@ export function ProductDetailView({
   const [descExpanded, setDescExpanded] = useState(false);
   const [imageZoomed, setImageZoomed] = useState(false);
   const [imageZoomOrigin, setImageZoomOrigin] = useState("50% 50%");
+  const [cartBusy, setCartBusy] = useState<"add" | "buy" | null>(null);
 
   const selectedVariant = variants[variantIdx] ?? variants[0] ?? null;
   const effectivePriceCents = selectedVariant?.priceCents ?? priceCents;
@@ -346,56 +351,59 @@ export function ProductDetailView({
                 ›
               </button>
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-white via-white/90 to-transparent pt-10 pb-3">
-                <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+              <p className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
+                <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500 ring-1 ring-stone-200/70">
                   {galleryIdx + 1} / {galleryCount} fotos
-                </p>
-                <div
-                  className="pointer-events-auto flex justify-center gap-1.5 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  role="tablist"
-                  aria-label="Galería del producto"
-                >
-                  {activeGalleryUrls.map((url, i) => {
-                    const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
-                    const selected = galleryIdx === i;
-                    return (
-                      <button
-                        key={`${url}-${i}`}
-                        type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => setGalleryIdx(i)}
-                        onMouseEnter={() => {
-                          const next = productHeroImageUrl(url);
-                          if (next) {
-                            const img = new window.Image();
-                            img.src = next;
-                          }
-                        }}
-                        className={
-                          selected
-                            ? "relative size-12 shrink-0 overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-1 sm:size-14"
-                            : "relative size-12 shrink-0 overflow-hidden bg-white opacity-80 ring-1 ring-stone-200 transition hover:opacity-100 hover:ring-stone-400 sm:size-14"
-                        }
-                        aria-label={`Ver foto ${i + 1} de ${galleryCount}`}
-                      >
-                        <Image
-                          src={thumbUrl}
-                          alt=""
-                          fill
-                          loading="lazy"
-                          className="object-contain object-center"
-                          sizes="56px"
-                          unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                </span>
+              </p>
             </>
           ) : null}
         </div>
+
+        {canGalleryNav ? (
+          <div
+            className="mt-3 flex justify-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="tablist"
+            aria-label="Galería del producto"
+          >
+            {activeGalleryUrls.map((url, i) => {
+              const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
+              const selected = galleryIdx === i;
+              return (
+                <button
+                  key={`${url}-${i}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setGalleryIdx(i)}
+                  onMouseEnter={() => {
+                    const next = productHeroImageUrl(url);
+                    if (next) {
+                      const img = new window.Image();
+                      img.src = next;
+                    }
+                  }}
+                  className={
+                    selected
+                      ? "relative size-12 shrink-0 overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-1 sm:size-14"
+                      : "relative size-12 shrink-0 overflow-hidden bg-white opacity-80 ring-1 ring-stone-200 transition hover:opacity-100 hover:ring-stone-400 sm:size-14"
+                  }
+                  aria-label={`Ver foto ${i + 1} de ${galleryCount}`}
+                >
+                  <Image
+                    src={thumbUrl}
+                    alt=""
+                    fill
+                    loading="lazy"
+                    className="object-contain object-center"
+                    sizes="56px"
+                    unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       {/* Datos — en desktop cabe en el primer viewport */}
@@ -536,25 +544,37 @@ export function ProductDetailView({
               </div>
             </div>
 
-            <button
-              type="submit"
+            <StoreAddToBagButton
+              variant="solid"
+              pending={cartBusy === "add"}
+              disabled={cartBusy === "buy"}
               formAction={async (formData) => {
-                await addToCartFromForm(formData);
-                router.refresh();
-                openCart();
+                setCartBusy("add");
+                try {
+                  await addToCartFromForm(formData);
+                  router.refresh();
+                  openCart();
+                } finally {
+                  setCartBusy(null);
+                }
               }}
-              className="w-full bg-stone-900 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800 lg:py-2.5"
-            >
-              Añadir a la bolsa
-            </button>
+            />
 
-            <button
-              type="submit"
-              formAction={buyNowFromDetail}
-              className="w-full bg-transparent py-1.5 text-center text-sm text-stone-600 underline decoration-stone-300 underline-offset-[6px] transition hover:text-stone-900"
-            >
-              Comprar ahora
-            </button>
+            <StoreFormPendingButton
+              label="Comprar ahora"
+              pendingLabel="Redirigiendo…"
+              pending={cartBusy === "buy"}
+              disabled={cartBusy === "add"}
+              formAction={async (formData) => {
+                setCartBusy("buy");
+                try {
+                  await buyNowFromDetail(formData);
+                } finally {
+                  setCartBusy(null);
+                }
+              }}
+              className="w-full bg-transparent py-1.5 text-center text-sm text-stone-600 underline decoration-stone-300 underline-offset-[6px] hover:text-stone-900"
+            />
           </form>
         ) : null}
 

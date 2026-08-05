@@ -36,7 +36,26 @@ function supabaseStorageOrigin(): string | null {
 
 const storageOrigin = supabaseStorageOrigin();
 
+function siteOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "") ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+  if (raw) {
+    try {
+      return new URL(raw).origin;
+    } catch {
+      /* fall through */
+    }
+  }
+  return "https://mariapazimports.com";
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteOrigin()),
   title: {
     default: storeBrand,
     template: `%s · ${storeBrand}`,
@@ -44,8 +63,31 @@ export const metadata: Metadata = {
   description: storeShortDescription,
   applicationName: storeBrand,
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/icon.png", type: "image/png" }],
+    shortcut: "/icon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_CO",
+    siteName: storeBrand,
+    title: storeBrand,
+    description: storeShortDescription,
+    images: [
+      {
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
+        alt: storeBrand,
+        type: "image/jpeg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: storeBrand,
+    description: storeShortDescription,
+    images: ["/og.jpg"],
   },
 };
 

@@ -283,3 +283,79 @@ body {
     transform: scale(1.05);
   }
 }
+
+/* CTA «Añadir a la bolsa» — spinner + sheen al pending */
+@keyframes store-add-to-bag-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes store-add-to-bag-sheen {
+  from {
+    transform: translate3d(-120%, 0, 0) skewX(-18deg);
+  }
+  to {
+    transform: translate3d(220%, 0, 0) skewX(-18deg);
+  }
+}
+
+@keyframes store-cart-qty-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.store-add-to-bag-spinner {
+  box-sizing: border-box;
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: store-add-to-bag-spin 0.65s linear infinite;
+}
+
+.store-add-to-bag-sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.22),
+    transparent
+  );
+  animation: store-add-to-bag-sheen 0.9s ease-in-out infinite;
+}
+
+.store-cart-qty-pending {
+  animation: store-cart-qty-pulse 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-add-to-bag-spinner,
+  .store-add-to-bag-sheen,
+  .store-cart-qty-pending {
+    animation: none;
+  }
+
+  .store-add-to-bag-spinner {
+    border-right-color: currentColor;
+    opacity: 0.7;
+  }
+
+  .store-add-to-bag-sheen {
+    display: none;
+  }
+
+  .store-add-to-bag {
+    transform: none !important;
+  }
+}
