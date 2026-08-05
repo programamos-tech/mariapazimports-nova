@@ -143,20 +143,20 @@ export function AdminNewOrderModal() {
 
   if (!current) return null;
 
-  const meta = current.metadata;
+  const active = current;
+  const meta = active.metadata;
   const orderRef =
     metaString(meta, "orderRef") ??
-    (current.entity_id ? String(current.entity_id).slice(0, 8) : "—");
+    (active.entity_id ? String(active.entity_id).slice(0, 8) : "—");
   const customerName = metaString(meta, "customerName") ?? "Cliente";
   const totalCents = metaNumber(meta, "totalCents");
   const paymentLabel = metaString(meta, "paymentLabel") ?? "Pago";
   const items = metaStringArray(meta, "itemsPreview");
   const itemCount = metaNumber(meta, "itemCount") ?? items.length;
-  const href = current.href ?? `/admin/orders/${current.entity_id ?? ""}`;
+  const href = active.href ?? `/admin/orders/${active.entity_id ?? ""}`;
 
   function dismiss() {
-    const id = current.id;
-    void markRead(id);
+    void markRead(active.id);
     setCurrent(null);
   }
 
