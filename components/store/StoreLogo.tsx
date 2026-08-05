@@ -7,11 +7,6 @@ type Variant = "header" | "footer" | "hero";
 const LOGO_WIDTH = 966;
 const LOGO_HEIGHT = 306;
 
-/** Versión ligera para footer (menos peso al scroll). */
-const FOOTER_LOGO_PATH = "/logo-maria-paz-imports-sm.png";
-const FOOTER_LOGO_WIDTH = 480;
-const FOOTER_LOGO_HEIGHT = 152;
-
 const variantClass: Record<Variant, string> = {
   header:
     "h-8 w-auto max-h-8 sm:h-9 sm:max-h-9 md:h-10 md:max-h-10 lg:h-11 lg:max-h-11",
@@ -37,13 +32,12 @@ export function StoreLogo({
   priority = false,
   className = "",
 }: Props) {
-  const isFooter = variant === "footer";
   return (
     <Image
-      src={isFooter ? FOOTER_LOGO_PATH : storeLogoPath}
+      src={storeLogoPath}
       alt={storeBrand}
-      width={isFooter ? FOOTER_LOGO_WIDTH : LOGO_WIDTH}
-      height={isFooter ? FOOTER_LOGO_HEIGHT : LOGO_HEIGHT}
+      width={LOGO_WIDTH}
+      height={LOGO_HEIGHT}
       priority={priority}
       sizes={variantSizes[variant]}
       className={`object-contain object-center ${variantClass[variant]} ${className}`.trim()}

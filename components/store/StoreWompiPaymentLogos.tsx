@@ -1,6 +1,5 @@
 /**
- * Medios de pago Wompi (Colombia) — SVG inline monocromo.
- * width/height intrínsecos: sin ellos `w-auto` colapsa el icono a 0px.
+ * Medios de pago Wompi (Colombia) — marcas monocromo sin cajas.
  * @see https://docs.wompi.co/docs/colombia/metodos-de-pago/
  */
 
@@ -12,26 +11,14 @@ function VisaMark({ className = "" }: MarkProps) {
   return (
     <svg
       className={className}
-      width={48}
-      height={32}
-      viewBox="0 0 48 32"
-      fill="none"
+      width={36}
+      height={12}
+      viewBox="0 0 24 8"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <rect
-        x="1"
-        y="1"
-        width="46"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <path
-        fill="currentColor"
-        d="M18.9 11.05 15.55 20.95h-2.18l-1.64-6.36c-.1-.39-.19-.53-.49-.7-.48-.27-1.28-.52-1.99-.68l.05-.23h3.51c.45 0 .84.3.95.81l.87 4.61 2.15-5.42h2.17Zm8.55 5.37c.01-2.1-2.91-2.22-2.89-3.16.01-.29.28-.59.87-.67a3.9 3.9 0 0 1 2.04.36l.36-1.69a5.54 5.54 0 0 0-1.93-.35c-2.04 0-3.47 1.08-3.49 2.64-.01 1.15 1.02 1.79 1.81 2.17.8.39 1.07.64 1.07.99-.01.54-.64.77-1.23.78-1.04.02-1.64-.28-2.12-.5l-.37 1.75c.48.22 1.37.41 2.29.42 2.17 0 3.59-1.07 3.59-2.73Zm5.39 2.6h2.17l-1.66-7.97h-1.76a.94.94 0 0 0-.88.58l-3.1 7.39h2.16l.43-1.19h2.65Zm-2.3-2.83.1-.01 1.08-2.99.63 3Zm-8.68-5.15-1.71 7.97h-2.07l1.71-7.97z"
-      />
+      <path d="M9.112.262 5.97 7.758H3.92L2.374 1.775C2.28 1.407 2.2 1.272 1.913 1.117.447.864.677.627 0 .479L.046.262h3.3a.904.904 0 0 1 .894.764l.817 4.338L7.075.262zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 0 1 1.913.336l.34-1.59a5.207 5.207 0 0 0-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24L22.435 0h-1.656a.883.883 0 0 0-.826.55L16.944 7.496h2.036l.405-1.12h2.488zm-2.163-2.656.02-.015 1.02-2.8.588 2.815zM11.883.262 10.28 7.758H8.34L9.945.262z" />
     </svg>
   );
 }
@@ -40,186 +27,71 @@ function MastercardMark({ className = "" }: MarkProps) {
   return (
     <svg
       className={className}
-      width={48}
-      height={32}
-      viewBox="0 0 48 32"
+      width={26}
+      height={16}
+      viewBox="0 0 24 15"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <rect
-        x="1"
-        y="1"
-        width="46"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <circle cx="20" cy="16" r="7" fill="#57534e" />
-      <circle cx="28" cy="16" r="7" fill="#a8a29e" />
+      <circle cx="8.5" cy="7.5" r="6.5" fill="#57534e" />
+      <circle cx="15.5" cy="7.5" r="6.5" fill="#a8a29e" />
       <path
         fill="#78716c"
-        d="M24 10.5c1.7 1.55 2.75 3.75 2.75 5.5S25.7 20 24 21.5C22.3 20 21.25 17.75 21.25 16S22.3 12.05 24 10.5Z"
+        d="M12 2.4c1.55 1.4 2.5 3.35 2.5 5.1S13.55 11.7 12 13.1c-1.55-1.4-2.5-3.35-2.5-5.1S10.45 3.8 12 2.4Z"
       />
     </svg>
   );
 }
 
-function AmexMark({ className = "" }: MarkProps) {
+function TextMark({
+  className = "",
+  children,
+}: MarkProps & { children: string }) {
   return (
-    <svg
-      className={className}
-      width={48}
-      height={32}
-      viewBox="0 0 48 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
+    <span
+      className={`text-[0.6875rem] font-semibold tracking-wide text-stone-600 ${className}`}
     >
-      <rect
-        x="1"
-        y="1"
-        width="46"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <text
-        x="24"
-        y="20"
-        textAnchor="middle"
-        fill="currentColor"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-        fontSize="9"
-        fontWeight="700"
-        letterSpacing="0.08em"
-      >
-        AMEX
-      </text>
-    </svg>
-  );
-}
-
-function PseMark({ className = "" }: MarkProps) {
-  return (
-    <svg
-      className={className}
-      width={48}
-      height={32}
-      viewBox="0 0 48 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <rect
-        x="1"
-        y="1"
-        width="46"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <text
-        x="24"
-        y="20"
-        textAnchor="middle"
-        fill="currentColor"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-        fontSize="11"
-        fontWeight="700"
-        letterSpacing="0.16em"
-      >
-        PSE
-      </text>
-    </svg>
-  );
-}
-
-function NequiMark({ className = "" }: MarkProps) {
-  return (
-    <svg
-      className={className}
-      width={64}
-      height={32}
-      viewBox="0 0 64 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <rect
-        x="1"
-        y="1"
-        width="62"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <circle cx="14" cy="16" r="3.4" fill="currentColor" />
-      <text
-        x="40"
-        y="20"
-        textAnchor="middle"
-        fill="currentColor"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-        fontSize="10"
-        fontWeight="700"
-      >
-        Nequi
-      </text>
-    </svg>
-  );
-}
-
-function BancolombiaMark({ className = "" }: MarkProps) {
-  return (
-    <svg
-      className={className}
-      width={108}
-      height={32}
-      viewBox="0 0 108 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <rect
-        x="1"
-        y="1"
-        width="106"
-        height="30"
-        rx="4"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
-      <text
-        x="54"
-        y="20"
-        textAnchor="middle"
-        fill="currentColor"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-        fontSize="8.5"
-        fontWeight="700"
-        letterSpacing="0.02em"
-      >
-        Bancolombia
-      </text>
-    </svg>
+      {children}
+    </span>
   );
 }
 
 const METHODS = [
-  { id: "visa", label: "Visa", Mark: VisaMark },
-  { id: "mastercard", label: "Mastercard", Mark: MastercardMark },
-  { id: "amex", label: "American Express", Mark: AmexMark },
-  { id: "pse", label: "PSE", Mark: PseMark },
-  { id: "nequi", label: "Nequi", Mark: NequiMark },
-  { id: "bancolombia", label: "Botón Bancolombia", Mark: BancolombiaMark },
+  { id: "visa", label: "Visa", node: (c: string) => <VisaMark className={c} /> },
+  {
+    id: "mastercard",
+    label: "Mastercard",
+    node: (c: string) => <MastercardMark className={c} />,
+  },
+  {
+    id: "amex",
+    label: "American Express",
+    node: (c: string) => <TextMark className={c}>AMEX</TextMark>,
+  },
+  {
+    id: "pse",
+    label: "PSE",
+    node: (c: string) => <TextMark className={c}>PSE</TextMark>,
+  },
+  {
+    id: "nequi",
+    label: "Nequi",
+    node: (c: string) => (
+      <span className={`inline-flex items-center gap-1.5 ${c}`}>
+        <span className="size-2 shrink-0 rounded-full bg-stone-600" aria-hidden />
+        <TextMark>Nequi</TextMark>
+      </span>
+    ),
+  },
+  {
+    id: "bancolombia",
+    label: "Botón Bancolombia",
+    node: (c: string) => <TextMark className={c}>Bancolombia</TextMark>,
+  },
 ] as const;
 
-const markClass = "block h-8 w-auto shrink-0 text-stone-800 sm:h-9";
+const markClass = "shrink-0 text-stone-600";
 
 export function StoreWompiPaymentLogos({
   className = "",
@@ -228,13 +100,13 @@ export function StoreWompiPaymentLogos({
 }) {
   return (
     <ul
-      className={`flex flex-wrap items-center gap-2.5 sm:gap-3 ${className}`}
+      className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${className}`}
       aria-label="Medios de pago aceptados con Wompi: Visa, Mastercard, American Express, PSE, Nequi y Bancolombia"
     >
-      {METHODS.map(({ id, label, Mark }) => (
+      {METHODS.map(({ id, label, node }) => (
         <li key={id} className="flex shrink-0 items-center" title={label}>
           <span className="sr-only">{label}</span>
-          <Mark className={markClass} />
+          {node(markClass)}
         </li>
       ))}
     </ul>
