@@ -131,8 +131,8 @@ export function StoreFooter() {
               <Image
                 src={bereaSignaturePathSm}
                 alt="Berea House — desarrollo de software"
-                width={320}
-                height={150}
+                width={220}
+                height={103}
                 sizes="112px"
                 className="h-7 w-auto max-w-[6.5rem] object-contain object-left opacity-90 sm:h-8 sm:max-w-[7.5rem]"
               />

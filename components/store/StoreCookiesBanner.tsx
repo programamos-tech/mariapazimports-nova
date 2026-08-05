@@ -93,8 +93,8 @@ export function StoreCookiesBanner() {
               <Image
                 src={bereaSignaturePath}
                 alt="Berea House"
-                width={680}
-                height={319}
+                width={400}
+                height={188}
                 className="h-7 w-auto max-w-[5.5rem] object-contain object-left opacity-80 sm:h-8 sm:max-w-[6.5rem]"
               />
             </div>

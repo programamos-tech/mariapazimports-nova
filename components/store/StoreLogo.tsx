@@ -3,9 +3,14 @@ import { storeBrand, storeLogoPath } from "@/lib/brand";
 
 type Variant = "header" | "footer" | "hero";
 
-/** Dimensiones intrínsecas del PNG (2× Canva, fondo transparente). */
+/** Dimensiones intrínsecas del PNG completo (2× Canva). */
 const LOGO_WIDTH = 966;
 const LOGO_HEIGHT = 306;
+
+/** Variante ligera para header/footer (ya redimensionada en `/public`). */
+const LOGO_SM_PATH = "/logo-maria-paz-imports-sm.png";
+const LOGO_SM_WIDTH = 480;
+const LOGO_SM_HEIGHT = 152;
 
 const variantClass: Record<Variant, string> = {
   header:
@@ -32,13 +37,19 @@ export function StoreLogo({
   priority = false,
   className = "",
 }: Props) {
+  const useSm = variant === "header" || variant === "footer";
+  const src = useSm ? LOGO_SM_PATH : storeLogoPath;
+  const width = useSm ? LOGO_SM_WIDTH : LOGO_WIDTH;
+  const height = useSm ? LOGO_SM_HEIGHT : LOGO_HEIGHT;
+
   return (
     <Image
-      src={storeLogoPath}
+      src={src}
       alt={storeBrand}
-      width={LOGO_WIDTH}
-      height={LOGO_HEIGHT}
+      width={width}
+      height={height}
       priority={priority}
+      fetchPriority={priority ? "high" : "auto"}
       sizes={variantSizes[variant]}
       className={`object-contain object-center ${variantClass[variant]} ${className}`.trim()}
     />

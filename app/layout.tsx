@@ -102,6 +102,13 @@ export default function RootLayout({
       className={`${montserrat.variable} ${playfair.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <link
+          rel="preload"
+          as="image"
+          href="/logo-maria-paz-imports-sm.png"
+          type="image/png"
+          fetchPriority="high"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {storageOrigin ? (

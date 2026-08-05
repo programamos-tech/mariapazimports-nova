@@ -115,8 +115,8 @@ export default async function AdminLoginPage({ searchParams }: Props) {
                 <Image
                   src={bereaSignaturePath}
                   alt="Berea House — diseño y desarrollo de software a la medida"
-                  width={680}
-                  height={319}
+                  width={400}
+                  height={188}
                   className="h-12 w-auto max-w-[min(100%,15rem)] object-contain opacity-[0.88] sm:h-14"
                 />
               </div>
