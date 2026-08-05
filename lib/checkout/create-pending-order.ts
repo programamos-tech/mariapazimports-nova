@@ -36,7 +36,9 @@ import {
   normalizeDepartmentCode,
 } from "@/lib/colombia-geo";
 import { notifyStoreOrderCreated } from "@/lib/admin-notifications";
+import { sendOrderReceivedEmails } from "@/lib/order-email";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 
 export type PendingStoreOrder = {
@@ -482,6 +484,26 @@ export async function createPendingStoreOrderFromForm(
         ? `${l.product_name_snapshot} (${variant})`
         : l.product_name_snapshot;
     }),
+  });
+
+  after(() => {
+    void sendOrderReceivedEmails({
+      orderId,
+      customerName: resolvedName,
+      customerEmail: customerEmailForOrder,
+      totalCents: orderTotalCents,
+      subtotalCents: orderSubtotalCents,
+      shippingCents,
+      paymentMethod:
+        paymentMethod === "bank_transfer" ? "bank_transfer" : "wompi",
+      trackingToken,
+      lines: lines.map((l) => ({
+        name: l.product_name_snapshot,
+        quantity: l.quantity,
+        unitPriceCents: l.unit_price_cents,
+        variantLabel: l.variant_label_snapshot,
+      })),
+    });
   });
 
   revalidatePath("/admin/ventas");
