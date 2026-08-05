@@ -8,6 +8,7 @@ import {
 } from "@/lib/store-product-card-image";
 import { productCardImageSources } from "@/lib/storage-image-url";
 
+/** Tile de categoría: distinto a la card de producto (sin precio ni CTA de bolsa). */
 export function StoreCategoryCard({
   category,
   priority,
@@ -24,10 +25,10 @@ export function StoreCategoryCard({
         <Link
           href={href}
           className="block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/60 focus-visible:ring-offset-2"
-          aria-label={`Ver categoría ${category.name}`}
+          aria-label={`Categoría ${category.name}`}
         >
           <div
-            className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
+            className={`relative w-full overflow-hidden ring-1 ring-stone-200 transition group-hover/cat:ring-stone-900 ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
           >
             {src ? (
               // eslint-disable-next-line @next/next/no-img-element -- original Storage, contain como vitrina
@@ -45,19 +46,15 @@ export function StoreCategoryCard({
               <div className={`absolute inset-0 ${category.tint}`} />
             )}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent px-3 pb-3 pt-10">
-              <p className="text-center text-[9px] font-medium uppercase tracking-[0.16em] text-stone-400">
+            <div className="absolute inset-x-0 bottom-0 z-[1] bg-stone-900 px-3 py-3 text-white sm:px-3.5 sm:py-3.5">
+              <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/65">
                 Categoría
               </p>
-              <p className="mt-0.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-[12px] sm:tracking-[0.14em]">
+              <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:text-[12px] sm:tracking-[0.14em]">
                 <span className="line-clamp-2">{category.name}</span>
               </p>
             </div>
           </div>
-
-          <p className="mt-2.5 text-center text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500 underline decoration-stone-300 underline-offset-4 transition group-hover/cat:text-stone-900 group-hover/cat:decoration-stone-900 sm:mt-3 sm:text-[11px]">
-            Ver productos
-          </p>
         </Link>
       </article>
     </li>

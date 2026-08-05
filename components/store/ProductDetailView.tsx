@@ -559,7 +559,7 @@ export function ProductDetailView({
         ) : null}
 
         <div className="mt-5 lg:mt-4">
-          <AccordionSection title="Descripción">
+          <AccordionSection title="Descripción" defaultOpen>
             {descriptionText ? (
               <div className="space-y-1.5">
                 <p className="whitespace-pre-wrap">{descriptionDisplayed}</p>
@@ -581,7 +581,7 @@ export function ProductDetailView({
             )}
           </AccordionSection>
 
-          <AccordionSection title="Detalles">
+          <AccordionSection title="Detalles" defaultOpen>
             <ul className="list-inside list-disc space-y-1.5 text-stone-600">
               {outOfStock ? (
                 <li>
@@ -614,14 +614,14 @@ export function ProductDetailView({
               ) : null}
               {variantLabels.length > 0 ? (
                 <li>
-                  <span className="text-stone-800">{variantPickerTitle}s:</span>{" "}
+                  <span className="text-stone-800">{variantPickerTitle}:</span>{" "}
                   {variantLabels.join(", ")}
                 </li>
               ) : null}
             </ul>
           </AccordionSection>
 
-          <AccordionSection title="Envíos y devoluciones">
+          <AccordionSection title="Envíos y devoluciones" defaultOpen>
             <p>
               Envíos a todo el país según disponibilidad. Cambios y devoluciones
               según políticas del comercio; consultá por WhatsApp antes de
