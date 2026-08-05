@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { normalizeDocumentIdForMatch, emailConflictsWithDocument } from "@/lib/normalize-document-id";
 import {
   ensureStoreCustomerLinked,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/store-customer-service";
 import { notifyStoreCustomerRegistered } from "@/lib/admin-notifications";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { sendWelcomeEmail } from "@/lib/welcome-email";
 
 export type RegisterStoreCustomerResult =
   | { ok: true }
@@ -87,6 +89,10 @@ export async function registerStoreCustomer(input: {
       email,
     });
   }
+
+  after(() => {
+    void sendWelcomeEmail({ name, email });
+  });
 
   return { ok: true };
 }
