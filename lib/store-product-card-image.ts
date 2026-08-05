@@ -58,7 +58,7 @@ export const STORE_PRODUCT_DETAIL_HERO_SIZES =
  * El navegador pide el original; sizes evita sobre-descarga innecesaria.
  */
 export const STORE_CATEGORY_CARD_IMAGE_SIZES =
-  "(max-width: 640px) 50vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw";
+  "(max-width: 640px) 50vw, 280px";
 
 export function storeProductCardImagePriority(index: number): boolean {
   return index >= 0 && index < STORE_PRODUCT_CARD_EAGER_COUNT;

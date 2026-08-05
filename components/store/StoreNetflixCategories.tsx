@@ -2,7 +2,7 @@ import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
 import { storeShellClass } from "@/lib/store-layout";
 import { StoreCategoryCard } from "@/components/store/StoreCategoryCard";
 
-/** Vitrina de categorías: grilla densa, productos nítidos. */
+/** Vitrina 3×2: mismas 6 categorías, ancho contenido para que no se vean enormes. */
 export function StoreNetflixCategories({
   categories,
 }: {
@@ -10,7 +10,7 @@ export function StoreNetflixCategories({
 }) {
   const visible = categories
     .filter((c) => c.productCount > 0)
-    .slice(0, 12);
+    .slice(0, 6);
 
   if (visible.length === 0) return null;
 
@@ -29,9 +29,9 @@ export function StoreNetflixCategories({
           </h2>
         </div>
 
-        <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:mt-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <ul className="mx-auto mt-6 grid max-w-4xl grid-cols-2 gap-x-4 gap-y-7 sm:mt-7 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-8">
           {visible.map((c, i) => (
-            <StoreCategoryCard key={c.id} category={c} priority={i < 6} />
+            <StoreCategoryCard key={c.id} category={c} priority={i < 3} />
           ))}
         </ul>
       </div>

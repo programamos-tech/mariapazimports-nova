@@ -29,9 +29,9 @@ export function CatalogMoreCategories({
         </p>
       </div>
 
-      <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:mt-7 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {categories.map((c, i) => (
-          <StoreCategoryCard key={c.id} category={c} priority={i < 4} />
+      <ul className="mx-auto mt-6 grid max-w-4xl grid-cols-2 gap-x-4 gap-y-7 sm:mt-7 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-8">
+        {categories.slice(0, 6).map((c, i) => (
+          <StoreCategoryCard key={c.id} category={c} priority={i === 0} />
         ))}
       </ul>
     </section>
