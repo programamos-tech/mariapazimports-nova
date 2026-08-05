@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Vercel Image Optimization está en 402 (pago requerido); servir estáticos directos.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

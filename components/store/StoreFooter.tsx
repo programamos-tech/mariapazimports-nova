@@ -102,7 +102,7 @@ export function StoreFooter() {
 
       <div className="border-t border-stone-200/90">
         <div
-          className={`${storeShellClass} flex flex-col gap-4 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3`}
+          className={`${storeShellClass} flex flex-col gap-4 py-5 pr-[4.75rem] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-3 sm:pr-24 lg:pr-28`}
         >
           <p className="text-[11px] leading-relaxed text-stone-500 sm:text-xs">
             © {year} {storeCopyrightHolder}. Todos los derechos reservados.
