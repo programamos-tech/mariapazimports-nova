@@ -96,11 +96,11 @@ function buildBodies(
 
   const isBankTransfer = payload.paymentMethod === "bank_transfer";
   const paymentHint = isBankTransfer
-    ? "Estado: pendiente de aprobación. Transfiere el monto exacto y subí el comprobante desde el enlace de seguimiento; cuando lo revisemos, confirmamos tu pago."
+    ? "Estamos validando tu pago. Una vez lo confirmemos, procedemos al despacho."
     : "Si elegiste pago en línea, completá el pago en la ventana de Wompi (o desde el enlace que te mostramos al finalizar).";
 
   const statusLine = isBankTransfer
-    ? "Estado: Pendiente de aprobación"
+    ? "Estado: Estamos validando tu pago"
     : null;
 
   const text = [
@@ -188,7 +188,7 @@ function buildBodies(
               ${
                 isBankTransfer
                   ? `<p style="margin:0 0 20px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;font-size:13px;line-height:1.45;color:#92400e">
-                      <strong>Estado:</strong> Pendiente de aprobación — subí tu comprobante desde el seguimiento para que validemos el pago.
+                      <strong>Estado:</strong> Estamos validando tu pago. Una vez lo confirmemos, procedemos al despacho.
                     </p>`
                   : ""
               }
@@ -235,7 +235,7 @@ function buildBodies(
               ${
                 trackingUrl
                   ? `<p style="margin:0 0 8px;text-align:center">
-                      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">${isBankTransfer ? "Subir comprobante / seguimiento" : "Ver seguimiento del pedido"}</a>
+                      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">Ver seguimiento del pedido</a>
                     </p>`
                   : ""
               }
