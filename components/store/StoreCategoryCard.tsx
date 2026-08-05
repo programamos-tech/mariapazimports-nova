@@ -46,11 +46,8 @@ export function StoreCategoryCard({
               <div className={`absolute inset-0 ${category.tint}`} />
             )}
 
-            <div className="absolute inset-x-0 bottom-0 z-[1] bg-stone-900 px-3 py-3 text-white sm:px-3.5 sm:py-3.5">
-              <p className="text-[9px] font-medium uppercase tracking-[0.18em] text-white/65">
-                Categoría
-              </p>
-              <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:text-[12px] sm:tracking-[0.14em]">
+            <div className="absolute inset-x-0 bottom-0 z-[1] bg-stone-900 px-3 py-3 text-center text-white sm:px-3.5 sm:py-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] sm:text-[12px] sm:tracking-[0.14em]">
                 <span className="line-clamp-2">{category.name}</span>
               </p>
             </div>
