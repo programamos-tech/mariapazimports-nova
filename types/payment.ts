@@ -98,4 +98,6 @@ export type CreateWompiCheckoutSessionResult = {
   customerEmail?: string;
   customerFullName?: string;
   customerPhone?: string;
+  /** Para ir al seguimiento público tras cerrar el widget. */
+  trackingToken?: string | null;
 };

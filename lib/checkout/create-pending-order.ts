@@ -487,6 +487,8 @@ export async function createPendingStoreOrderFromForm(
   });
 
   after(() => {
+    // Wompi: el correo va al aprobar el pago (webhook/reconcile), no al crear pendiente.
+    if (paymentMethod === "wompi") return;
     void sendOrderReceivedEmails({
       orderId,
       customerName: resolvedName,
@@ -494,8 +496,7 @@ export async function createPendingStoreOrderFromForm(
       totalCents: orderTotalCents,
       subtotalCents: orderSubtotalCents,
       shippingCents,
-      paymentMethod:
-        paymentMethod === "bank_transfer" ? "bank_transfer" : "wompi",
+      paymentMethod: "bank_transfer",
       trackingToken,
       lines: lines.map((l) => ({
         name: l.product_name_snapshot,

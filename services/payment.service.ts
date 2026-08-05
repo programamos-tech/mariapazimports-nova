@@ -303,6 +303,22 @@ export class PaymentService {
       paymentLogger.info("stock deducted after APPROVED", { orderId, source });
     }
 
+    // Solo en la primera transición a APPROVED (canTransition ya evitó reentradas).
+    if (mapped === PaymentStatus.APPROVED && orderId) {
+      try {
+        const { sendOrderReceivedEmailsForOrderId } = await import(
+          "@/lib/order-email"
+        );
+        await sendOrderReceivedEmailsForOrderId(orderId);
+        paymentLogger.info("order confirmation email sent", {
+          orderId,
+          source,
+        });
+      } catch (emailErr) {
+        paymentLogger.error("order confirmation email failed", emailErr);
+      }
+    }
+
     const updated = await this.findById(payment.id);
     paymentLogger.info("payment transition applied", {
       paymentId: payment.id,
@@ -343,7 +359,7 @@ export class PaymentService {
     return {
       publicKey: config.publicKey,
       integritySignature,
-      redirectUrl: `${config.baseUrl}/checkout/return?order_id=${payment.orderId ?? ""}&reference=${encodeURIComponent(payment.reference)}`,
+      redirectUrl: `${config.baseUrl}/cuenta/pedidos/${payment.orderId ?? ""}`,
       amountInCents: payment.amountInCents,
       currency: payment.currency,
       reference: payment.reference,

@@ -318,3 +318,60 @@ export async function sendOrderReceivedEmails(
     html,
   });
 }
+
+/**
+ * Carga el pedido + ítems y envía la confirmación (p. ej. tras APPROVED de Wompi).
+ */
+export async function sendOrderReceivedEmailsForOrderId(
+  orderId: string,
+): Promise<void> {
+  if (!orderId.trim() || !isStoreEmailConfigured()) return;
+
+  const { createSupabaseServiceClient } = await import(
+    "@/lib/supabase/service"
+  );
+  const sb = createSupabaseServiceClient();
+
+  const { data: order, error } = await sb
+    .from("orders")
+    .select(
+      "id, customer_name, customer_email, total_cents, subtotal_cents, shipping_cents, payment_method, tracking_token",
+    )
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (error || !order) {
+    console.error("[order-email] pedido no encontrado", orderId, error?.message);
+    return;
+  }
+
+  const { data: items } = await sb
+    .from("order_items")
+    .select(
+      "product_name_snapshot, quantity, unit_price_cents, variant_label_snapshot",
+    )
+    .eq("order_id", orderId);
+
+  await sendOrderReceivedEmails({
+    orderId: order.id,
+    customerName: String(order.customer_name ?? ""),
+    customerEmail: String(order.customer_email ?? ""),
+    totalCents: Number(order.total_cents) || 0,
+    subtotalCents:
+      order.subtotal_cents != null ? Number(order.subtotal_cents) : undefined,
+    shippingCents:
+      order.shipping_cents != null ? Number(order.shipping_cents) : undefined,
+    paymentMethod: String(order.payment_method ?? "wompi"),
+    trackingToken:
+      order.tracking_token != null ? String(order.tracking_token) : null,
+    lines: (items ?? []).map((l) => ({
+      name: String(l.product_name_snapshot ?? "Producto"),
+      quantity: Number(l.quantity) || 0,
+      unitPriceCents: Number(l.unit_price_cents) || 0,
+      variantLabel:
+        l.variant_label_snapshot != null
+          ? String(l.variant_label_snapshot)
+          : null,
+    })),
+  });
+}

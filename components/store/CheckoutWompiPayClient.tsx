@@ -90,21 +90,18 @@ export function CheckoutWompiPayClient({ orderId, reference }: Props) {
 
         if (cancelled) return;
 
-        const status = (
-          widgetResult?.transaction?.status ?? "PENDING"
-        ).toUpperCase();
-        const widget =
-          status === "APPROVED"
-            ? "approved"
-            : status === "DECLINED" ||
-                status === "ERROR" ||
-                status === "VOIDED"
-              ? status.toLowerCase()
-              : "pending";
+        // El correo de confirmación solo se envía cuando Wompi marca APPROVED
+        // (webhook/reconcile). Acá solo navegamos al pedido creado.
+        void widgetResult;
 
-        router.replace(
-          `/checkout/return?order_id=${encodeURIComponent(orderId)}&reference=${encodeURIComponent(reference)}&widget=${widget}`,
-        );
+        const tracking = session.trackingToken?.trim();
+        if (tracking) {
+          router.replace(
+            `/pedidos/seguimiento/${encodeURIComponent(tracking)}`,
+          );
+          return;
+        }
+        router.replace(`/cuenta/pedidos/${encodeURIComponent(orderId)}`);
       } catch (err) {
         if (cancelled) return;
         setPhase("error");
@@ -145,12 +142,10 @@ export function CheckoutWompiPayClient({ orderId, reference }: Props) {
               type="button"
               className="mt-6 text-sm font-medium text-stone-900 underline"
               onClick={() =>
-                router.replace(
-                  `/checkout/return?order_id=${encodeURIComponent(orderId)}&reference=${encodeURIComponent(reference)}&widget=pending`,
-                )
+                router.replace(`/cuenta/pedidos/${encodeURIComponent(orderId)}`)
               }
             >
-              Ir al estado del pedido
+              Ir a mi pedido
             </button>
           </div>
         ) : null}
@@ -174,7 +169,7 @@ export function CheckoutWompiPayClient({ orderId, reference }: Props) {
                 className="underline"
                 onClick={() =>
                   router.replace(
-                    `/checkout/return?order_id=${encodeURIComponent(orderId)}&reference=${encodeURIComponent(reference)}&widget=pending`,
+                    `/cuenta/pedidos/${encodeURIComponent(orderId)}`,
                   )
                 }
               >

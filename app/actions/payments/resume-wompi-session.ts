@@ -11,6 +11,7 @@ import {
 import { isPaymentError, PaymentError } from "@/lib/payments/errors";
 import { generateIntegritySignature } from "@/lib/payments/signature";
 import { PaymentService } from "@/services/payment.service";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { PaymentStatus, type CreateWompiCheckoutSessionResult } from "@/types/payment";
 
 export type ResumeWompiSessionResult =
@@ -59,6 +60,19 @@ export async function resumeWompiCheckoutSession(
       integritySecret: config.integritySecret,
     });
 
+    let trackingToken: string | null = null;
+    const sb = createSupabaseServiceClient();
+    const { data: orderRow } = await sb
+      .from("orders")
+      .select("tracking_token")
+      .eq("id", payment.orderId)
+      .maybeSingle();
+    if (orderRow?.tracking_token) {
+      trackingToken = String(orderRow.tracking_token);
+    }
+
+    const orderPath = `/cuenta/pedidos/${payment.orderId}`;
+
     return {
       ok: true,
       session: {
@@ -69,10 +83,11 @@ export async function resumeWompiCheckoutSession(
         currency: payment.currency,
         publicKey: config.publicKey,
         integritySignature,
-        redirectUrl: `${config.baseUrl}/checkout/return?order_id=${payment.orderId}&reference=${encodeURIComponent(payment.reference)}`,
+        redirectUrl: `${config.baseUrl}${orderPath}`,
         environment: payment.environment,
         customerEmail: payment.customerEmail || undefined,
         customerFullName: payment.customerName || undefined,
+        trackingToken,
       },
     };
   } catch (err) {

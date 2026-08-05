@@ -70,6 +70,7 @@ export async function createWompiCheckoutSession(
       integritySecret: config.integritySecret,
     });
 
+    const orderPath = `/cuenta/pedidos/${order.orderId}`;
     const session: CreateWompiCheckoutSessionResult = {
       paymentId: payment.id,
       orderId: order.orderId,
@@ -78,11 +79,12 @@ export async function createWompiCheckoutSession(
       currency: payment.currency,
       publicKey: config.publicKey,
       integritySignature,
-      redirectUrl: `${config.baseUrl}/checkout/return?order_id=${order.orderId}&reference=${encodeURIComponent(payment.reference)}`,
+      redirectUrl: `${config.baseUrl}${orderPath}`,
       environment: payment.environment,
       customerEmail: order.customerEmail || undefined,
       customerFullName: order.customerName || undefined,
       customerPhone: order.customerPhone || undefined,
+      trackingToken: order.trackingToken || null,
     };
 
     paymentLogger.info("wompi checkout session ready", {
