@@ -1,8 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
-import { STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS } from "@/lib/store-product-card-image";
-import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
+import {
+  STORE_CATEGORY_CARD_IMAGE_SIZES,
+  STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
+  STORE_PRODUCT_CARD_IMAGE_BG_CLASS,
+  STORE_PRODUCT_IMAGE_IMG_CLASS,
+} from "@/lib/store-product-card-image";
+import { productCardImageSources } from "@/lib/storage-image-url";
 
 export function StoreCategoryCard({
   category,
@@ -12,44 +16,55 @@ export function StoreCategoryCard({
   priority?: boolean;
 }) {
   const href = `/products?category=${encodeURIComponent(category.id)}`;
+  const { src, srcSet } = productCardImageSources(category.imageSrc);
+  const countLabel =
+    category.productCount > 0
+      ? `${category.productCount} producto${category.productCount === 1 ? "" : "s"}`
+      : null;
 
   return (
     <li className="min-w-0">
-      <article className="group/cat flex h-full flex-col">
-        <div className="relative shrink-0">
+      <article className="group/cat">
+        <Link
+          href={href}
+          className="block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/60 focus-visible:ring-offset-2"
+          aria-label={
+            countLabel
+              ? `${category.name}, ${countLabel}`
+              : category.name
+          }
+        >
           <div
-            className={`relative w-full overflow-hidden bg-stone-100 ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS}`}
+            className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
           >
-            {category.imageSrc ? (
-              <Image
-                src={category.imageSrc}
+            {src ? (
+              // eslint-disable-next-line @next/next/no-img-element -- original Storage, contain como vitrina
+              <img
+                src={src}
+                srcSet={srcSet ?? undefined}
+                sizes={STORE_CATEGORY_CARD_IMAGE_SIZES}
                 alt=""
-                fill
-                priority={priority}
-                quality={90}
-                sizes="(max-width: 640px) 50vw, 33vw"
-                className="object-cover object-center transition duration-500 ease-out group-hover/cat:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/cat:scale-100"
-                unoptimized={shouldUnoptimizeStorageImageUrl(category.imageSrc)}
+                className={`${STORE_PRODUCT_IMAGE_IMG_CLASS} transition duration-500 ease-out group-hover/cat:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover/cat:scale-100`}
+                loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
+                decoding="async"
               />
             ) : (
               <div className={`absolute inset-0 ${category.tint}`} />
             )}
           </div>
-          <Link
-            href={href}
-            className="absolute inset-0 z-[1] block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/70"
-            aria-label={category.name}
-          />
-        </div>
 
-        <div className="pt-4">
-          <Link
-            href={href}
-            className="block border border-stone-300 bg-white py-2.5 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
-          >
-            <span className="line-clamp-1">{category.name}</span>
-          </Link>
-        </div>
+          <div className="mt-2.5 text-center sm:mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition group-hover/cat:text-stone-700 sm:text-[11px] sm:tracking-[0.16em]">
+              <span className="line-clamp-2">{category.name}</span>
+            </p>
+            {countLabel ? (
+              <p className="mt-0.5 text-[10px] tabular-nums text-stone-400 sm:text-[11px]">
+                {countLabel}
+              </p>
+            ) : null}
+          </div>
+        </Link>
       </article>
     </li>
   );

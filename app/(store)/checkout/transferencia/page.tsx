@@ -47,7 +47,6 @@ export default async function CheckoutTransferenciaPage({
   const orderId = String(sp.order_id ?? "").trim();
   const token = String(sp.token ?? "").trim();
   const uploadError = uploadErrorMessage(sp.error);
-  const justUploaded = sp.uploaded === "1";
 
   if (!orderId || !token) notFound();
 
@@ -132,17 +131,6 @@ export default async function CheckoutTransferenciaPage({
             role="alert"
           >
             {uploadError}
-          </div>
-        ) : null}
-
-        {justUploaded || pendingValidation ? (
-          <div
-            className="mt-3 border border-stone-200 bg-[#f4f4f3] px-3 py-2.5 text-sm text-stone-700"
-            role="status"
-          >
-            {justUploaded
-              ? "Comprobante enviado. Tu pedido quedó pendiente de validación de pago en el backoffice."
-              : "Estado: pendiente de validación de pago. Te avisaremos cuando lo confirmemos."}
           </div>
         ) : null}
 

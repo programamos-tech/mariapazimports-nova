@@ -11,7 +11,10 @@ import {
 } from "@/lib/store-category-group";
 import { getStoreCategoryVisual } from "@/lib/store-category-visuals";
 import { normalizeProductImagePaths } from "@/lib/product-images";
-import { storageOriginalObjectUrl } from "@/lib/storage-image-url";
+import {
+  productStorefrontImageUrl,
+  storageOriginalObjectUrl,
+} from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
 import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -147,6 +150,7 @@ async function loadHomeCategoryCards(
         : null,
     );
     const productCover = productCoverByGroup.get(gKey) ?? null;
+    const rawCover = heroFallback ?? productCover;
 
     merged.push({
       id: canonicalId,
@@ -154,7 +158,7 @@ async function loadHomeCategoryCards(
       sort_order: Math.min(...arr.map((c) => c.sort_order)),
       iconKey: resolveCategoryIconKey(winner.icon_key),
       productCount,
-      imageSrc: heroFallback ?? productCover,
+      imageSrc: productStorefrontImageUrl(rawCover) ?? rawCover,
       ...visual,
     });
   }
@@ -172,7 +176,7 @@ const getCachedHomeCategoryCards = unstable_cache(
     const supabase = createSupabaseServiceClient();
     return loadHomeCategoryCards(supabase);
   },
-  ["home-category-cards-v2"],
+  ["home-category-cards-v3"],
   { revalidate: 60 },
 );
 
