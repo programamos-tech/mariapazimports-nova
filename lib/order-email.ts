@@ -94,15 +94,20 @@ function buildBodies(
   const shipping =
     payload.shippingCents ?? Math.max(0, payload.totalCents - subtotal);
 
-  const paymentHint =
-    payload.paymentMethod === "bank_transfer"
-      ? "Si elegiste transferencia, subí el comprobante desde el enlace de seguimiento cuando lo tengas."
-      : "Si elegiste pago en línea, completá el pago en la ventana de Wompi (o desde el enlace que te mostramos al finalizar).";
+  const isBankTransfer = payload.paymentMethod === "bank_transfer";
+  const paymentHint = isBankTransfer
+    ? "Estado: pendiente de aprobación. Transfiere el monto exacto y subí el comprobante desde el enlace de seguimiento; cuando lo revisemos, confirmamos tu pago."
+    : "Si elegiste pago en línea, completá el pago en la ventana de Wompi (o desde el enlace que te mostramos al finalizar).";
+
+  const statusLine = isBankTransfer
+    ? "Estado: Pendiente de aprobación"
+    : null;
 
   const text = [
     `Hola ${payload.customerName.trim() || "hola"},`,
     "",
     `Recibimos tu pedido #${orderRef} en ${storeBrand}.`,
+    statusLine,
     "",
     "Resumen:",
     ...itemLines,
@@ -180,6 +185,14 @@ function buildBodies(
                 <strong style="letter-spacing:0.04em">#${escapeHtml(orderRef)}</strong>.
               </p>
 
+              ${
+                isBankTransfer
+                  ? `<p style="margin:0 0 20px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;font-size:13px;line-height:1.45;color:#92400e">
+                      <strong>Estado:</strong> Pendiente de aprobación — subí tu comprobante desde el seguimiento para que validemos el pago.
+                    </p>`
+                  : ""
+              }
+
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#fafaf9;border:1px solid #e7e5e4">
                 <tr>
                   <td style="padding:14px 16px;font-size:12px;color:#78716c;width:50%">
@@ -222,7 +235,7 @@ function buildBodies(
               ${
                 trackingUrl
                   ? `<p style="margin:0 0 8px;text-align:center">
-                      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">Ver seguimiento del pedido</a>
+                      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:14px 22px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;font-weight:600;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">${isBankTransfer ? "Subir comprobante / seguimiento" : "Ver seguimiento del pedido"}</a>
                     </p>`
                   : ""
               }
@@ -263,7 +276,9 @@ function buildBodies(
 </html>`.trim();
 
   return {
-    subject: `${storeBrand} · Pedido #${orderRef} recibido`,
+    subject: isBankTransfer
+      ? `${storeBrand} · Pedido #${orderRef} · Pendiente de aprobación`
+      : `${storeBrand} · Pedido #${orderRef} recibido`,
     text,
     html,
     orderRef,
