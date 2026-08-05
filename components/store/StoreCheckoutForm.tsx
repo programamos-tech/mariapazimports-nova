@@ -20,7 +20,7 @@ import {
 import { startCheckout } from "@/app/actions/checkout";
 import { createWompiCheckoutSession } from "@/app/actions/payments/create-wompi-session";
 import { storeWompiSession } from "@/components/store/CheckoutWompiPayClient";
-import { PaymentLoader } from "@/components/payments/PaymentLoader";
+import { StoreLoadingScreen } from "@/components/store/StoreLoadingScreen";
 
 export type CheckoutStep = 1 | 2;
 
@@ -144,6 +144,7 @@ export function StoreCheckoutForm({
       const method = String(fd.get("paymentMethod") ?? "").trim();
 
       if (method === "bank_transfer") {
+        setBusy(true);
         return;
       }
 
@@ -220,9 +221,7 @@ export function StoreCheckoutForm({
         className="relative"
       >
         {busy ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-[1px]">
-            <PaymentLoader label="Creando tu pedido…" />
-          </div>
+          <StoreLoadingScreen label="Creando tu pedido…" overlay />
         ) : null}
 
         {children}

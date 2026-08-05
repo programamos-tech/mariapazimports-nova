@@ -11,7 +11,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { setLineQuantity } from "@/app/actions/cart";
 import { formatCop } from "@/lib/money";
@@ -23,6 +23,7 @@ import {
 } from "@/lib/store-product-card-image";
 import { productCardImageSources } from "@/lib/storage-image-url";
 import { storagePublicObjectUrl } from "@/lib/storage-public-url";
+import { StoreLoadingScreen } from "@/components/store/StoreLoadingScreen";
 
 export type StoreCartDrawerItem = {
   productId: string;
@@ -317,12 +318,21 @@ export function StoreCartDrawerProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<StoreCartDrawerItem[]>([]);
   const [suggestions, setSuggestions] = useState<StoreCartSuggestion[]>([]);
   const [subtotalCents, setSubtotalCents] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [checkoutNavPending, setCheckoutNavPending] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!checkoutNavPending) return;
+    if (pathname.startsWith("/checkout")) {
+      setCheckoutNavPending(false);
+    }
+  }, [pathname, checkoutNavPending]);
 
   const reloadCart = useCallback(async (mode: "full" | "quiet" = "full") => {
     if (mode === "full") setLoading(true);
@@ -496,13 +506,17 @@ export function StoreCartDrawerProvider({
                     {formatCop(subtotalCents)}
                   </span>
                 </div>
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheckoutNavPending(true);
+                    closeCart();
+                    router.push("/checkout");
+                  }}
                   className="mt-5 flex w-full items-center justify-center bg-stone-900 py-4 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-stone-800"
                 >
                   Revisar y finalizar compra
-                </Link>
+                </button>
                 <Link
                   href="/products"
                   onClick={closeCart}
@@ -514,6 +528,9 @@ export function StoreCartDrawerProvider({
             ) : null}
           </div>
         </>
+      ) : null}
+      {checkoutNavPending ? (
+        <StoreLoadingScreen label="Preparando tu compra…" overlay />
       ) : null}
     </StoreCartDrawerContext.Provider>
   );
