@@ -2,7 +2,7 @@ import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
 import { storeShellClass } from "@/lib/store-layout";
 import { StoreCategoryCard } from "@/components/store/StoreCategoryCard";
 
-/** Vitrina 3×2: mismas 6 categorías, ancho contenido para que no se vean enormes. */
+/** Vitrina 3×2 a ancho de vitrina: categorías, no productos sueltos. */
 export function StoreNetflixCategories({
   categories,
 }: {
@@ -20,16 +20,19 @@ export function StoreNetflixCategories({
       aria-labelledby="home-categories-heading"
     >
       <div className={storeShellClass}>
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-stone-400 sm:text-[11px]">
+            Explorá por categoría
+          </p>
           <h2
             id="home-categories-heading"
-            className="text-lg font-semibold uppercase tracking-[0.08em] text-stone-900 sm:text-xl"
+            className="mt-1.5 text-lg font-semibold uppercase tracking-[0.08em] text-stone-900 sm:text-xl"
           >
             Categorías
           </h2>
         </div>
 
-        <ul className="mx-auto mt-6 grid max-w-6xl grid-cols-2 gap-x-5 gap-y-7 sm:mt-7 sm:grid-cols-3 sm:gap-x-8 sm:gap-y-8">
+        <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:mt-7 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-8 lg:gap-x-8">
           {visible.map((c, i) => (
             <StoreCategoryCard key={c.id} category={c} priority={i < 3} />
           ))}
