@@ -101,20 +101,22 @@ export function StoreFooter() {
         <div className="mt-12 border-t border-stone-200/80 pt-8 sm:mt-14">
           <p className={footerColumnTitle}>Medios de pago</p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-stone-500">
-            Pagos seguros con Wompi: tarjetas, PSE, Nequi y Bancolombia.
+            Pagos seguros con Wompi: Visa, Mastercard, American Express, PSE,
+            Nequi y Bancolombia.
           </p>
           <StoreWompiPaymentLogos className="mt-5" />
         </div>
       </div>
 
-      <div className="border-t border-stone-200/90">
+      <div className="border-t border-stone-200/90 bg-stone-50/60">
         <div
-          className={`${storeShellClass} flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6`}
+          className={`${storeShellClass} flex flex-col gap-5 py-5 sm:gap-4 lg:flex-row lg:items-center lg:justify-between`}
         >
           <p className="text-[11px] leading-relaxed text-stone-500 sm:text-xs">
             © {year} {storeCopyrightHolder}. Todos los derechos reservados.
           </p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 sm:justify-end">
+          <StoreWompiPaymentLogos className="lg:justify-center" />
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 lg:justify-end">
             <nav
               aria-label="Legal y equipo"
               className="flex flex-wrap gap-x-5 gap-y-2 text-[11px] text-stone-500 sm:text-xs"
@@ -133,10 +135,11 @@ export function StoreFooter() {
               </Link>
             </nav>
             <Image
-              src="/logo-berea-agencia.png"
+              src="/logo-berea-agencia-sm.png"
               alt="Berea — agencia de software"
-              width={1536}
-              height={1024}
+              width={320}
+              height={213}
+              sizes="128px"
               className="h-9 w-auto max-w-[7rem] object-contain opacity-80 transition-opacity hover:opacity-100 sm:h-10 sm:max-w-[8rem]"
             />
           </div>
