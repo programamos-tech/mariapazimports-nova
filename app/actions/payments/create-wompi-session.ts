@@ -80,6 +80,9 @@ export async function createWompiCheckoutSession(
       integritySignature,
       redirectUrl: `${config.baseUrl}/checkout/return?order_id=${order.orderId}&reference=${encodeURIComponent(payment.reference)}`,
       environment: payment.environment,
+      customerEmail: order.customerEmail || undefined,
+      customerFullName: order.customerName || undefined,
+      customerPhone: order.customerPhone || undefined,
     };
 
     paymentLogger.info("wompi checkout session ready", {

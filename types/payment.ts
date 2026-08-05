@@ -94,4 +94,8 @@ export type CreateWompiCheckoutSessionResult = {
   integritySignature: string;
   redirectUrl: string;
   environment: "sandbox" | "production";
+  /** Prefill del widget (solo si son válidos). */
+  customerEmail?: string;
+  customerFullName?: string;
+  customerPhone?: string;
 };

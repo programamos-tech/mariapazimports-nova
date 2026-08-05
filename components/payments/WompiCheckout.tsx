@@ -14,6 +14,7 @@ import type {
   WidgetCheckoutParams,
   WompiWidgetCheckoutResult,
 } from "@/types/wompi";
+import { buildWompiCustomerData } from "@/types/wompi";
 
 const WIDGET_SCRIPT = "https://checkout.wompi.co/widget.js";
 
@@ -144,6 +145,11 @@ export function WompiCheckout({
         throw new Error("WidgetCheckout no disponible");
       }
 
+      const customerData = buildWompiCustomerData({
+        email: customerEmail,
+        fullName: customerFullName,
+      });
+
       const params: WidgetCheckoutParams = {
         currency: session.currency,
         amountInCents: session.amountInCents,
@@ -151,10 +157,7 @@ export function WompiCheckout({
         publicKey: session.publicKey,
         signature: { integrity: session.integritySignature },
         redirectUrl: session.redirectUrl,
-        customerData: {
-          email: customerEmail,
-          fullName: customerFullName,
-        },
+        ...(customerData ? { customerData } : {}),
       };
 
       const checkout = new window.WidgetCheckout(params);
@@ -245,6 +248,13 @@ export async function openWompiWidgetCheckout(input: {
     throw new Error("WidgetCheckout no disponible");
   }
 
+  const customerData = buildWompiCustomerData({
+    email: input.customerEmail ?? input.session.customerEmail,
+    fullName: input.customerFullName ?? input.session.customerFullName,
+    phoneNumber: input.session.customerPhone,
+    phoneNumberPrefix: "+57",
+  });
+
   const params: WidgetCheckoutParams = {
     currency: input.session.currency,
     amountInCents: input.session.amountInCents,
@@ -252,10 +262,7 @@ export async function openWompiWidgetCheckout(input: {
     publicKey: input.session.publicKey,
     signature: { integrity: input.session.integritySignature },
     redirectUrl: input.session.redirectUrl,
-    customerData: {
-      email: input.customerEmail,
-      fullName: input.customerFullName,
-    },
+    ...(customerData ? { customerData } : {}),
   };
 
   const timeoutMs = input.timeoutMs ?? 15 * 60 * 1000;

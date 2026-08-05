@@ -71,6 +71,8 @@ export async function resumeWompiCheckoutSession(
         integritySignature,
         redirectUrl: `${config.baseUrl}/checkout/return?order_id=${payment.orderId}&reference=${encodeURIComponent(payment.reference)}`,
         environment: payment.environment,
+        customerEmail: payment.customerEmail || undefined,
+        customerFullName: payment.customerName || undefined,
       },
     };
   } catch (err) {
