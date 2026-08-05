@@ -203,6 +203,8 @@ function CartDrawerSuggestionsRow({
 type StoreCartDrawerContextValue = {
   openCart: () => void;
   closeCart: () => void;
+  /** Precarga en hover/focus del ícono de bolsa — la apertura se siente instantánea. */
+  prefetchCart: () => void;
 };
 
 const StoreCartDrawerContext =
@@ -229,20 +231,21 @@ function DrawerLine({
 }) {
   const img = storagePublicObjectUrl(item.imagePath);
   return (
-    <li className="border-b border-stone-200/90 py-6">
+    <li className="py-6">
       <div className="flex gap-4">
         <Link
           href={`/products/${item.productId}`}
-          className="relative size-24 shrink-0 overflow-hidden bg-[#f0eeeb]"
+          className={`relative w-24 shrink-0 overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
         >
           {img ? (
             // eslint-disable-next-line @next/next/no-img-element -- Storage directo, igual que vitrina
             <img
               src={img}
               alt=""
-              className="absolute inset-0 size-full object-contain object-center"
-              loading="lazy"
+              className={STORE_PRODUCT_IMAGE_IMG_CLASS}
+              loading="eager"
               decoding="async"
+              fetchPriority="high"
             />
           ) : (
             <div className="flex size-full items-center justify-center text-2xl text-stone-200">
@@ -326,6 +329,11 @@ export function StoreCartDrawerProvider({
   const [loading, setLoading] = useState(false);
   const [checkoutNavPending, setCheckoutNavPending] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const fetchGenRef = useRef(0);
+  const suggestionsGenRef = useRef(0);
+  const prefetchInflightRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (!checkoutNavPending) return;
@@ -334,39 +342,90 @@ export function StoreCartDrawerProvider({
     }
   }, [pathname, checkoutNavPending]);
 
-  const reloadCart = useCallback(async (mode: "full" | "quiet" = "full") => {
-    if (mode === "full") setLoading(true);
+  const loadSuggestions = useCallback(async () => {
+    const gen = ++suggestionsGenRef.current;
     try {
-      const res = await fetch("/api/store/cart", {
+      const res = await fetch("/api/store/cart?suggestions=1", {
         cache: "no-store",
       });
-      if (!res.ok) {
-        setItems([]);
-        setSuggestions([]);
-        setSubtotalCents(0);
-        return;
-      }
+      if (!res.ok || gen !== suggestionsGenRef.current) return;
       const body = (await res.json()) as {
-        items?: StoreCartDrawerItem[];
-        subtotalCents?: number;
         suggestions?: StoreCartSuggestion[];
       };
-      setItems(body.items ?? []);
-      setSubtotalCents(Number(body.subtotalCents ?? 0));
       setSuggestions(body.suggestions ?? []);
-    } finally {
-      if (mode === "full") setLoading(false);
+    } catch {
+      /* red intermitente: la bolsa ya tiene ítems */
     }
   }, []);
 
+  const reloadCart = useCallback(
+    async (mode: "full" | "quiet" = "full") => {
+      const gen = ++fetchGenRef.current;
+      if (mode === "full") setLoading(true);
+      try {
+        // Ítems primero (lite) — la bolsa pinta sin esperar sugerencias.
+        const res = await fetch("/api/store/cart?lite=1", {
+          cache: "no-store",
+        });
+        if (gen !== fetchGenRef.current) return;
+        if (!res.ok) {
+          setItems([]);
+          setSuggestions([]);
+          setSubtotalCents(0);
+          return;
+        }
+        const body = (await res.json()) as {
+          items?: StoreCartDrawerItem[];
+          subtotalCents?: number;
+        };
+        setItems(body.items ?? []);
+        setSubtotalCents(Number(body.subtotalCents ?? 0));
+      } finally {
+        if (mode === "full" && gen === fetchGenRef.current) {
+          setLoading(false);
+        }
+      }
+      if (gen === fetchGenRef.current) void loadSuggestions();
+    },
+    [loadSuggestions],
+  );
+
+  const prefetchCart = useCallback(() => {
+    if (prefetchInflightRef.current || itemsRef.current.length > 0) return;
+    const run = reloadCart("quiet").finally(() => {
+      prefetchInflightRef.current = null;
+    });
+    prefetchInflightRef.current = run;
+  }, [reloadCart]);
+
   const openCart = useCallback(() => {
     setOpen(true);
-    void reloadCart("full");
+    // Con ítems en pantalla: refresca en silencio. Vacío: loading corto (lite).
+    void reloadCart(itemsRef.current.length > 0 ? "quiet" : "full");
   }, [reloadCart]);
 
   const closeCart = useCallback(() => {
     setOpen(false);
   }, []);
+
+  // Precarga en idle para que el primer click no espere la red.
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (
+        cb: () => void,
+        opts?: { timeout: number },
+      ) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof w.requestIdleCallback === "function") {
+      const id = w.requestIdleCallback(() => prefetchCart(), {
+        timeout: 1800,
+      });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(() => prefetchCart(), 900);
+    return () => window.clearTimeout(t);
+  }, [prefetchCart]);
 
   useEffect(() => {
     if (!open) return;
@@ -392,8 +451,8 @@ export function StoreCartDrawerProvider({
   }, [open, closeCart]);
 
   const value = useMemo(
-    () => ({ openCart, closeCart }),
-    [openCart, closeCart],
+    () => ({ openCart, closeCart, prefetchCart }),
+    [openCart, closeCart, prefetchCart],
   );
 
   const [linePending, startLineTransition] = useTransition();
@@ -476,7 +535,7 @@ export function StoreCartDrawerProvider({
                 </>
               ) : (
                 <>
-                  <ul className="pb-2">
+                  <ul className="divide-y divide-stone-200/90 pb-2">
                     {items.map((item) => (
                       <DrawerLine
                         key={`${item.productId}-${item.variantId ?? ""}`}

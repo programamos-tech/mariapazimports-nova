@@ -35,6 +35,7 @@ import {
   normalizeMunicipalityCode,
   normalizeDepartmentCode,
 } from "@/lib/colombia-geo";
+import { notifyStoreOrderCreated } from "@/lib/admin-notifications";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -468,6 +469,20 @@ export async function createPendingStoreOrderFromForm(
     await supabase.from("orders").delete().eq("id", orderId);
     redirect("/checkout?error=items");
   }
+
+  await notifyStoreOrderCreated({
+    orderId,
+    customerName: resolvedName,
+    totalCents: orderTotalCents,
+    paymentMethod:
+      paymentMethod === "bank_transfer" ? "bank_transfer" : "wompi",
+    itemLabels: lines.map((l) => {
+      const variant = l.variant_label_snapshot?.trim();
+      return variant
+        ? `${l.product_name_snapshot} (${variant})`
+        : l.product_name_snapshot;
+    }),
+  });
 
   revalidatePath("/admin/ventas");
   revalidatePath("/admin/orders");

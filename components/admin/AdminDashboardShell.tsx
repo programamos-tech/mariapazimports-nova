@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AuthSessionWatcher } from "@/components/auth/AuthSessionWatcher";
+import { AdminNewOrderModal } from "@/components/admin/AdminNewOrderModal";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
 
@@ -38,6 +39,7 @@ export function AdminDashboardShell({
   return (
     <div className="isolate flex min-h-screen items-stretch antialiased">
       <AuthSessionWatcher />
+      <AdminNewOrderModal />
       {mobileNavOpen ? (
         <button
           type="button"

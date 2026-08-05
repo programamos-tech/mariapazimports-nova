@@ -24,7 +24,7 @@ export function StoreHeaderActions({
   userIconLabel: string;
   guestOpensAuthDrawer?: boolean;
 }) {
-  const { openCart } = useStoreCartDrawer();
+  const { openCart, prefetchCart } = useStoreCartDrawer();
   const { openLogin } = useStoreAuthModals();
 
   return (
@@ -32,6 +32,8 @@ export function StoreHeaderActions({
       <button
         type="button"
         onClick={() => openCart()}
+        onPointerEnter={prefetchCart}
+        onFocus={prefetchCart}
         aria-label={
           cartItemCount > 0
             ? `Bolsa de compras, ${cartItemCount} productos. Abrir bolsa`

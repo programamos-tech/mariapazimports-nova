@@ -5,6 +5,7 @@ import {
   ensureStoreCustomerLinked,
   isDocumentRegisteredToAnotherAccount,
 } from "@/lib/store-customer-service";
+import { notifyStoreCustomerRegistered } from "@/lib/admin-notifications";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type RegisterStoreCustomerResult =
@@ -72,12 +73,20 @@ export async function registerStoreCustomer(input: {
     return { ok: false, error: "auth", message: error?.message };
   }
 
-  await ensureStoreCustomerLinked(
+  const customerId = await ensureStoreCustomerLinked(
     created.user.id,
     email,
     name,
     documentNorm,
   );
+
+  if (customerId) {
+    await notifyStoreCustomerRegistered({
+      customerId,
+      name,
+      email,
+    });
+  }
 
   return { ok: true };
 }

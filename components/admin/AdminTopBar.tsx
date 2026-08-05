@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
+import { AdminNotificationsBell } from "@/components/admin/AdminNotificationsBell";
 import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminUserMenu } from "@/components/admin/AdminUserMenu";
 import { CustomerAvatar } from "@/components/admin/CustomerAvatar";
@@ -31,15 +32,6 @@ function IconSliders() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" className="size-5" aria-hidden>
       <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M9 17h6M7 13H5m14-4h-4" />
-    </svg>
-  );
-}
-
-function IconBell() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.65} strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden>
-      <path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7" />
-      <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
     </svg>
   );
 }
@@ -82,8 +74,9 @@ export function AdminTopBar({ onMenuClick, menuOpen }: AdminTopBarProps = {}) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <div className="lg:hidden">
+          <div className="flex items-center gap-0.5 lg:hidden">
             <AdminThemeToggle />
+            <AdminNotificationsBell />
           </div>
           <Link
             href="/admin/ventas/nueva"
@@ -115,13 +108,7 @@ export function AdminTopBar({ onMenuClick, menuOpen }: AdminTopBarProps = {}) {
             >
               <IconSliders />
             </Link>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-              title="Notificaciones"
-            >
-              <IconBell />
-            </button>
+            <AdminNotificationsBell />
           </div>
 
           <AdminUserMenu

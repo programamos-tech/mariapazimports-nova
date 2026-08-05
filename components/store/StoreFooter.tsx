@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StoreLogo } from "@/components/store/StoreLogo";
+import { StoreWompiPaymentLogos } from "@/components/store/StoreWompiPaymentLogos";
 import { storeShellClass } from "@/lib/store-layout";
 import {
   storeCopyrightHolder,
@@ -95,6 +96,14 @@ export function StoreFooter() {
               </ul>
             </div>
           </div>
+        </div>
+
+        <div className="mt-12 border-t border-stone-200/80 pt-8 sm:mt-14">
+          <p className={footerColumnTitle}>Medios de pago</p>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-stone-500">
+            Pagos seguros con Wompi: tarjetas, PSE, Nequi y Bancolombia.
+          </p>
+          <StoreWompiPaymentLogos className="mt-5" />
         </div>
       </div>
 
