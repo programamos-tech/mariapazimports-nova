@@ -4,8 +4,8 @@ import Image from "next/image";
 import { Heart, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { MouseEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addToCartFromForm, buyNowFromDetail } from "@/app/actions/cart";
 import { useStoreCartDrawer } from "@/components/store/StoreCartDrawerProvider";
 import { useStoreFavorites } from "@/components/store/StoreFavoritesProvider";
@@ -127,6 +127,8 @@ export function ProductDetailView({
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [imageZoomed, setImageZoomed] = useState(false);
+  const [imageZoomOrigin, setImageZoomOrigin] = useState("50% 50%");
 
   const selectedVariant = variants[variantIdx] ?? variants[0] ?? null;
   const effectivePriceCents = selectedVariant?.priceCents ?? priceCents;
@@ -184,7 +186,37 @@ export function ProductDetailView({
     setVariantIdx(idx);
     setGalleryIdx(0);
     setQty(1);
+    setImageZoomed(false);
   };
+
+  const imageZoomFinePointerRef = useRef(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const sync = () => {
+      imageZoomFinePointerRef.current = mq.matches;
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const onGalleryImageZoomMove = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (!imageZoomFinePointerRef.current) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setImageZoomOrigin(`${x}% ${y}%`);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setImageZoomed(false);
+    setImageZoomOrigin("50% 50%");
+  }, [galleryIdx, variantIdx]);
 
   const selectedVariantLabel = selectedVariant?.label ?? null;
   const selectedVariantId = selectedVariant?.id ?? "";
@@ -234,28 +266,50 @@ export function ProductDetailView({
   return (
     <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-10 xl:gap-12">
       {/* Imagen */}
-      <div className="space-y-2 lg:space-y-0">
-        <div className="relative w-full overflow-hidden bg-white">
-          {showSsrHero ? (
-            ssrHero
-          ) : heroImageUrl ? (
-            <ProductDetailHeroImage
-              src={heroImageUrl}
-              alt={
-                selectedVariantLabel
-                  ? `${name} — ${selectedVariantLabel}`
-                  : name
-              }
-              priority={variantIdx === 0 && galleryIdx === 0}
-              fetchPriority={
-                variantIdx === 0 && galleryIdx === 0 ? "high" : "auto"
-              }
-            />
-          ) : (
-            <div className="flex aspect-[4/5] w-full items-center justify-center bg-[#f5f5f4] text-6xl text-stone-300 lg:aspect-auto lg:h-[min(70svh,calc(100svh-8.75rem))]">
-              ◆
-            </div>
-          )}
+      <div>
+        <div
+          className="relative w-full overflow-hidden bg-white [@media(hover:hover)_and_(pointer:fine)]:cursor-zoom-in"
+          onMouseEnter={() => {
+            if (imageZoomFinePointerRef.current) setImageZoomed(true);
+          }}
+          onMouseLeave={() => {
+            setImageZoomed(false);
+            setImageZoomOrigin("50% 50%");
+          }}
+          onMouseMove={onGalleryImageZoomMove}
+        >
+          <div
+            className={
+              imageZoomed
+                ? "will-change-transform"
+                : "transition-transform duration-200 ease-out"
+            }
+            style={{
+              transform: imageZoomed ? "scale(1.85)" : "scale(1)",
+              transformOrigin: imageZoomOrigin,
+            }}
+          >
+            {showSsrHero ? (
+              ssrHero
+            ) : heroImageUrl ? (
+              <ProductDetailHeroImage
+                src={heroImageUrl}
+                alt={
+                  selectedVariantLabel
+                    ? `${name} — ${selectedVariantLabel}`
+                    : name
+                }
+                priority={variantIdx === 0 && galleryIdx === 0}
+                fetchPriority={
+                  variantIdx === 0 && galleryIdx === 0 ? "high" : "auto"
+                }
+              />
+            ) : (
+              <div className="flex aspect-[4/5] w-full items-center justify-center bg-[#f5f5f4] text-6xl text-stone-300 lg:aspect-auto lg:h-[min(70svh,calc(100svh-8.75rem))]">
+                ◆
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => toggle(productId)}
@@ -278,7 +332,7 @@ export function ProductDetailView({
               <button
                 type="button"
                 onClick={() => stepGallery(-1)}
-                className="absolute left-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:left-4"
+                className="absolute left-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:left-4"
                 aria-label="Imagen anterior"
               >
                 ‹
@@ -286,53 +340,62 @@ export function ProductDetailView({
               <button
                 type="button"
                 onClick={() => stepGallery(1)}
-                className="absolute right-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:right-4"
+                className="absolute right-3 top-1/2 z-20 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-lg leading-none text-stone-700 shadow-md ring-1 ring-stone-200/80 transition hover:bg-white sm:right-4"
                 aria-label="Imagen siguiente"
               >
                 ›
               </button>
+
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-white via-white/90 to-transparent pt-10 pb-3">
+                <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">
+                  {galleryIdx + 1} / {galleryCount} fotos
+                </p>
+                <div
+                  className="pointer-events-auto flex justify-center gap-1.5 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  role="tablist"
+                  aria-label="Galería del producto"
+                >
+                  {activeGalleryUrls.map((url, i) => {
+                    const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
+                    const selected = galleryIdx === i;
+                    return (
+                      <button
+                        key={`${url}-${i}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => setGalleryIdx(i)}
+                        onMouseEnter={() => {
+                          const next = productHeroImageUrl(url);
+                          if (next) {
+                            const img = new window.Image();
+                            img.src = next;
+                          }
+                        }}
+                        className={
+                          selected
+                            ? "relative size-12 shrink-0 overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-1 sm:size-14"
+                            : "relative size-12 shrink-0 overflow-hidden bg-white opacity-80 ring-1 ring-stone-200 transition hover:opacity-100 hover:ring-stone-400 sm:size-14"
+                        }
+                        aria-label={`Ver foto ${i + 1} de ${galleryCount}`}
+                      >
+                        <Image
+                          src={thumbUrl}
+                          alt=""
+                          fill
+                          loading="lazy"
+                          className="object-contain object-center"
+                          sizes="56px"
+                          unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </>
           ) : null}
         </div>
-
-        {activeGalleryUrls.length > 1 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-1.5 lg:hidden">
-            {activeGalleryUrls.map((url, i) => {
-              const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
-              return (
-                <button
-                  key={`${url}-${i}`}
-                  type="button"
-                  onClick={() => setGalleryIdx(i)}
-                  onMouseEnter={() => {
-                    const next = productHeroImageUrl(url);
-                    if (next) {
-                      const img = new window.Image();
-                      img.src = next;
-                    }
-                  }}
-                  className={
-                    galleryIdx === i
-                      ? "relative aspect-square w-full overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-1"
-                      : "relative aspect-square w-full overflow-hidden bg-white ring-1 ring-stone-200 transition hover:ring-stone-400"
-                  }
-                  aria-label={`Ver imagen ${i + 1} de ${selectedVariantLabel ?? name}`}
-                  aria-current={galleryIdx === i ? "true" : undefined}
-                >
-                  <Image
-                    src={thumbUrl}
-                    alt=""
-                    fill
-                    loading="lazy"
-                    className="object-contain object-center"
-                    sizes="64px"
-                    unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
-                  />
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
       </div>
 
       {/* Datos — en desktop cabe en el primer viewport */}
