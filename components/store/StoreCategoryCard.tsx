@@ -17,10 +17,6 @@ export function StoreCategoryCard({
 }) {
   const href = `/products?category=${encodeURIComponent(category.id)}`;
   const { src, srcSet } = productCardImageSources(category.imageSrc);
-  const countLabel =
-    category.productCount > 0
-      ? `${category.productCount} producto${category.productCount === 1 ? "" : "s"}`
-      : null;
 
   return (
     <li className="min-w-0">
@@ -28,11 +24,7 @@ export function StoreCategoryCard({
         <Link
           href={href}
           className="block outline-none focus-visible:ring-2 focus-visible:ring-stone-400/60 focus-visible:ring-offset-2"
-          aria-label={
-            countLabel
-              ? `${category.name}, ${countLabel}`
-              : category.name
-          }
+          aria-label={category.name}
         >
           <div
             className={`relative w-full overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS} ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS}`}
@@ -54,16 +46,9 @@ export function StoreCategoryCard({
             )}
           </div>
 
-          <div className="mt-2.5 text-center sm:mt-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition group-hover/cat:text-stone-700 sm:text-[11px] sm:tracking-[0.16em]">
-              <span className="line-clamp-2">{category.name}</span>
-            </p>
-            {countLabel ? (
-              <p className="mt-0.5 text-[10px] tabular-nums text-stone-400 sm:text-[11px]">
-                {countLabel}
-              </p>
-            ) : null}
-          </div>
+          <p className="mt-2.5 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-900 transition group-hover/cat:text-stone-700 sm:mt-3 sm:text-[11px] sm:tracking-[0.16em]">
+            <span className="line-clamp-2">{category.name}</span>
+          </p>
         </Link>
       </article>
     </li>
