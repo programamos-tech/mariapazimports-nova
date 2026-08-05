@@ -271,8 +271,8 @@ function buildBodies(
 }
 
 /**
- * Correo al comprador + BCC a la tienda (copia).
- * Si no hay email del cliente, solo avisa a la tienda.
+ * Correo al comprador + aviso aparte a la tienda.
+ * (Gmail no entrega BCC cuando From y BCC son la misma cuenta SMTP.)
  */
 export async function sendOrderReceivedEmails(
   payload: OrderReceivedEmailPayload,
@@ -287,29 +287,34 @@ export async function sendOrderReceivedEmails(
   }
 
   const customerEmail = payload.customerEmail.trim().toLowerCase();
-  const copyTo = orderNotifyCopyTo();
+  const copyTo = orderNotifyCopyTo()?.trim().toLowerCase() || "";
+  const hasCustomer = Boolean(customerEmail && customerEmail.includes("@"));
 
-  if (customerEmail && customerEmail.includes("@")) {
+  if (hasCustomer) {
     const { subject, text, html } = buildBodies(payload);
     await sendStoreEmail({
       to: customerEmail,
-      bcc: copyTo && copyTo.toLowerCase() !== customerEmail ? copyTo : undefined,
       subject,
       text,
       html,
     });
+  }
+
+  if (!copyTo || (hasCustomer && copyTo === customerEmail)) {
     return;
   }
 
-  if (copyTo) {
-    const { subject, text, html, orderRef } = buildBodies(payload, {
-      includeAdminLink: true,
-    });
-    await sendStoreEmail({
-      to: copyTo,
-      subject: `[Sin email cliente] ${storeBrand} · Pedido #${orderRef}`,
-      text: `El pedido #${orderRef} se creó sin email de cliente.\n\n${text}`,
-      html,
-    });
-  }
+  const { subject, text, html, orderRef } = buildBodies(payload, {
+    includeAdminLink: true,
+  });
+  await sendStoreEmail({
+    to: copyTo,
+    subject: hasCustomer
+      ? `[Nuevo pedido] ${storeBrand} · #${orderRef}`
+      : `[Sin email cliente] ${storeBrand} · Pedido #${orderRef}`,
+    text: hasCustomer
+      ? `Nuevo pedido #${orderRef} de ${payload.customerName.trim() || customerEmail} (${customerEmail}).\n\n${text}`
+      : `El pedido #${orderRef} se creó sin email de cliente.\n\n${text}`,
+    html,
+  });
 }
