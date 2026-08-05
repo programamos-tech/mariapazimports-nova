@@ -17,9 +17,12 @@ export const STORE_PRODUCT_IMAGE_IMG_CLASS =
 /** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
 export const STORE_PRODUCT_IMAGE_FRAME_CLASS = "";
 
-/** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
+/**
+ * Marco del hero en ficha: 4:5 en móvil; en desktop se limita a la altura
+ * visible para que título + compra + acordeones quepan sin scroll de página.
+ */
 export const STORE_PRODUCT_DETAIL_HERO_FRAME_CLASS =
-  STORE_PRODUCT_IMAGE_FRAME_CLASS;
+  `relative overflow-hidden ${STORE_PRODUCT_CARD_IMAGE_BG_CLASS} aspect-[4/5] lg:aspect-auto lg:h-[min(70svh,calc(100svh-8.75rem))]`;
 
 /** @deprecated Usar `STORE_PRODUCT_IMAGE_IMG_CLASS` */
 export const STORE_PRODUCT_DETAIL_HERO_IMG_CLASS =

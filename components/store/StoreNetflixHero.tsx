@@ -96,19 +96,19 @@ export function StoreNetflixHero() {
         aria-labelledby="store-hero-intro-heading"
       >
         <div className="mx-auto max-w-3xl">
-          <h1
-            id="store-hero-intro-heading"
-            className="text-[clamp(2rem,6vw,2.85rem)] font-bold tracking-tight text-stone-900"
-          >
-            María Paz Imports
-          </h1>
-
-          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-stone-900 sm:mt-5 sm:text-xs sm:tracking-[0.2em]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-stone-900 sm:text-xs sm:tracking-[0.2em]">
             Tienda online * Personal shopper
           </p>
           <p className="mt-2 text-[14px] font-bold leading-snug normal-case tracking-normal text-stone-800 sm:text-[15px]">
             productos entrega inmediata y encargos
           </p>
+
+          <h1
+            id="store-hero-intro-heading"
+            className="mt-4 text-[clamp(2rem,6vw,2.85rem)] font-bold tracking-tight text-stone-900 sm:mt-5"
+          >
+            María Paz Imports
+          </h1>
 
           <p className="mx-auto mt-5 whitespace-pre-line text-[11px] font-bold uppercase leading-snug tracking-[0.18em] text-stone-900 sm:mt-6 sm:text-xs sm:tracking-[0.2em]">
             {`Encuentro lo extraordinario\npara ti`}

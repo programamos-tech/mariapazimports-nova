@@ -66,7 +66,7 @@ export function ProductImportOriginMark({
   if (variant === "detail") {
     return (
       <p
-        className={`mt-2.5 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500 ${className}`.trim()}
+        className={`mt-1.5 inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-500 lg:mt-1 ${className}`.trim()}
         title={label}
       >
         <Flag className="h-[11px] w-4 shrink-0 rounded-[1px] opacity-90 shadow-[0_0_0_1px_rgba(0,0,0,0.08)]" />

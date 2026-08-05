@@ -128,9 +128,9 @@ export default async function ProductDetailPage({ params }: Props) {
         />
       ) : null}
       <div
-        className={`${storeShellClass} pb-10 pt-4 sm:pb-12 sm:pt-5 lg:pb-14 lg:pt-6`}
+        className={`${storeShellClass} pb-6 pt-3 sm:pb-8 sm:pt-4 lg:pb-4 lg:pt-3`}
       >
-      <nav aria-label="Migas de pan" className="mb-5 text-[11px] uppercase tracking-[0.12em] text-stone-400">
+      <nav aria-label="Migas de pan" className="mb-3 text-[10px] uppercase tracking-[0.12em] text-stone-400 lg:mb-2">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <li>
             <Link href="/" className="transition hover:text-stone-700">

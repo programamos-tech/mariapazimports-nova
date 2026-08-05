@@ -80,18 +80,20 @@ function AccordionSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-4 py-4 text-left transition hover:opacity-90"
+        className="flex w-full items-center justify-between gap-4 py-2.5 text-left transition hover:opacity-90 lg:py-2"
         aria-expanded={open}
       >
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900">
           {title}
         </span>
-        <span className="text-lg font-light leading-none text-stone-400 tabular-nums">
+        <span className="text-base font-light leading-none text-stone-400 tabular-nums">
           {open ? "−" : "+"}
         </span>
       </button>
       {open ? (
-        <div className="pb-5 text-sm leading-relaxed text-stone-600">{children}</div>
+        <div className="pb-3 text-[13px] leading-relaxed text-stone-600 lg:pb-2.5">
+          {children}
+        </div>
       ) : null}
     </div>
   );
@@ -188,7 +190,7 @@ export function ProductDetailView({
   const selectedVariantId = selectedVariant?.id ?? "";
 
   const descriptionText = description?.trim() ?? "";
-  const descPreviewLimit = 280;
+  const descPreviewLimit = 140;
   const showDescToggle = descriptionText.length > descPreviewLimit;
   const descriptionDisplayed =
     descriptionText &&
@@ -230,9 +232,9 @@ export function ProductDetailView({
   }, [canGalleryNav, stepGallery]);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 lg:items-start">
+    <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-10 xl:gap-12">
       {/* Imagen */}
-      <div className="space-y-3">
+      <div className="space-y-2 lg:space-y-0">
         <div className="relative w-full overflow-hidden bg-white">
           {showSsrHero ? (
             ssrHero
@@ -250,27 +252,27 @@ export function ProductDetailView({
               }
             />
           ) : (
-            <div className="flex aspect-[4/5] w-full items-center justify-center bg-[#f5f5f4] text-6xl text-stone-300">
+            <div className="flex aspect-[4/5] w-full items-center justify-center bg-[#f5f5f4] text-6xl text-stone-300 lg:aspect-auto lg:h-[min(70svh,calc(100svh-8.75rem))]">
               ◆
             </div>
           )}
           <button
-          type="button"
-          onClick={() => toggle(productId)}
-          className={
-            favorite
-              ? "absolute right-4 top-4 z-10 flex size-10 items-center justify-center text-rose-500 transition hover:opacity-70"
-              : "absolute right-4 top-4 z-10 flex size-10 items-center justify-center text-stone-700 transition hover:text-stone-900 hover:opacity-70"
-          }
-          aria-pressed={favorite}
-          aria-label={favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
-        >
-          <Heart
-            className="size-[18px]"
-            strokeWidth={1.35}
-            fill={favorite ? "currentColor" : "none"}
-          />
-        </button>
+            type="button"
+            onClick={() => toggle(productId)}
+            className={
+              favorite
+                ? "absolute right-3 top-3 z-10 flex size-9 items-center justify-center text-rose-500 transition hover:opacity-70"
+                : "absolute right-3 top-3 z-10 flex size-9 items-center justify-center text-stone-700 transition hover:text-stone-900 hover:opacity-70"
+            }
+            aria-pressed={favorite}
+            aria-label={favorite ? "Quitar de favoritos" : "Guardar en favoritos"}
+          >
+            <Heart
+              className="size-[18px]"
+              strokeWidth={1.35}
+              fill={favorite ? "currentColor" : "none"}
+            />
+          </button>
           {canGalleryNav ? (
             <>
               <button
@@ -294,62 +296,62 @@ export function ProductDetailView({
         </div>
 
         {activeGalleryUrls.length > 1 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-2 sm:gap-2.5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-1.5 lg:hidden">
             {activeGalleryUrls.map((url, i) => {
               const thumbUrl = productDisplayImageUrl(url, "thumb") ?? url;
               return (
-              <button
-                key={`${url}-${i}`}
-                type="button"
-                onClick={() => setGalleryIdx(i)}
-                onMouseEnter={() => {
-                  const next = productHeroImageUrl(url);
-                  if (next) {
-                    const img = new window.Image();
-                    img.src = next;
+                <button
+                  key={`${url}-${i}`}
+                  type="button"
+                  onClick={() => setGalleryIdx(i)}
+                  onMouseEnter={() => {
+                    const next = productHeroImageUrl(url);
+                    if (next) {
+                      const img = new window.Image();
+                      img.src = next;
+                    }
+                  }}
+                  className={
+                    galleryIdx === i
+                      ? "relative aspect-square w-full overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-1"
+                      : "relative aspect-square w-full overflow-hidden bg-white ring-1 ring-stone-200 transition hover:ring-stone-400"
                   }
-                }}
-                className={
-                  galleryIdx === i
-                    ? "relative aspect-square w-full overflow-hidden bg-white ring-2 ring-stone-900 ring-offset-2"
-                    : "relative aspect-square w-full overflow-hidden bg-white ring-1 ring-stone-200 transition hover:ring-stone-400"
-                }
-                aria-label={`Ver imagen ${i + 1} de ${selectedVariantLabel ?? name}`}
-                aria-current={galleryIdx === i ? "true" : undefined}
-              >
-                <Image
-                  src={thumbUrl}
-                  alt=""
-                  fill
-                  loading="lazy"
-                  className="object-contain object-center"
-                  sizes="80px"
-                  unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
-                />
-              </button>
+                  aria-label={`Ver imagen ${i + 1} de ${selectedVariantLabel ?? name}`}
+                  aria-current={galleryIdx === i ? "true" : undefined}
+                >
+                  <Image
+                    src={thumbUrl}
+                    alt=""
+                    fill
+                    loading="lazy"
+                    className="object-contain object-center"
+                    sizes="64px"
+                    unoptimized={shouldUseUnoptimizedImage(thumbUrl)}
+                  />
+                </button>
               );
             })}
           </div>
         ) : null}
       </div>
 
-      {/* Datos */}
-      <div className="flex min-w-0 flex-col lg:max-w-xl lg:pt-2">
-        <h1 className="text-xl font-semibold uppercase leading-snug tracking-[0.06em] text-stone-900 sm:text-2xl">
+      {/* Datos — en desktop cabe en el primer viewport */}
+      <div className="flex min-w-0 flex-col lg:max-w-xl lg:justify-between lg:self-stretch lg:py-0">
+        <h1 className="text-lg font-semibold uppercase leading-snug tracking-[0.06em] text-stone-900 sm:text-xl lg:text-[1.35rem]">
           {name}
         </h1>
         <ProductImportOriginMark origin={importOrigin} variant="detail" />
 
-        <div className="mt-4">
+        <div className="mt-2.5 lg:mt-2">
           {hasCouponPrice ? (
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-stone-500">
+            <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wide text-stone-500">
               −{pct}% con cupón al pagar
             </p>
           ) : null}
-          <p className="text-lg font-normal tabular-nums text-stone-900 sm:text-xl">
+          <p className="text-base font-normal tabular-nums text-stone-900 sm:text-lg lg:text-xl">
             {hasCouponPrice ? (
               <>
-                <span className="mr-2 text-base text-stone-400 line-through decoration-stone-300">
+                <span className="mr-2 text-sm text-stone-400 line-through decoration-stone-300">
                   {formatCop(effectivePriceCents)}
                 </span>
                 <span>{formatCop(displayPriceCents)}</span>
@@ -359,7 +361,7 @@ export function ProductDetailView({
             )}
           </p>
           {hasVat ? (
-            <p className="mt-2 text-[13px] leading-relaxed text-stone-600">
+            <p className="mt-1 text-[12px] leading-snug text-stone-600">
               <span className="text-stone-500">Sin IVA:</span>{" "}
               {formatCop(netCents)}
               <span className="mx-2 text-stone-300" aria-hidden>
@@ -371,17 +373,17 @@ export function ProductDetailView({
           ) : null}
         </div>
 
-        <div className="mt-5 flex items-center gap-2">
+        <div className="mt-2.5 flex items-center gap-2 lg:mt-2">
           <span className="flex text-stone-900" aria-hidden>
             {Array.from({ length: 5 }, (_, i) => (
               <Star
                 key={i}
-                className="size-[15px] fill-current"
+                className="size-[13px] fill-current"
                 strokeWidth={0}
               />
             ))}
           </span>
-          <span className="text-sm tabular-nums text-stone-500">({reviews})</span>
+          <span className="text-xs tabular-nums text-stone-500">({reviews})</span>
         </div>
 
         {showVariantPicker ? (
@@ -394,35 +396,35 @@ export function ProductDetailView({
         ) : null}
 
         {outOfStock ? (
-          <p className="mt-6 border-t border-stone-200/80 pt-6 text-sm font-medium uppercase tracking-wide text-stone-500">
+          <p className="mt-4 border-t border-stone-200/80 pt-4 text-sm font-medium uppercase tracking-wide text-stone-500">
             Agotado
           </p>
         ) : null}
 
         {colorOptions.length > 0 ? (
-          <div className="mt-8">
-            <div className="flex flex-wrap gap-2.5">
+          <div className="mt-4 lg:mt-3">
+            <div className="flex flex-wrap gap-2">
               {colorOptions.map((color, i) => (
                 <button
                   key={`${color}-${i}`}
                   type="button"
                   onClick={() => setColorIdx(i)}
-                  className={`flex size-10 items-center justify-center rounded-full border-2 transition ${
+                  className={`flex size-8 items-center justify-center rounded-full border-2 transition ${
                     colorIdx === i
-                      ? "border-stone-900 ring-2 ring-stone-900 ring-offset-2"
+                      ? "border-stone-900 ring-2 ring-stone-900 ring-offset-1"
                       : "border-stone-200 hover:border-stone-400"
                   }`}
                   aria-pressed={colorIdx === i}
                   aria-label={`Color ${color}`}
                 >
                   <span
-                    className={`size-6 rounded-full ${productColorSwatchClass(color)}`}
+                    className={`size-5 rounded-full ${productColorSwatchClass(color)}`}
                   />
                 </button>
               ))}
             </div>
             {selectedColorLabel ? (
-              <p className="mt-3 text-[13px] text-stone-600">
+              <p className="mt-2 text-[12px] text-stone-600">
                 <span className="text-stone-500">Color:</span>{" "}
                 {selectedColorLabel}
               </p>
@@ -431,7 +433,7 @@ export function ProductDetailView({
         ) : null}
 
         {!outOfStock ? (
-          <form className="mt-10 space-y-4">
+          <form className="mt-5 space-y-2.5 lg:mt-4 lg:space-y-2">
             <input type="hidden" name="productId" value={productId} />
             <input type="hidden" name="quantity" value={String(safeQty)} />
             <input
@@ -440,7 +442,7 @@ export function ProductDetailView({
               value={selectedVariantId}
             />
 
-            <div className="flex max-w-xs items-center justify-between gap-4 border-b border-stone-200 pb-3">
+            <div className="flex max-w-xs items-center justify-between gap-4 border-b border-stone-200 pb-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-600">
                 Cantidad
               </span>
@@ -478,7 +480,7 @@ export function ProductDetailView({
                 router.refresh();
                 openCart();
               }}
-              className="w-full bg-stone-900 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800"
+              className="w-full bg-stone-900 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-stone-800 lg:py-2.5"
             >
               Añadir a la bolsa
             </button>
@@ -486,23 +488,23 @@ export function ProductDetailView({
             <button
               type="submit"
               formAction={buyNowFromDetail}
-              className="w-full bg-transparent py-2 text-center text-sm text-stone-600 underline decoration-stone-300 underline-offset-[6px] transition hover:text-stone-900"
+              className="w-full bg-transparent py-1.5 text-center text-sm text-stone-600 underline decoration-stone-300 underline-offset-[6px] transition hover:text-stone-900"
             >
               Comprar ahora
             </button>
           </form>
         ) : null}
 
-        <div className="mt-12">
-          <AccordionSection title="Descripción" defaultOpen>
+        <div className="mt-5 lg:mt-4">
+          <AccordionSection title="Descripción">
             {descriptionText ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <p className="whitespace-pre-wrap">{descriptionDisplayed}</p>
                 {showDescToggle ? (
                   <button
                     type="button"
                     onClick={() => setDescExpanded((v) => !v)}
-                    className="text-sm font-medium text-stone-900 underline decoration-stone-400 underline-offset-4"
+                    className="text-[13px] font-medium text-stone-900 underline decoration-stone-400 underline-offset-4"
                   >
                     {descExpanded ? "Ver menos" : "Leer más"}
                   </button>
@@ -517,7 +519,7 @@ export function ProductDetailView({
           </AccordionSection>
 
           <AccordionSection title="Detalles">
-            <ul className="list-inside list-disc space-y-2 text-stone-600">
+            <ul className="list-inside list-disc space-y-1.5 text-stone-600">
               {outOfStock ? (
                 <li>
                   <span className="text-stone-800">Estado:</span> Agotado
@@ -565,14 +567,20 @@ export function ProductDetailView({
           </AccordionSection>
         </div>
 
-        <p className="mt-10 text-[13px] text-stone-500">
-          <Link href="/products" className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950">
+        <p className="mt-4 text-[12px] text-stone-500 lg:mt-3">
+          <Link
+            href="/products"
+            className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950"
+          >
             Ver más
           </Link>
           <span className="mx-2 text-stone-300" aria-hidden>
             |
           </span>
-          <Link href="/products" className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950">
+          <Link
+            href="/products"
+            className="text-stone-800 underline decoration-stone-300 underline-offset-4 hover:text-stone-950"
+          >
             Productos
           </Link>
         </p>
