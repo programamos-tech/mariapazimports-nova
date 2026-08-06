@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { productInputOnWhiteClass } from "@/components/admin/product-form-primitives";
+import { CategorySelectOptions } from "@/components/admin/CategorySelectOptions";
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; parent_id?: string | null };
 
 type Props = {
   defaultQ: string;
