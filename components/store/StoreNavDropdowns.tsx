@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CaretDown } from "@phosphor-icons/react/dist/csr/CaretDown";
 import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
@@ -15,10 +16,21 @@ import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
 import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
 
 const linkRowClass =
-  "flex items-center justify-between gap-4 border-b border-stone-200 py-4 text-left transition hover:bg-stone-50";
+  "flex min-w-0 flex-1 items-center justify-between gap-3 py-4 text-left transition hover:bg-stone-50";
 
 const linkLabelClass =
   "text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900";
+
+function readActiveCategoryId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return (
+      new URLSearchParams(window.location.search).get("category")?.trim() ?? ""
+    );
+  } catch {
+    return "";
+  }
+}
 
 export function StoreNavDropdowns({
   menuCategories,
@@ -35,6 +47,8 @@ export function StoreNavDropdowns({
   const { openLogin } = useStoreAuthModals();
   const [open, setOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [activeCategoryId, setActiveCategoryId] = useState("");
   const baseId = useId();
 
   const categoriesWithProducts = menuCategories.filter((c) => c.productCount > 0);
@@ -43,7 +57,36 @@ export function StoreNavDropdowns({
     setPortalTarget(document.body);
   }, []);
 
+  /** Al abrir el menú, expandí la categoría activa (padre o hija). */
+  useEffect(() => {
+    if (!open) return;
+    const activeId = readActiveCategoryId();
+    setActiveCategoryId(activeId);
+    if (!activeId) return;
+    const parent = menuCategories.find(
+      (c) =>
+        c.productCount > 0 &&
+        (c.id === activeId || c.children.some((ch) => ch.id === activeId)),
+    );
+    if (!parent || parent.children.length === 0) return;
+    setExpandedIds((prev) => {
+      if (prev.has(parent.id)) return prev;
+      const next = new Set(prev);
+      next.add(parent.id);
+      return next;
+    });
+  }, [open, menuCategories]);
+
   const close = useCallback(() => setOpen(false), []);
+
+  const toggleExpanded = useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -109,31 +152,88 @@ export function StoreNavDropdowns({
               </p>
             ) : (
               <ul className="border-t border-stone-200">
-                {categoriesWithProducts.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      href={`/products?category=${c.id}`}
-                      onClick={close}
-                      className={linkRowClass}
-                    >
-                      <span className={linkLabelClass}>{c.name}</span>
-                      <CaretRight
-                        className="size-4 shrink-0 text-stone-400"
-                        weight={STORE_HEADER_ICON_WEIGHT}
-                        aria-hidden
-                      />
-                    </Link>
-                    {c.children.length > 0 ? (
-                      <ul className="border-b border-stone-100 bg-stone-50/60">
-                        {c.children.map((child) => (
-                          <li key={child.id}>
-                            <Link
-                              href={`/products?category=${child.id}`}
-                              onClick={close}
-                              className="flex items-center justify-between gap-4 py-3 pl-5 pr-0 text-left transition hover:bg-stone-100/80"
+                {categoriesWithProducts.map((c) => {
+                  const hasSubs = c.children.length > 0;
+                  const expanded = expandedIds.has(c.id);
+                  const parentHref = `/products?category=${c.id}`;
+                  const parentActive = activeCategoryId === c.id;
+
+                  return (
+                    <li key={c.id} className="border-b border-stone-200">
+                      <div className="flex items-stretch">
+                        {hasSubs ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(c.id)}
+                            className="flex min-w-0 flex-1 items-center justify-between gap-3 py-4 text-left transition hover:bg-stone-50"
+                            aria-expanded={expanded}
+                            aria-controls={`${baseId}-subs-${c.id}`}
+                          >
+                            <span
+                              className={`${linkLabelClass} ${
+                                parentActive
+                                  ? "underline decoration-stone-400 underline-offset-4"
+                                  : ""
+                              }`}
                             >
-                              <span className="text-[12px] font-medium uppercase tracking-[0.05em] text-stone-600">
-                                {child.name}
+                              {c.name}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 pr-1 text-stone-400">
+                              <span className="text-[10px] font-medium uppercase tracking-[0.06em] text-stone-400">
+                                {expanded ? "Ocultar" : "Ver"}
+                              </span>
+                              <CaretDown
+                                className={`size-4 shrink-0 transition-transform duration-200 ${
+                                  expanded ? "rotate-180" : ""
+                                }`}
+                                weight={STORE_HEADER_ICON_WEIGHT}
+                                aria-hidden
+                              />
+                            </span>
+                          </button>
+                        ) : (
+                          <Link
+                            href={parentHref}
+                            onClick={close}
+                            className={linkRowClass}
+                          >
+                            <span
+                              className={`${linkLabelClass} ${
+                                parentActive
+                                  ? "underline decoration-stone-400 underline-offset-4"
+                                  : ""
+                              }`}
+                            >
+                              {c.name}
+                            </span>
+                            <CaretRight
+                              className="size-4 shrink-0 text-stone-400"
+                              weight={STORE_HEADER_ICON_WEIGHT}
+                              aria-hidden
+                            />
+                          </Link>
+                        )}
+                      </div>
+
+                      {hasSubs && expanded ? (
+                        <ul
+                          id={`${baseId}-subs-${c.id}`}
+                          className="border-t border-stone-100 bg-stone-50/80"
+                        >
+                          <li>
+                            <Link
+                              href={parentHref}
+                              onClick={close}
+                              className="flex items-center justify-between gap-4 py-3 pl-4 pr-0 text-left transition hover:bg-stone-100/80"
+                            >
+                              <span
+                                className={`text-[12px] font-semibold uppercase tracking-[0.05em] ${
+                                  parentActive
+                                    ? "text-stone-900"
+                                    : "text-stone-600"
+                                }`}
+                              >
+                                Todo {c.name}
                               </span>
                               <CaretRight
                                 className="size-3.5 shrink-0 text-stone-300"
@@ -142,11 +242,38 @@ export function StoreNavDropdowns({
                               />
                             </Link>
                           </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
+                          {c.children.map((child) => {
+                            const childActive = activeCategoryId === child.id;
+                            return (
+                              <li key={child.id}>
+                                <Link
+                                  href={`/products?category=${child.id}`}
+                                  onClick={close}
+                                  className="flex items-center justify-between gap-4 py-3 pl-4 pr-0 text-left transition hover:bg-stone-100/80"
+                                >
+                                  <span
+                                    className={`text-[12px] font-medium uppercase tracking-[0.05em] ${
+                                      childActive
+                                        ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
+                                        : "text-stone-600"
+                                    }`}
+                                  >
+                                    {child.name}
+                                  </span>
+                                  <CaretRight
+                                    className="size-3.5 shrink-0 text-stone-300"
+                                    weight={STORE_HEADER_ICON_WEIGHT}
+                                    aria-hidden
+                                  />
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

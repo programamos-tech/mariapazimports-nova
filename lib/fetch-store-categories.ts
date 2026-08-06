@@ -110,7 +110,8 @@ function loadFromRows(
       sort_order: parent.sort_order ?? 0,
       iconKey: resolveCategoryIconKey(parent.icon_key),
       productCount,
-      children: childItems.filter((c) => c.productCount > 0),
+      // Mostrar todas las subcategorías del árbol (aunque aún no tengan stock).
+      children: childItems,
       ...visual,
     });
   }

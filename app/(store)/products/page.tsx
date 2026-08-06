@@ -1,7 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CatalogListingHero } from "@/components/store/CatalogListingHero";
 import { CatalogPagination } from "@/components/store/CatalogPagination";
-import { CategoryListingHero } from "@/components/store/CategoryListingHero";
 import { StoreBannerCarousel } from "@/components/store/StoreBannerCarousel";
 import { ProductListingCard } from "@/components/store/ProductListingCard";
 import { ProductsListingControls } from "@/components/store/ProductsListingControls";
@@ -34,16 +33,13 @@ import {
 } from "@/lib/store-listing-variant-meta";
 import {
   fetchPublishedProductsForListing,
-  shuffleStoreListingProducts,
   STORE_CATALOG_PAGE_SIZE,
   type StoreListingProductRow,
 } from "@/lib/store-products-listing-query";
 import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
-import { resolveCategoryListingHeroSrc } from "@/lib/category-listing-hero-url";
-import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
-import { CatalogMoreCategories } from "@/components/store/CatalogMoreCategories";
-import { categoryGroupKey } from "@/lib/store-category-group";
+import { buildCategoryTree } from "@/lib/category-tree";
+import { CategorySubnav } from "@/components/store/CategorySubnav";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +108,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     categoryId ?
       supabase
         .from("categories")
-        .select("name,listing_hero_image_path,listing_hero_alt_text")
+        .select("name,parent_id")
         .eq("id", categoryId)
         .maybeSingle()
     : Promise.resolve({ data: null, error: null });
@@ -136,31 +132,18 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   let categoryName: string | null = null;
   let categoryFilterId: string | null = null;
-  let categoryListingHeroPath: string | null = null;
-  let categoryListingHeroAlt: string | null = null;
+  let categoryParentId: string | null = null;
   const cat = categoryLookup.data;
   if (cat?.name) {
     categoryName = cat.name;
     categoryFilterId = categoryId;
-    categoryListingHeroPath =
-      typeof cat.listing_hero_image_path === "string" &&
-      cat.listing_hero_image_path.trim()
-        ? cat.listing_hero_image_path.trim()
-        : null;
-    categoryListingHeroAlt =
-      typeof cat.listing_hero_alt_text === "string" &&
-      cat.listing_hero_alt_text.trim()
-        ? cat.listing_hero_alt_text.trim()
+    categoryParentId =
+      typeof cat.parent_id === "string" && cat.parent_id.trim()
+        ? cat.parent_id.trim()
         : null;
   }
 
-  const categoryHeroResolvedSrc = categoryListingHeroPath
-    ? resolveCategoryListingHeroSrc(categoryListingHeroPath)
-    : null;
   const categoryView = Boolean(categoryFilterId && categoryName);
-  const showCategoryListingHero = Boolean(
-    categoryView && categoryHeroResolvedSrc,
-  );
 
   const filterCategoryIds = categoryFilterId
     ? []
@@ -209,7 +192,6 @@ export default async function ProductsPage({ searchParams }: Props) {
     listingResult,
     cartQtyByProductId,
     couponPctByProductId,
-    homeCategoryCards,
   ] = await Promise.all([
     fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
     categoryView ?
@@ -230,7 +212,6 @@ export default async function ProductsPage({ searchParams }: Props) {
     }),
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
-    categoryView ? fetchHomeCategoryCards(supabase) : Promise.resolve([]),
   ]);
 
   const categoryNameById = new Map(
@@ -277,31 +258,33 @@ export default async function ProductsPage({ searchParams }: Props) {
       p.category_id ? (categoryNameById.get(p.category_id) ?? null) : null,
   }));
 
-  const currentCategoryGroupKey =
-    categoryName ? categoryGroupKey(categoryName) : null;
-  const excludeCategoryIds = new Set(
-    (expandedCategoryIds ?? []).map((id) => id.trim().toLowerCase()),
-  );
-  if (categoryFilterId) {
-    excludeCategoryIds.add(categoryFilterId.trim().toLowerCase());
+  /** Subcategorías del grupo activo (padre o hijo) para el subnav. */
+  let categorySubnav: {
+    parentId: string;
+    parentName: string;
+    activeId: string;
+    children: { id: string; name: string }[];
+  } | null = null;
+  if (categoryFilterId && allCategoryRows?.length) {
+    const tree = buildCategoryTree(
+      allCategoryRows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        parent_id: r.parent_id ?? null,
+        sort_order: r.sort_order ?? 0,
+      })),
+    );
+    const rootId = categoryParentId ?? categoryFilterId;
+    const group = tree.find((g) => g.parent.id === rootId);
+    if (group && group.children.length > 0) {
+      categorySubnav = {
+        parentId: group.parent.id,
+        parentName: group.parent.name,
+        activeId: categoryFilterId,
+        children: group.children.map((c) => ({ id: c.id, name: c.name })),
+      };
+    }
   }
-
-  const moreCategories =
-    categoryView && currentPage >= totalPages
-      ? shuffleStoreListingProducts(
-          homeCategoryCards.filter((c) => {
-            if (c.productCount <= 0) return false;
-            if (excludeCategoryIds.has(c.id.trim().toLowerCase())) return false;
-            if (
-              currentCategoryGroupKey &&
-              categoryGroupKey(c.name) === currentCategoryGroupKey
-            ) {
-              return false;
-            }
-            return true;
-          }),
-        ).slice(0, 3)
-      : [];
 
   const invalidCategory = Boolean(categoryId && !categoryName);
 
@@ -362,24 +345,21 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       ) : null}
 
-      {showCategoryListingHero &&
-      categoryListingHeroPath &&
-      categoryName &&
-      categoryHeroResolvedSrc ? (
-        <CategoryListingHero
-          imagePath={categoryListingHeroPath}
-          title={categoryName}
-          alt={categoryListingHeroAlt}
-        />
-      ) : null}
-
-      {categoryView && categoryName && !showCategoryListingHero ? (
+      {categoryView && categoryName ? (
         <header
           className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
         >
           <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
             {categoryName}
           </h1>
+          {categorySubnav ? (
+            <CategorySubnav
+              parentId={categorySubnav.parentId}
+              parentName={categorySubnav.parentName}
+              activeId={categorySubnav.activeId}
+              subcategories={categorySubnav.children}
+            />
+          ) : null}
         </header>
       ) : null}
 
@@ -481,10 +461,6 @@ export default async function ProductsPage({ searchParams }: Props) {
             />
           </div>
         )}
-
-        {moreCategories.length > 0 ? (
-          <CatalogMoreCategories categories={moreCategories} />
-        ) : null}
       </div>
     </div>
   );
