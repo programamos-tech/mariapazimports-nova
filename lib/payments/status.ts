@@ -44,12 +44,13 @@ export function isFinalPaymentStatus(status: PaymentStatus): boolean {
 /**
  * Transiciones permitidas.
  * Nunca degradar APPROVED a otro estado final.
+ * Mismo estado = no-op (evita reentrar webhook + reconcile).
  */
 export function canTransitionPaymentStatus(
   from: PaymentStatus,
   to: PaymentStatus,
 ): boolean {
-  if (from === to) return true;
+  if (from === to) return false;
   if (from === PaymentStatus.APPROVED) return false;
   if (from === PaymentStatus.PENDING) return true;
   // Estados finales distintos de APPROVED: no reabrir.

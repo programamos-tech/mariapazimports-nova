@@ -303,8 +303,13 @@ export class PaymentService {
       paymentLogger.info("stock deducted after APPROVED", { orderId, source });
     }
 
-    // Solo en la primera transición a APPROVED (canTransition ya evitó reentradas).
-    if (mapped === PaymentStatus.APPROVED && orderId) {
+    // Solo la primera transición a APPROVED (stock_should_deduct del RPC).
+    // Webhook + reconcile del widget no deben mandar el correo dos veces.
+    if (
+      stockShouldDeduct &&
+      mapped === PaymentStatus.APPROVED &&
+      orderId
+    ) {
       try {
         const { sendOrderReceivedEmailsForOrderId } = await import(
           "@/lib/order-email"
