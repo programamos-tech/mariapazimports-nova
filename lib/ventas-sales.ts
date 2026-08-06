@@ -11,7 +11,7 @@ export function ventaFormaPagoLabel(wompiReference: string | null | undefined): 
   if (r === "POS:mixed") return "Mixto";
   if (r === "ONLINE:transfer") return "Transferencia en línea";
   if (r.startsWith("POS:")) return "Mostrador";
-  return "En línea";
+  return "Wompi";
 }
 
 /** Pill de forma de pago (colores para escanear la tabla). */
@@ -55,7 +55,7 @@ export function ventaFormaPagoBadge(
     };
   }
   return {
-    label: "En línea",
+    label: "Wompi",
     className:
       "bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200/90 dark:bg-indigo-950/45 dark:text-indigo-100 dark:ring-indigo-700/50",
   };

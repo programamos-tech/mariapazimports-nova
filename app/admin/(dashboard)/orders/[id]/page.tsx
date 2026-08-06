@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation";
 import { OrderInvoiceDetailView } from "@/components/admin/OrderInvoiceDetailView";
 import { OrderTransferPanel } from "@/components/admin/OrderTransferPanel";
+import { OrderWompiPaymentPanel } from "@/components/admin/OrderWompiPaymentPanel";
 import { getOrderPaymentProofSignedUrl } from "@/app/actions/admin/order-fulfillment";
 import { isOnlineBankTransferOrder } from "@/lib/bank-transfer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ventaNumeroReferencia } from "@/lib/ventas-sales";
+import {
+  isVentaFisica,
+  ventaNumeroReferencia,
+} from "@/lib/ventas-sales";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +27,10 @@ function productRefFromRow(row: ItemRow): string | null {
   const raw = row.products;
   const p = Array.isArray(raw) ? raw[0] : raw;
   if (!p || typeof p !== "object") return null;
-  const ref = "reference" in p && typeof p.reference === "string" ? p.reference.trim() : "";
+  const ref =
+    "reference" in p && typeof p.reference === "string"
+      ? p.reference.trim()
+      : "";
   return ref.length > 0 ? ref : null;
 }
 
@@ -38,12 +45,23 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
   if (!order) notFound();
 
-  const { data: itemsRaw } = await supabase
-    .from("order_items")
-    .select(
-      "id, quantity, unit_price_cents, product_name_snapshot, product_id, products(reference)",
-    )
-    .eq("order_id", id);
+  const [{ data: itemsRaw }, { data: paymentRow }] = await Promise.all([
+    supabase
+      .from("order_items")
+      .select(
+        "id, quantity, unit_price_cents, product_name_snapshot, product_id, products(reference)",
+      )
+      .eq("order_id", id),
+    supabase
+      .from("payments")
+      .select(
+        "reference, provider_transaction_id, status, payment_method_type, status_message, approved_at, amount_in_cents, currency, environment",
+      )
+      .eq("order_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   const items = (itemsRaw ?? []) as unknown as ItemRow[];
 
@@ -63,9 +81,11 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     order.tracking_token != null
       ? `${siteUrl}/pedidos/seguimiento/${String(order.tracking_token)}`
       : null;
+  const paymentMethod =
+    order.payment_method != null ? String(order.payment_method) : null;
   const isBankTransfer = isOnlineBankTransferOrder(
     order.wompi_reference != null ? String(order.wompi_reference) : null,
-    order.payment_method != null ? String(order.payment_method) : null,
+    paymentMethod,
   );
 
   const { data: proofRows } = isBankTransfer
@@ -89,6 +109,59 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     })),
   );
 
+  const wompiReference =
+    order.wompi_reference != null ? String(order.wompi_reference) : null;
+  const wompiTransactionId =
+    order.wompi_transaction_id != null
+      ? String(order.wompi_transaction_id)
+      : paymentRow?.provider_transaction_id != null
+        ? String(paymentRow.provider_transaction_id)
+        : null;
+
+  const isWompiOnline =
+    paymentMethod === "wompi" ||
+    (!isBankTransfer &&
+      !isVentaFisica(wompiReference) &&
+      (paymentRow != null || wompiTransactionId != null));
+
+  const wompiPayment = isWompiOnline
+    ? {
+        reference:
+          paymentRow?.reference != null
+            ? String(paymentRow.reference)
+            : wompiReference,
+        transactionId: wompiTransactionId,
+        status:
+          paymentRow?.status != null
+            ? String(paymentRow.status)
+            : order.status === "paid"
+              ? "APPROVED"
+              : null,
+        paymentMethodType:
+          paymentRow?.payment_method_type != null
+            ? String(paymentRow.payment_method_type)
+            : null,
+        statusMessage:
+          paymentRow?.status_message != null
+            ? String(paymentRow.status_message)
+            : null,
+        approvedAt:
+          paymentRow?.approved_at != null
+            ? String(paymentRow.approved_at)
+            : null,
+        amountInCents:
+          paymentRow?.amount_in_cents != null
+            ? Number(paymentRow.amount_in_cents)
+            : null,
+        currency:
+          paymentRow?.currency != null ? String(paymentRow.currency) : null,
+        environment:
+          paymentRow?.environment != null
+            ? String(paymentRow.environment)
+            : null,
+      }
+    : null;
+
   return (
     <div className="-m-4 bg-zinc-50/70 px-4 py-6 dark:bg-zinc-950/80 md:-m-6 md:px-6 print:m-0 print:bg-transparent print:p-0">
       <OrderInvoiceDetailView
@@ -99,9 +172,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         customerEmail={String(order.customer_email ?? "")}
         totalCents={Number(order.total_cents ?? 0)}
         createdAt={String(order.created_at)}
-        wompiReference={
-          order.wompi_reference != null ? String(order.wompi_reference) : null
-        }
+        wompiReference={wompiReference}
         shippingAddress={
           order.shipping_address != null ? String(order.shipping_address) : null
         }
@@ -122,6 +193,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             : null
         }
         lines={lines}
+      />
+      <OrderWompiPaymentPanel
+        payment={wompiPayment}
+        orderPaymentMethod={paymentMethod}
       />
       <OrderTransferPanel
         orderId={id}

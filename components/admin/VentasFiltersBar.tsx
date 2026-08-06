@@ -132,7 +132,7 @@ export function VentasFiltersBar({ initialQ }: VentasFiltersBarProps) {
             <option value="cash">Efectivo</option>
             <option value="transfer">Transferencia</option>
             <option value="mixed">Mixto</option>
-            <option value="online">En línea</option>
+            <option value="online">Wompi</option>
           </select>
         </div>
       </div>
