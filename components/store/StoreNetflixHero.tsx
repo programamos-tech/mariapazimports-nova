@@ -98,7 +98,7 @@ export function StoreNetflixHero() {
       <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(5.5rem,10vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(6rem,11vh)]">
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center sm:max-w-lg">
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 sm:text-[11px] sm:tracking-[0.24em]">
-            Personal shopper · Originales
+            Tienda en línea · Personal shopper
           </p>
           <h1
             id="store-hero-intro-heading"
