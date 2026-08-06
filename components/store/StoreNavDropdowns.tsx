@@ -196,7 +196,7 @@ export function StoreNavDropdowns({
     createPortal(
       <>
         <div
-          className="fixed inset-0 z-[75] bg-black/40"
+          className="fixed inset-0 z-[90] bg-black/40"
           aria-hidden
           onClick={close}
         />
@@ -206,7 +206,7 @@ export function StoreNavDropdowns({
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${baseId}-shop-drawer-title`}
-          className={`relative fixed inset-y-0 left-0 z-[80] flex h-full ${drawerWidth} flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)]`}
+          className={`fixed inset-y-0 left-0 z-[95] flex h-[100dvh] max-h-[100dvh] ${drawerWidth} flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)]`}
         >
           <div className="flex shrink-0 justify-end px-4 pb-2 pt-4">
             <button
