@@ -86,33 +86,23 @@ export function StoreNetflixHero() {
         aria-hidden
       />
 
-      {/* Lavado inferior más alto/opaco en tablet: el collage no pelea con el copy. */}
+      {/* Lavado inferior suave a todo el ancho (sin cuadro detrás del copy). */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(68vh,34rem)] sm:h-[min(62vh,36rem)] md:h-[min(70vh,40rem)]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(62vh,32rem)] sm:h-[min(56vh,34rem)] md:h-[min(58vh,36rem)]"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-white from-[18%] via-white/97 via-[48%] to-transparent" />
-        <div className="absolute inset-0 backdrop-blur-[6px] [mask-image:linear-gradient(to_top,black_42%,transparent_92%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 via-[40%] to-transparent" />
+        <div className="absolute inset-0 backdrop-blur-[3px] [mask-image:linear-gradient(to_top,black_30%,transparent_88%)]" />
       </div>
 
-      <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(5.5rem,10vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(6rem,11vh)] md:pb-[max(6.5rem,12vh)]">
-        <div className="relative mx-auto flex w-full max-w-sm flex-col items-center text-center sm:max-w-md">
-          {/* Velo local detrás del mensaje (sin borde/card): legible sobre fotos oscuras. */}
-          <div
-            className="pointer-events-none absolute -inset-x-6 -inset-y-5 -z-10 bg-white/88 blur-xl sm:-inset-x-10 sm:-inset-y-7 md:-inset-x-14 md:-inset-y-8 md:bg-white/92"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -inset-x-4 -inset-y-3 -z-10 bg-gradient-to-t from-white via-white/95 to-white/70 sm:-inset-x-8 sm:-inset-y-4"
-            aria-hidden
-          />
-
+      <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(4.5rem,8vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(5rem,9vh)]">
+        <div className="mx-auto flex w-full max-w-sm flex-col items-center text-center sm:max-w-md">
           <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-600 sm:text-[11px]">
             Tienda en línea · Personal shopper
           </p>
           <h1
             id="store-hero-intro-heading"
-            className="mt-2.5 text-[clamp(1.75rem,5.5vw,2.55rem)] font-semibold leading-[1.1] tracking-tight text-stone-900 [text-shadow:0_1px_0_rgba(255,255,255,0.9)]"
+            className="mt-2.5 text-[clamp(1.75rem,5.5vw,2.55rem)] font-semibold leading-[1.1] tracking-tight text-stone-900"
           >
             María Paz Imports
           </h1>
@@ -130,7 +120,7 @@ export function StoreNetflixHero() {
 
           <Link
             href="/products"
-            className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_-12px_rgba(0,0,0,0.45)] transition hover:bg-stone-800 active:scale-[0.98]"
+            className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-stone-800 active:scale-[0.98]"
           >
             Ver tienda
           </Link>
