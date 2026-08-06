@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { CaretDoubleRight } from "@phosphor-icons/react/dist/csr/CaretDoubleRight";
 import { CaretLeft } from "@phosphor-icons/react/dist/csr/CaretLeft";
 import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
 import { X } from "@phosphor-icons/react/dist/csr/X";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   STORE_HEADER_ICON_LG,
@@ -48,8 +48,7 @@ export function StoreNavDropdowns({
 }) {
   const { openLogin } = useStoreAuthModals();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlKey = `${pathname}?${searchParams.toString()}`;
+  const prevPathnameRef = useRef(pathname);
   const [open, setOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [flyoutId, setFlyoutId] = useState<string | null>(null);
@@ -67,12 +66,14 @@ export function StoreNavDropdowns({
     setPortalTarget(document.body);
   }, []);
 
-  /** Cualquier navegación cierra el menú (evita el panel blanco colgado). */
+  /** Cerrar solo si cambió la ruta (no al abrir el menú). */
   useEffect(() => {
+    if (prevPathnameRef.current === pathname) return;
+    prevPathnameRef.current = pathname;
     setOpen(false);
     setFlyoutId(null);
     document.body.style.overflow = "";
-  }, [urlKey]);
+  }, [pathname]);
 
   /** Al abrir el menú, abrí el panel de la categoría activa si tiene subcategorías. */
   useEffect(() => {
