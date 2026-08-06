@@ -46,16 +46,39 @@ function resolveProductCoverUrl(
 async function loadHomeCategoryCards(
   supabase: SupabaseClient,
 ): Promise<HomeCategoryCard[]> {
-  const [{ data: categories, error: catErr }, countsRes] = await Promise.all([
+  const [{ data: categoriesRaw, error: catErr }, countsRes] = await Promise.all([
     supabase
       .from("categories")
-      .select("id,name,sort_order,icon_key,listing_hero_image_path")
+      .select("id,name,sort_order,icon_key,listing_hero_image_path,parent_id")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase.rpc("store_category_product_counts"),
   ]);
 
-  if (catErr || !categories?.length) return [];
+  let categories = categoriesRaw as
+    | {
+        id: string;
+        name: string;
+        sort_order: number;
+        icon_key: string | null;
+        listing_hero_image_path: string | null;
+        parent_id: string | null;
+      }[]
+    | null;
+
+  if (catErr || !categories?.length) {
+    if (catErr && /parent_id/i.test(catErr.message)) {
+      const flat = await supabase
+        .from("categories")
+        .select("id,name,sort_order,icon_key,listing_hero_image_path")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (flat.error || !flat.data?.length) return [];
+      categories = flat.data.map((c) => ({ ...c, parent_id: null }));
+    } else {
+      return [];
+    }
+  }
 
   const countByCategoryId = new Map<string, number>();
   const { data: countRows, error: countErr } = countsRes;
@@ -73,17 +96,31 @@ async function loadHomeCategoryCards(
     }
   }
 
-  const groups = new Map<string, typeof categories>();
+  // Solo raíces en home; el conteo incluye productos de subcategorías.
+  const roots = categories.filter((c) => !c.parent_id);
+  const childrenByParent = new Map<string, typeof categories>();
   for (const c of categories) {
+    if (!c.parent_id) continue;
+    const arr = childrenByParent.get(c.parent_id) ?? [];
+    arr.push(c);
+    childrenByParent.set(c.parent_id, arr);
+  }
+
+  const groups = new Map<string, typeof categories>();
+  for (const c of roots) {
     const k = categoryGroupKey(c.name);
     const arr = groups.get(k) ?? [];
     arr.push(c);
+    // Incluir hijos en el grupo para hero/covers/counts
+    for (const child of childrenByParent.get(c.id) ?? []) {
+      arr.push(child);
+    }
     groups.set(k, arr);
   }
 
   const idToGroupKey = new Map<string, string>();
-  for (const c of categories) {
-    idToGroupKey.set(c.id, categoryGroupKey(c.name));
+  for (const [gKey, arr] of groups) {
+    for (const c of arr) idToGroupKey.set(c.id, gKey);
   }
 
   /** Grupos sin listing_hero: rellenamos portada con un producto reciente. */
@@ -139,7 +176,10 @@ async function loadHomeCategoryCards(
       0,
     );
 
-    const canonicalId = pickCanonicalCategoryId(arr) ?? arr[0]!.id;
+    // Winner = raíz canónica del grupo (no una subcategoría).
+    const rootRows = arr.filter((c) => !c.parent_id);
+    const canonicalPool = rootRows.length ? rootRows : arr;
+    const canonicalId = pickCanonicalCategoryId(canonicalPool) ?? arr[0]!.id;
     const winner = arr.find((c) => c.id === canonicalId) ?? arr[0]!;
     const visual = getStoreCategoryVisual(winner.name, visualIndex);
     visualIndex += 1;
@@ -155,7 +195,7 @@ async function loadHomeCategoryCards(
     merged.push({
       id: canonicalId,
       name: winner.name,
-      sort_order: Math.min(...arr.map((c) => c.sort_order)),
+      sort_order: Math.min(...canonicalPool.map((c) => c.sort_order)),
       iconKey: resolveCategoryIconKey(winner.icon_key),
       productCount,
       imageSrc: productStorefrontImageUrl(rawCover) ?? rawCover,
@@ -176,7 +216,7 @@ const getCachedHomeCategoryCards = unstable_cache(
     const supabase = createSupabaseServiceClient();
     return loadHomeCategoryCards(supabase);
   },
-  ["home-category-cards-v3"],
+  ["home-category-cards-v4"],
   { revalidate: 60 },
 );
 

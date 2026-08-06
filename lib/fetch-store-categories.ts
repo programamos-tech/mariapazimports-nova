@@ -2,15 +2,18 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCategoryIconKey, type CategoryIconKey } from "@/lib/category-icons";
-import {
-  categoryGroupKey,
-  pickCanonicalCategoryId,
-} from "@/lib/store-category-group";
+import { buildCategoryTree } from "@/lib/category-tree";
 import {
   getStoreCategoryVisual,
   type StoreCategoryVisual,
 } from "@/lib/store-category-visuals";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+
+export type StoreCategoryMenuChild = {
+  id: string;
+  name: string;
+  productCount: number;
+};
 
 export type StoreCategoryMenuItem = {
   id: string;
@@ -18,7 +21,16 @@ export type StoreCategoryMenuItem = {
   sort_order: number;
   iconKey: CategoryIconKey;
   productCount: number;
+  children: StoreCategoryMenuChild[];
 } & StoreCategoryVisual;
+
+type CategoryRow = {
+  id: string;
+  name: string;
+  sort_order: number;
+  icon_key: string | null;
+  parent_id: string | null;
+};
 
 async function loadStoreCategoriesWithCounts(
   supabase: SupabaseClient,
@@ -26,59 +38,79 @@ async function loadStoreCategoriesWithCounts(
   const [{ data: categories, error: catErr }, countsRes] = await Promise.all([
     supabase
       .from("categories")
-      .select("id,name,sort_order,icon_key")
+      .select("id,name,sort_order,icon_key,parent_id")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase.rpc("store_category_product_counts"),
   ]);
 
-  if (catErr || !categories?.length) return [];
+  if (catErr || !categories?.length) {
+    // Compat sin parent_id
+    if (catErr && /parent_id/i.test(catErr.message)) {
+      const flat = await supabase
+        .from("categories")
+        .select("id,name,sort_order,icon_key")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
+      if (flat.error || !flat.data?.length) return [];
+      return loadFromRows(
+        flat.data.map((c) => ({ ...c, parent_id: null })),
+        countsRes,
+      );
+    }
+    return [];
+  }
 
+  return loadFromRows(categories as CategoryRow[], countsRes);
+}
+
+function loadFromRows(
+  categories: CategoryRow[],
+  countsRes: {
+    data: { category_id: string; product_count: number }[] | null;
+    error: { message: string; code?: string } | null;
+  },
+): StoreCategoryMenuItem[] {
   const countByCategory = new Map<string, number>();
-  const { data: countRows, error: countErr } = countsRes;
-  if (countErr) {
+  if (countsRes.error) {
     console.error(
       "[store-categories] counts rpc:",
-      countErr.message,
-      countErr.code,
+      countsRes.error.message,
+      countsRes.error.code,
     );
   } else {
-    for (const row of countRows ?? []) {
+    for (const row of countsRes.data ?? []) {
       const cid = row.category_id as string | null;
       if (!cid) continue;
       countByCategory.set(cid, Number(row.product_count) || 0);
     }
   }
 
-  const groups = new Map<string, typeof categories>();
-  for (const c of categories) {
-    const k = categoryGroupKey(c.name);
-    const arr = groups.get(k) ?? [];
-    arr.push(c);
-    groups.set(k, arr);
-  }
-
+  const tree = buildCategoryTree(categories);
   const merged: StoreCategoryMenuItem[] = [];
   let visualIndex = 0;
-  for (const [, arr] of groups) {
-    const productCount = arr.reduce(
-      (sum, c) => sum + (countByCategory.get(c.id) ?? 0),
-      0,
-    );
 
-    const canonicalId = pickCanonicalCategoryId(arr) ?? arr[0]!.id;
-    const winner = arr.find((c) => c.id === canonicalId) ?? arr[0]!;
-    const minSort = Math.min(...arr.map((c) => c.sort_order));
+  for (const { parent, children } of tree) {
+    const childItems: StoreCategoryMenuChild[] = children.map((child) => ({
+      id: child.id,
+      name: child.name,
+      productCount: countByCategory.get(child.id) ?? 0,
+    }));
 
-    const visual = getStoreCategoryVisual(winner.name, visualIndex);
+    const ownCount = countByCategory.get(parent.id) ?? 0;
+    const childrenCount = childItems.reduce((s, c) => s + c.productCount, 0);
+    const productCount = ownCount + childrenCount;
+
+    const visual = getStoreCategoryVisual(parent.name, visualIndex);
     visualIndex += 1;
 
     merged.push({
-      id: canonicalId,
-      name: winner.name,
-      sort_order: minSort,
-      iconKey: resolveCategoryIconKey(winner.icon_key),
+      id: parent.id,
+      name: parent.name,
+      sort_order: parent.sort_order ?? 0,
+      iconKey: resolveCategoryIconKey(parent.icon_key),
       productCount,
+      children: childItems.filter((c) => c.productCount > 0),
       ...visual,
     });
   }
@@ -92,19 +124,18 @@ async function loadStoreCategoriesWithCounts(
   return merged;
 }
 
-/** Cache entre requests (menú Shop casi estático). */
+/** Cache entre requests (menú Shop). Incluye jerarquía. */
 const getCachedStoreCategoriesWithCounts = unstable_cache(
   async () => {
     const supabase = createSupabaseServiceClient();
     return loadStoreCategoriesWithCounts(supabase);
   },
-  ["store-categories-with-counts-v1"],
+  ["store-categories-with-counts-v2"],
   { revalidate: 60 },
 );
 
 /**
- * Categorías del catálogo para el menú Shop (fusiona duplicados / sinónimos).
- * Dedup por request + cache 60s entre navegaciones.
+ * Categorías del catálogo para el menú Shop (raíces + subcategorías con stock).
  */
 export const fetchStoreCategoriesWithCounts = cache(
   async (_supabase?: SupabaseClient): Promise<StoreCategoryMenuItem[]> => {

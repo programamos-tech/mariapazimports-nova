@@ -1,10 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { normalizeSizeOptionsFromRow } from "@/lib/product-size-options";
-import {
-  categoryGroupKey,
-  pickCanonicalCategoryId,
-} from "@/lib/store-category-group";
+import { buildCategoryTree } from "@/lib/category-tree";
 
 export type SizeFacetOption = {
   key: string;
@@ -116,34 +113,27 @@ export function computeListingFacetsFromProductRows(
   };
 }
 
-/** Categorías fusionadas para checklist en el catálogo completo. */
+/** Categorías fusionadas para checklist en el catálogo completo (con subcategorías). */
 export function mergeCategoryRowsForFilterMenu(
-  rows: { id: string; name: string; sort_order: number }[],
+  rows: { id: string; name: string; sort_order: number; parent_id?: string | null }[],
 ): { id: string; name: string }[] {
-  const groups = new Map<string, typeof rows>();
-  for (const c of rows) {
-    const k = categoryGroupKey(c.name);
-    const arr = groups.get(k) ?? [];
-    arr.push(c);
-    groups.set(k, arr);
-  }
-  const merged: { id: string; name: string; sort_order: number }[] = [];
-  for (const [, arr] of groups) {
-    const canonicalId = pickCanonicalCategoryId(arr) ?? arr[0]!.id;
-    const winner = arr.find((c) => c.id === canonicalId) ?? arr[0]!;
-    const minSort = Math.min(...arr.map((c) => c.sort_order));
-    merged.push({
-      id: winner.id,
-      name: winner.name,
-      sort_order: minSort,
-    });
-  }
-  merged.sort(
-    (a, b) =>
-      a.sort_order - b.sort_order ||
-      a.name.localeCompare(b.name, "es"),
+  const tree = buildCategoryTree(
+    rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      parent_id: r.parent_id ?? null,
+      sort_order: r.sort_order,
+    })),
   );
-  return merged.map(({ id, name }) => ({ id, name }));
+
+  const out: { id: string; name: string }[] = [];
+  for (const { parent, children } of tree) {
+    out.push({ id: parent.id, name: parent.name });
+    for (const child of children) {
+      out.push({ id: child.id, name: `↳ ${child.name}` });
+    }
+  }
+  return out;
 }
 
 export async function fetchListingFacets(

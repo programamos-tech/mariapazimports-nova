@@ -31,8 +31,13 @@ import {
   parseProductImportOrigin,
   type ProductImportOrigin,
 } from "@/lib/product-import-origin";
+import { CategorySelectOptions } from "@/components/admin/CategorySelectOptions";
 
-export type ProductCategoryOption = { id: string; name: string };
+export type ProductCategoryOption = {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+};
 
 const cardClass =
   "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -171,12 +176,7 @@ export function NewProductForm({
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="">Seleccionar categoría</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                    <CategorySelectOptions categories={categories} />
                   </select>
                 </div>
               </div>

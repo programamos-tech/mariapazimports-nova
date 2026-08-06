@@ -124,26 +124,36 @@ export async function fetchAdminProductsList(
 }
 
 export async function fetchAdminCategoriesList(supabase: SupabaseClient): Promise<
-  { id: string; name: string }[]
+  { id: string; name: string; parent_id: string | null }[]
 > {
   const { data, error } = await supabase
     .from("categories")
-    .select("id,name")
+    .select("id,name,parent_id")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
-  if (error) {
-    return [];
+  if (error && /parent_id/i.test(error.message)) {
+    const fallback = await supabase
+      .from("categories")
+      .select("id,name")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    if (fallback.error) return [];
+    return (fallback.data ?? []).map((c) => ({ ...c, parent_id: null }));
   }
-  return data ?? [];
+
+  if (error) return [];
+  return (data ?? []) as { id: string; name: string; parent_id: string | null }[];
 }
 
 export type AdminCategoryManageRow = {
   id: string;
   name: string;
+  parent_id: string | null;
   icon_key: string | null;
   listing_hero_image_path: string | null;
   listing_hero_alt_text: string | null;
+  sort_order?: number;
 };
 
 /** Listado completo para la vista/modal de gestión de categorías (orden en BD por sort_order + nombre). */
@@ -153,9 +163,29 @@ export async function fetchAdminCategoriesManageList(supabase: SupabaseClient): 
 }> {
   const { data, error } = await supabase
     .from("categories")
-    .select("id,name,icon_key,listing_hero_image_path,listing_hero_alt_text")
+    .select(
+      "id,name,parent_id,icon_key,listing_hero_image_path,listing_hero_alt_text,sort_order",
+    )
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
+
+  // Compat: si la columna parent_id aún no existe en remoto, caer al select plano.
+  if (error && /parent_id/i.test(error.message)) {
+    const fallback = await supabase
+      .from("categories")
+      .select(
+        "id,name,icon_key,listing_hero_image_path,listing_hero_alt_text,sort_order",
+      )
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+    return {
+      list: (fallback.data ?? []).map((c) => ({
+        ...c,
+        parent_id: null,
+      })) as AdminCategoryManageRow[],
+      error: !!fallback.error,
+    };
+  }
 
   return {
     list: (data ?? []) as AdminCategoryManageRow[],

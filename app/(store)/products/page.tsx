@@ -119,7 +119,7 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const categoriesPromise = supabase
     .from("categories")
-    .select("id,name,sort_order")
+    .select("id,name,sort_order,parent_id")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 

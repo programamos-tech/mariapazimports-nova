@@ -1,8 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeListingFacetsFromProductRows, mergeCategoryRowsForFilterMenu, type ListingFacets } from "@/lib/product-listing-facets";
+import {
+  computeListingFacetsFromProductRows,
+  type ListingFacets,
+} from "@/lib/product-listing-facets";
 import type { ListingProductWithVariantMeta } from "@/lib/store-listing-variant-meta";
 import { enrichListingProductsWithVariants } from "@/lib/store-listing-variant-meta";
 import { expandCategoryIdsFromRows } from "@/lib/store-category-group";
+import { buildCategoryTree } from "@/lib/category-tree";
 
 const PRODUCT_SELECT =
   "id,name,brand,description,price_cents,image_path,image_paths,stock_quantity,size_options,size_value,size_unit,fragrance_options,variant_axis,import_origin,created_at";
@@ -52,13 +56,27 @@ function sortProductsByCreatedAtDesc(a: CatalogBrowseProductRow, b: CatalogBrows
  */
 export async function fetchCatalogBrowseSections(
   supabase: SupabaseClient,
-  allCategoryRows: { id: string; name: string; sort_order: number }[],
+  allCategoryRows: {
+    id: string;
+    name: string;
+    sort_order: number;
+    parent_id?: string | null;
+  }[],
 ): Promise<{ sections: CatalogBrowseSection[]; facets: ListingFacets }> {
   if (!allCategoryRows.length) {
     return { sections: [], facets: computeListingFacetsFromProductRows([]) };
   }
 
-  const merged = mergeCategoryRowsForFilterMenu(allCategoryRows);
+  // Filas del catálogo: una por categoría raíz (incluye productos de subcategorías).
+  const rootSections = buildCategoryTree(
+    allCategoryRows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      parent_id: r.parent_id ?? null,
+      sort_order: r.sort_order,
+    })),
+  ).map(({ parent }) => ({ id: parent.id, name: parent.name }));
+
   const knownCategoryId = new Set(
     allCategoryRows.map((r) => r.id.trim().toLowerCase()),
   );
@@ -107,7 +125,7 @@ export async function fetchCatalogBrowseSections(
     showSeeAll: boolean;
   }[] = [];
 
-  for (const cat of merged) {
+  for (const cat of rootSections) {
     const expandedIds = expandCategoryIdsFromRows(allCategoryRows, cat.id);
     if (!expandedIds.length) continue;
 

@@ -11,6 +11,7 @@ import {
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
 import type { ProductCategoryOption } from "@/components/admin/NewProductForm";
+import { CategorySelectOptions } from "@/components/admin/CategorySelectOptions";
 import {
   ProductVariantRows,
   type VariantFormTotals,
@@ -221,12 +222,7 @@ export function EditProductForm({
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="">Seleccionar categoría</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                    <CategorySelectOptions categories={categories} />
                   </select>
                 </div>
               </div>

@@ -171,7 +171,10 @@ export default async function AdminProductsPage({
   const rawCategoryErr =
     typeof sp.category_error === "string" ? sp.category_error : undefined;
   const categoryFormError =
-    showCategories && (rawCategoryErr === "name" || rawCategoryErr === "db")
+    showCategories &&
+    (rawCategoryErr === "name" ||
+      rawCategoryErr === "db" ||
+      rawCategoryErr === "parent")
       ? rawCategoryErr
       : undefined;
 

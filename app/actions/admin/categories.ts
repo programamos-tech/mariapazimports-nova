@@ -6,6 +6,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+function revalidateCategorySurfaces() {
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+  revalidatePath("/products");
+  revalidatePath("/");
+}
+
 export async function createCategory(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -16,10 +23,12 @@ export async function createCategory(formData: FormData) {
 
   const fromModal = String(formData.get("from") ?? "") === "modal";
   const name = String(formData.get("name") ?? "").trim();
+  const parentIdRaw = String(formData.get("parent_id") ?? "").trim();
+  const parentId = parentIdRaw || null;
   const iconRaw = String(formData.get("icon_key") ?? "").trim();
   const iconKey = resolveCategoryIconKey(iconRaw);
 
-  const redirectErr = (kind: "name" | "db") => {
+  const redirectErr = (kind: "name" | "db" | "parent") => {
     if (fromModal) {
       redirect(`/admin/products?categories=1&category_error=${kind}`);
     }
@@ -30,13 +39,23 @@ export async function createCategory(formData: FormData) {
 
   if (iconRaw && !isCategoryIconKey(iconRaw)) redirectErr("db");
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({ name, icon_key: iconKey });
+  if (parentId) {
+    const { data: parent, error: parentErr } = await supabase
+      .from("categories")
+      .select("id,parent_id")
+      .eq("id", parentId)
+      .maybeSingle();
+    if (parentErr || !parent || parent.parent_id) redirectErr("parent");
+  }
+
+  const { error } = await supabase.from("categories").insert({
+    name,
+    icon_key: iconKey,
+    parent_id: parentId,
+  });
   if (error) redirectErr("db");
 
-  revalidatePath("/admin/categories");
-  revalidatePath("/admin/products");
+  revalidateCategorySurfaces();
   redirect("/admin/products?categories=1");
 }
 
@@ -49,8 +68,7 @@ export async function deleteCategory(categoryId: string) {
   await assertActionPermission("categorias_gestionar");
 
   await supabase.from("categories").delete().eq("id", categoryId);
-  revalidatePath("/admin/categories");
-  revalidatePath("/admin/products");
+  revalidateCategorySurfaces();
   redirect("/admin/products?categories=1");
 }
 
@@ -80,7 +98,6 @@ export async function updateCategoryListingHero(formData: FormData) {
     redirect("/admin/products?categories=1&category_error=db");
   }
 
-  revalidatePath("/products");
-  revalidatePath("/admin/products");
+  revalidateCategorySurfaces();
   redirect("/admin/products?categories=1");
 }

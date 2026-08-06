@@ -123,6 +123,28 @@ export function StoreNavDropdowns({
                         aria-hidden
                       />
                     </Link>
+                    {c.children.length > 0 ? (
+                      <ul className="border-b border-stone-100 bg-stone-50/60">
+                        {c.children.map((child) => (
+                          <li key={child.id}>
+                            <Link
+                              href={`/products?category=${child.id}`}
+                              onClick={close}
+                              className="flex items-center justify-between gap-4 py-3 pl-5 pr-0 text-left transition hover:bg-stone-100/80"
+                            >
+                              <span className="text-[12px] font-medium uppercase tracking-[0.05em] text-stone-600">
+                                {child.name}
+                              </span>
+                              <CaretRight
+                                className="size-3.5 shrink-0 text-stone-300"
+                                weight={STORE_HEADER_ICON_WEIGHT}
+                                aria-hidden
+                              />
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 ))}
               </ul>

@@ -60,7 +60,7 @@ export type StoreListingQueryInput = {
   q: string;
   sort: string;
   allCategoryRows:
-    | { id: string; name: string; sort_order: number }[]
+    | { id: string; name: string; sort_order: number; parent_id?: string | null }[]
     | null
     | undefined;
   /** 1-based. Si se omite, se devuelve la primera página. */

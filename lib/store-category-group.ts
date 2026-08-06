@@ -1,11 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { categoryIdWithDescendants } from "@/lib/category-tree";
 
 const CATEGORY_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/** Varias categorías del filtro → todos los `category_id` equivalentes (sinónimos). */
+type CategoryRow = { id: string; name: string; parent_id?: string | null };
+
+/** Varias categorías del filtro → todos los `category_id` equivalentes (sinónimos + hijos). */
 export function expandManyCategoryIdsFromRows(
-  rows: { id: string; name: string }[],
+  rows: CategoryRow[],
   categoryIds: string[],
 ): string[] {
   const set = new Set<string>();
@@ -42,26 +45,42 @@ export function categoryGroupKey(name: string): string {
   return CATEGORY_SYNONYM_CANONICAL[n] ?? n;
 }
 
+/**
+ * IDs a incluir en `WHERE category_id IN (...)`:
+ * sinónimos del mismo nombre + subcategorías si el id es una raíz.
+ */
 export function expandCategoryIdsFromRows(
-  rows: { id: string; name: string }[],
+  rows: CategoryRow[],
   categoryId: string,
 ): string[] {
   const needle = categoryId.trim().toLowerCase();
   const target = rows.find((r) => r.id.trim().toLowerCase() === needle);
   if (!target) return [needle];
+
   const key = categoryGroupKey(target.name);
-  const ids = rows
+  const synonymIds = rows
     .filter((r) => categoryGroupKey(r.name) === key)
     .map((r) => r.id.trim().toLowerCase());
-  return ids.length ? ids : [needle];
+
+  const set = new Set<string>(synonymIds.length ? synonymIds : [needle]);
+
+  for (const id of [...set]) {
+    for (const childId of categoryIdWithDescendants(rows, id)) {
+      set.add(childId);
+    }
+  }
+
+  return [...set];
 }
 
-/** IDs de categoría equivalentes (misma etiqueta / sinónimo) para `WHERE category_id IN (...)`. */
+/** IDs de categoría equivalentes (misma etiqueta / sinónimo / hijos) para filtros. */
 export async function fetchExpandedCategoryIds(
   supabase: SupabaseClient,
   categoryId: string,
 ): Promise<string[]> {
-  const { data: rows } = await supabase.from("categories").select("id,name");
+  const { data: rows } = await supabase
+    .from("categories")
+    .select("id,name,parent_id");
   return expandCategoryIdsFromRows(rows ?? [], categoryId);
 }
 
