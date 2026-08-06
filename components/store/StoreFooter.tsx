@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StoreLogo } from "@/components/store/StoreLogo";
+import { StoreHomeLogoLink } from "@/components/store/StoreHomeLogoLink";
 import { StoreWompiPaymentLogos } from "@/components/store/StoreWompiPaymentLogos";
 import { storeShellClass } from "@/lib/store-layout";
 import {
@@ -25,12 +26,9 @@ export function StoreFooter() {
       <div className={`${storeShellClass} py-12 sm:py-14 lg:py-16`}>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,14rem)_1fr] lg:gap-16 xl:gap-20">
           <div className="max-w-[12rem]">
-            <Link
-              href="/"
-              className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
-            >
+            <StoreHomeLogoLink className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2">
               <StoreLogo variant="footer" className="object-left" />
-            </Link>
+            </StoreHomeLogoLink>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-3 sm:gap-8 lg:gap-12">

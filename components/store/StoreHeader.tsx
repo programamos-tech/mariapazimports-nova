@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
 import { StoreLogo } from "@/components/store/StoreLogo";
+import { StoreHomeLogoLink } from "@/components/store/StoreHomeLogoLink";
 import { StoreAnnouncementBar } from "@/components/store/StoreAnnouncementBar";
 import { StoreHeaderActions } from "@/components/store/StoreHeaderActions";
 import { StoreHeaderShell } from "@/components/store/StoreHeaderShell";
@@ -40,12 +40,9 @@ export async function StoreHeader() {
         </div>
 
         <div className="flex min-w-0 items-center justify-center overflow-hidden px-1 sm:px-2">
-          <Link
-            href="/"
-            className="inline-flex max-w-full shrink items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2"
-          >
+          <StoreHomeLogoLink className="inline-flex max-w-full shrink items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2">
             <StoreLogo variant="header" priority />
-          </Link>
+          </StoreHomeLogoLink>
         </div>
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 bg-white sm:gap-0.5 lg:min-w-0 lg:shrink lg:gap-4 group-data-[home-overlay=true]/header:bg-transparent">
