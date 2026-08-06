@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CaretLeft } from "@phosphor-icons/react/dist/csr/CaretLeft";
 import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
+import { Folders } from "@phosphor-icons/react/dist/csr/Folders";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
 import { X } from "@phosphor-icons/react/dist/csr/X";
@@ -281,25 +282,42 @@ export function StoreNavDropdowns({
                             }`}
                             aria-expanded={isFlyoutOpen}
                             aria-controls={`${baseId}-flyout`}
+                            aria-label={`${c.name}, tiene subcategorías`}
                           >
-                            <span
-                              className={`${linkLabelClass} ${
-                                parentActive
-                                  ? "underline decoration-stone-400 underline-offset-4"
-                                  : ""
-                              }`}
-                            >
-                              {c.name}
+                            <span className="flex min-w-0 items-center gap-2.5">
+                              <Folders
+                                className={`size-4 shrink-0 ${
+                                  isFlyoutOpen
+                                    ? "text-stone-900"
+                                    : "text-stone-500"
+                                }`}
+                                weight={STORE_HEADER_ICON_WEIGHT}
+                                aria-hidden
+                              />
+                              <span
+                                className={`${linkLabelClass} ${
+                                  parentActive
+                                    ? "underline decoration-stone-400 underline-offset-4"
+                                    : ""
+                                }`}
+                              >
+                                {c.name}
+                              </span>
                             </span>
-                            <CaretRight
-                              className={`size-4 shrink-0 transition-transform duration-200 ${
-                                isFlyoutOpen
-                                  ? "translate-x-0.5 text-stone-900"
-                                  : "text-stone-400"
-                              }`}
-                              weight={STORE_HEADER_ICON_WEIGHT}
-                              aria-hidden
-                            />
+                            <span className="inline-flex shrink-0 items-center gap-1 text-stone-400">
+                              <span className="text-[10px] font-medium uppercase tracking-[0.06em]">
+                                {isFlyoutOpen ? "Abiertas" : "Ver"}
+                              </span>
+                              <CaretRight
+                                className={`size-4 transition-transform duration-200 ${
+                                  isFlyoutOpen
+                                    ? "translate-x-0.5 text-stone-900"
+                                    : ""
+                                }`}
+                                weight={STORE_HEADER_ICON_WEIGHT}
+                                aria-hidden
+                              />
+                            </span>
                           </button>
                         ) : (
                           <Link
