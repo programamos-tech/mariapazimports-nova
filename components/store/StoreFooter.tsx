@@ -124,15 +124,15 @@ export function StoreFooter() {
                 Backoffice
               </Link>
             </nav>
-            <div className="inline-flex items-center gap-2 text-[11px] text-stone-500 sm:text-xs">
+            <div className="inline-flex items-center gap-1.5 text-[11px] text-stone-500 sm:text-xs">
               <span className="whitespace-nowrap">Diseñado por</span>
               <Image
                 src={bereaSignaturePathSm}
                 alt="Berea House — desarrollo de software"
                 width={220}
                 height={103}
-                sizes="112px"
-                className="h-7 w-auto max-w-[6.5rem] object-contain object-left opacity-90 sm:h-8 sm:max-w-[7.5rem]"
+                sizes="72px"
+                className="h-3.5 w-auto max-w-[4.25rem] object-contain object-left opacity-80 sm:h-4 sm:max-w-[4.75rem]"
               />
             </div>
           </div>
