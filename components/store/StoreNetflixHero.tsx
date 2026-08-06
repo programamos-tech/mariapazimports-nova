@@ -46,7 +46,7 @@ function HeroCard({
 export function StoreNetflixHero() {
   return (
     <section
-      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-[#eceae6]"
+      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-white"
       aria-labelledby="store-hero-intro-heading"
     >
       <div
@@ -86,12 +86,12 @@ export function StoreNetflixHero() {
         aria-hidden
       />
 
-      {/* Difuminado inferior: el collage se pierde y el texto queda legible */}
+      {/* Difuminado inferior blanco: se une con la sección siguiente */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(58vh,28rem)] sm:h-[min(52vh,30rem)]"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#eceae6] via-[#eceae6]/90 via-40% to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 via-35% to-transparent" />
         <div className="absolute inset-0 backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_35%,transparent_85%)]" />
       </div>
 
