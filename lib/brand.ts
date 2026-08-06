@@ -18,10 +18,10 @@ export const bereaSignaturePathSm = "/logo-berea-house-sm.png";
 export const storeCopyrightHolder =
   process.env.NEXT_PUBLIC_STORE_COPYRIGHT_NAME ?? "María Paz Importaciones";
 
-/** Línea bajo el nombre (footer, etc.). */
+/** Frase de la tienda (hero, footer, etc.). */
 export const storeTagline =
   process.env.NEXT_PUBLIC_STORE_TAGLINE ??
-  "Personal Shopper · Productos 100% originales";
+  "Encuentro lo extraordinario para ti";
 
 /** Párrafo corto sobre la tienda (footer). */
 export const storeShortDescription =

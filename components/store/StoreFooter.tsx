@@ -9,6 +9,7 @@ import {
   storeCopyrightHolder,
   storeInstagramUrl,
   storeSupportHours,
+  storeTagline,
   storeWhatsAppUrl,
 } from "@/lib/brand";
 
@@ -29,6 +30,9 @@ export function StoreFooter() {
             <StoreHomeLogoLink className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2">
               <StoreLogo variant="footer" className="object-left" />
             </StoreHomeLogoLink>
+            <p className="mt-3 text-[10px] font-medium uppercase leading-snug tracking-[0.12em] text-stone-500">
+              {storeTagline}
+            </p>
           </div>
 
           <div className="grid gap-10 sm:grid-cols-3 sm:gap-8 lg:gap-12">

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { storeTagline } from "@/lib/brand";
 import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
 
 const ROWS: { direction: "left" | "right"; durationSec: number; offset: number }[] =
@@ -107,8 +108,8 @@ export function StoreNetflixHero() {
           <p className="mt-3 text-[13px] leading-snug text-stone-600 sm:text-[14px]">
             Productos entrega inmediata y encargos
           </p>
-          <p className="mt-4 max-w-[20rem] text-[13px] font-medium leading-snug tracking-wide text-stone-700 sm:text-[14px]">
-            Encontramos lo extraordinario para ti
+          <p className="mt-4 max-w-[22rem] text-[12px] font-semibold uppercase leading-snug tracking-[0.14em] text-stone-700 sm:text-[13px]">
+            {storeTagline}
           </p>
 
           <Link
