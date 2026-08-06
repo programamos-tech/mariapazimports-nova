@@ -101,7 +101,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
     supabase.from("products").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("categories")
-      .select("id,name")
+      .select("id,name,parent_id")
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
     variantRowsForEditForm(supabase, id),

@@ -108,12 +108,10 @@ export function ProductFiltersBar({
           onChange={(e) => e.currentTarget.form?.requestSubmit()}
           className={fieldClass}
         >
-          <option value="">Todas las categorías</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
+          <CategorySelectOptions
+            categories={categories}
+            emptyLabel="Todas las categorías"
+          />
         </select>
       </div>
     </form>

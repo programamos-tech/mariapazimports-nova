@@ -15,7 +15,7 @@ export default async function NewProductPage({
   const supabase = await createSupabaseServerClient();
   const { data: categories } = await supabase
     .from("categories")
-    .select("id,name")
+    .select("id,name,parent_id")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 

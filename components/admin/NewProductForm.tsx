@@ -31,13 +31,12 @@ import {
   parseProductImportOrigin,
   type ProductImportOrigin,
 } from "@/lib/product-import-origin";
-import { CategorySelectOptions } from "@/components/admin/CategorySelectOptions";
+import {
+  ProductCategoryFields,
+  type ProductCategoryOption,
+} from "@/components/admin/ProductCategoryFields";
 
-export type ProductCategoryOption = {
-  id: string;
-  name: string;
-  parent_id?: string | null;
-};
+export type { ProductCategoryOption };
 
 const cardClass =
   "rounded-xl border border-zinc-200 bg-white p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-6 dark:border-zinc-700/90 dark:bg-zinc-900 dark:shadow-none dark:ring-white/[0.06]";
@@ -55,6 +54,7 @@ export function NewProductForm({
   const [description, setDescription] = useState("");
   const [brand, setBrand] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [categoryLabel, setCategoryLabel] = useState("—");
   const [importOrigin, setImportOrigin] =
     useState<ProductImportOrigin>("US");
   const [stockLocal, setStockLocal] = useState(0);
@@ -88,8 +88,6 @@ export function NewProductForm({
   const totalStock = effectiveStockLocal + effectiveStockWarehouse;
   const fmtStock = (n: number) =>
     n <= 0 ? "0" : formatQuantityInputGrouping(n);
-  const categoryLabel =
-    categories.find((c) => c.id === categoryId)?.name ?? "—";
 
   return (
     <form
@@ -151,35 +149,30 @@ export function NewProductForm({
                 />
               </div>
               <ProductCatalogImagesField />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="np-brand" className={labelClass}>
-                    Marca (opcional)
-                  </label>
-                  <input
-                    id="np-brand"
-                    name="brand"
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                    placeholder="Marca del producto"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="np-cat" className={labelClass}>
-                    Categoría (opcional)
-                  </label>
-                  <select
-                    id="np-cat"
-                    name="category_id"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className={inputClass}
-                  >
-                    <CategorySelectOptions categories={categories} />
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="np-brand" className={labelClass}>
+                  Marca (opcional)
+                </label>
+                <input
+                  id="np-brand"
+                  name="brand"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="Marca del producto"
+                  className={inputClass}
+                />
               </div>
+              <ProductCategoryFields
+                categories={categories}
+                initialCategoryId={categoryId}
+                idPrefix="np"
+                labelClass={labelClass}
+                inputClass={inputClass}
+                onEffectiveChange={(id, label) => {
+                  setCategoryId(id);
+                  setCategoryLabel(label);
+                }}
+              />
               <div>
                 <label htmlFor="np-import-origin" className={labelClass}>
                   Origen de importación

@@ -10,8 +10,11 @@ import {
   productLabelClass as labelClass,
   productSectionTitle as sectionTitle,
 } from "@/components/admin/product-form-primitives";
-import type { ProductCategoryOption } from "@/components/admin/NewProductForm";
-import { CategorySelectOptions } from "@/components/admin/CategorySelectOptions";
+import type { ProductCategoryOption } from "@/components/admin/ProductCategoryFields";
+import {
+  ProductCategoryFields,
+  productCategoryDisplayLabel,
+} from "@/components/admin/ProductCategoryFields";
 import {
   ProductVariantRows,
   type VariantFormTotals,
@@ -79,7 +82,9 @@ export function EditProductForm({
   const [reference, setReference] = useState(initial.reference);
   const [description, setDescription] = useState(initial.description);
   const [brand, setBrand] = useState(initial.brand);
-  const [categoryId, setCategoryId] = useState(initial.categoryId);
+  const [categoryLabel, setCategoryLabel] = useState(() =>
+    productCategoryDisplayLabel(categories, initial.categoryId),
+  );
   const [importOrigin, setImportOrigin] = useState<ProductImportOrigin>(
     initial.importOrigin,
   );
@@ -121,9 +126,6 @@ export function EditProductForm({
   const totalStock = effectiveStockLocal + effectiveStockWarehouse;
   const fmtStock = (n: number) =>
     n <= 0 ? "0" : formatQuantityInputGrouping(n);
-
-  const categoryLabel =
-    categories.find((c) => c.id === categoryId)?.name ?? "—";
 
   return (
     <form
@@ -198,34 +200,28 @@ export function EditProductForm({
                 initialExisting={catalogImagesExisting}
               />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="ep-brand" className={labelClass}>
-                    Marca (opcional)
-                  </label>
-                  <input
-                    id="ep-brand"
-                    name="brand"
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="ep-cat" className={labelClass}>
-                    Categoría (opcional)
-                  </label>
-                  <select
-                    id="ep-cat"
-                    name="category_id"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className={inputClass}
-                  >
-                    <CategorySelectOptions categories={categories} />
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="ep-brand" className={labelClass}>
+                  Marca (opcional)
+                </label>
+                <input
+                  id="ep-brand"
+                  name="brand"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  className={inputClass}
+                />
               </div>
+              <ProductCategoryFields
+                categories={categories}
+                initialCategoryId={initial.categoryId}
+                idPrefix="ep"
+                labelClass={labelClass}
+                inputClass={inputClass}
+                onEffectiveChange={(_id, label) => {
+                  setCategoryLabel(label);
+                }}
+              />
               <div>
                 <label htmlFor="ep-import-origin" className={labelClass}>
                   Origen de importación
