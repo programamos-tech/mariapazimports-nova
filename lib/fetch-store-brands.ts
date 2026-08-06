@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isUsableStoreBrand } from "@/lib/fetch-store-catalog-by-brand";
 
 export type StoreBrandSummary = {
   /** Valor exacto de `products.brand` (trim) para enlazar a `/products?brand=`. */
@@ -8,6 +9,7 @@ export type StoreBrandSummary = {
 
 /**
  * Marcas con al menos un producto publicado, orden alfabético (es).
+ * Ignora placeholders (“-”, “sin marca”, etc.).
  */
 export async function fetchPublishedBrandsWithCounts(
   supabase: SupabaseClient,
@@ -21,8 +23,8 @@ export async function fetchPublishedBrandsWithCounts(
 
   const counts = new Map<string, number>();
   for (const row of rows) {
+    if (!isUsableStoreBrand(row.brand)) continue;
     const name = String(row.brand ?? "").trim();
-    if (!name) continue;
     counts.set(name, (counts.get(name) ?? 0) + 1);
   }
 
