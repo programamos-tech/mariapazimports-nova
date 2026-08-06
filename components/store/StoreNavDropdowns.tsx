@@ -15,6 +15,12 @@ import {
   STORE_HEADER_ICON_WEIGHT,
 } from "@/lib/store-header-icons";
 import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
+import type { StoreBrandSummary } from "@/lib/fetch-store-brands";
+import {
+  isMarcasCategoryName,
+  storeMarcasBrandHref,
+  storeMarcasHref,
+} from "@/lib/store-marcas";
 import { useStoreAuthModals } from "@/components/store/StoreAuthModals";
 
 const linkRowClass =
@@ -34,13 +40,28 @@ function readActiveCategoryId(): string {
   }
 }
 
+function readActiveBrand(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const brands = params.get("brands")?.trim() ?? "";
+    if (brands) return brands.split(",")[0]?.trim() ?? "";
+    return params.get("brand")?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export function StoreNavDropdowns({
   menuCategories,
+  storeBrands = [],
   accountHref,
   accountLabel,
   guestOpensAuthDrawer = false,
 }: {
   menuCategories: StoreCategoryMenuItem[];
+  /** Marcas publicadas para el panel de la categoría «Marcas». */
+  storeBrands?: StoreBrandSummary[];
   accountHref: string;
   accountLabel: string;
   /** Si es true, “Mi cuenta” / login abre el panel lateral en lugar de navegar. */
@@ -53,6 +74,7 @@ export function StoreNavDropdowns({
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [flyoutId, setFlyoutId] = useState<string | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState("");
+  const [activeBrand, setActiveBrand] = useState("");
   const baseId = useId();
 
   const flyoutCategory =
@@ -60,6 +82,7 @@ export function StoreNavDropdowns({
       ? (menuCategories.find((c) => c.id === flyoutId) ?? null)
       : null;
   const flyoutOpen = Boolean(open && flyoutCategory);
+  const onMarcasPage = pathname === "/marcas" || pathname.startsWith("/marcas/");
 
   useEffect(() => {
     setPortalTarget(document.body);
@@ -78,16 +101,25 @@ export function StoreNavDropdowns({
   useEffect(() => {
     if (!open) return;
     const activeId = readActiveCategoryId();
+    const brand = readActiveBrand();
     setActiveCategoryId(activeId);
+    setActiveBrand(brand);
+
+    if (onMarcasPage) {
+      const marcas = menuCategories.find((c) => isMarcasCategoryName(c.name));
+      if (marcas) setFlyoutId(marcas.id);
+      return;
+    }
+
     if (!activeId) return;
     const parent = menuCategories.find(
       (c) =>
         c.id === activeId || c.children.some((ch) => ch.id === activeId),
     );
-    if (parent && parent.children.length > 0) {
+    if (parent && (parent.children.length > 0 || isMarcasCategoryName(parent.name))) {
       setFlyoutId(parent.id);
     }
-  }, [open, menuCategories]);
+  }, [open, menuCategories, onMarcasPage]);
 
   const close = useCallback(() => {
     setFlyoutId(null);
@@ -189,6 +221,75 @@ export function StoreNavDropdowns({
     );
   }
 
+  function renderBrandsList() {
+    return (
+      <ul className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        <li>
+          <Link
+            href={storeMarcasHref()}
+            onClick={close}
+            className="flex items-center justify-between gap-3 px-2 py-3.5 text-left transition hover:bg-stone-50"
+          >
+            <span
+              className={`text-[12px] font-semibold uppercase tracking-[0.05em] ${
+                onMarcasPage && !activeBrand
+                  ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
+                  : "text-stone-800"
+              }`}
+            >
+              Todas las marcas
+            </span>
+            <CaretRight
+              className="size-3.5 shrink-0 text-stone-300"
+              weight={STORE_HEADER_ICON_WEIGHT}
+              aria-hidden
+            />
+          </Link>
+        </li>
+        {storeBrands.map((brand) => {
+          const brandActive =
+            onMarcasPage &&
+            activeBrand.toLowerCase() === brand.name.toLowerCase();
+          return (
+            <li key={brand.name}>
+              <Link
+                href={storeMarcasBrandHref(brand.name)}
+                onClick={close}
+                className="flex items-center justify-between gap-3 px-2 py-3.5 text-left transition hover:bg-stone-50"
+              >
+                <span
+                  className={`text-[12px] font-medium uppercase tracking-[0.05em] ${
+                    brandActive
+                      ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
+                      : "text-stone-600"
+                  }`}
+                >
+                  {brand.name}
+                </span>
+                <CaretRight
+                  className="size-3.5 shrink-0 text-stone-300"
+                  weight={STORE_HEADER_ICON_WEIGHT}
+                  aria-hidden
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  function renderFlyoutBody(category: StoreCategoryMenuItem) {
+    if (isMarcasCategoryName(category.name)) {
+      return renderBrandsList();
+    }
+    return renderSubcategoryList(category);
+  }
+
+  function flyoutPanelLabel(category: StoreCategoryMenuItem) {
+    return isMarcasCategoryName(category.name) ? "Marcas" : "Subcategorías";
+  }
+
   /** Solo montamos el portal si el menú está abierto: nada de panel blanco residual. */
   const drawerLayer =
     portalTarget &&
@@ -248,13 +349,13 @@ export function StoreNavDropdowns({
                 </div>
                 <div className="shrink-0 px-4 pb-3 pt-4">
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-                    Subcategorías
+                    {flyoutPanelLabel(flyoutCategory)}
                   </p>
                   <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
                     {flyoutCategory.name}
                   </p>
                 </div>
-                {renderSubcategoryList(flyoutCategory)}
+                {renderFlyoutBody(flyoutCategory)}
               </>
             ) : null}
           </div>
@@ -294,10 +395,16 @@ export function StoreNavDropdowns({
                 </li>
               ) : (
                 menuCategories.map((c) => {
-                  const hasSubs = c.children.length > 0;
+                  const isMarcas = isMarcasCategoryName(c.name);
+                  const hasSubs =
+                    c.children.length > 0 ||
+                    (isMarcas && storeBrands.length > 0);
                   const isFlyoutOpen = flyoutId === c.id;
-                  const parentHref = `/products?category=${c.id}`;
+                  const parentHref = isMarcas
+                    ? storeMarcasHref()
+                    : `/products?category=${c.id}`;
                   const parentActive =
+                    (isMarcas && onMarcasPage) ||
                     activeCategoryId === c.id ||
                     c.children.some((ch) => ch.id === activeCategoryId);
 
@@ -314,7 +421,11 @@ export function StoreNavDropdowns({
                           aria-controls={
                             isFlyoutOpen ? `${baseId}-flyout` : undefined
                           }
-                          aria-label={`${c.name}, tiene ${c.children.length} subcategorías`}
+                          aria-label={
+                            isMarcas
+                              ? `${c.name}, ver marcas de la tienda`
+                              : `${c.name}, tiene ${c.children.length} subcategorías`
+                          }
                         >
                           <span
                             className={`${linkLabelClass} ${
@@ -416,13 +527,13 @@ export function StoreNavDropdowns({
             >
               <div className="shrink-0 border-b border-stone-200 px-4 py-5">
                 <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-                  Subcategorías
+                  {flyoutPanelLabel(flyoutCategory)}
                 </p>
                 <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
                   {flyoutCategory.name}
                 </p>
               </div>
-              {renderSubcategoryList(flyoutCategory)}
+              {renderFlyoutBody(flyoutCategory)}
             </div>
           ) : null}
         </div>

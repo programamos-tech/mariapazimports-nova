@@ -4,6 +4,10 @@ import { storeProductGridClass } from "@/lib/store-layout";
 import { storeProductCardImagePriority } from "@/lib/store-product-card-image";
 import { toProductListingCardProps } from "@/lib/store-listing-variant-meta";
 import type { CatalogBrowseSection } from "@/lib/catalog-browse-rows";
+import {
+  isMarcasCategoryName,
+  storeMarcasHref,
+} from "@/lib/store-marcas";
 
 export function CatalogBrowseSections({
   sections,
@@ -31,7 +35,11 @@ export function CatalogBrowseSections({
             </h2>
             {section.showSeeAll && section.categoryId ? (
               <Link
-                href={`/products?category=${encodeURIComponent(section.categoryId)}`}
+                href={
+                  isMarcasCategoryName(section.categoryName)
+                    ? storeMarcasHref()
+                    : `/products?category=${encodeURIComponent(section.categoryId)}`
+                }
                 className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500 underline-offset-4 transition hover:text-stone-800 hover:underline"
               >
                 Ver más

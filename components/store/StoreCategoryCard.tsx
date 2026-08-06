@@ -7,6 +7,10 @@ import {
   STORE_PRODUCT_IMAGE_IMG_CLASS,
 } from "@/lib/store-product-card-image";
 import { productCardImageSources } from "@/lib/storage-image-url";
+import {
+  isMarcasCategoryName,
+  storeMarcasHref,
+} from "@/lib/store-marcas";
 
 /** Tile de categoría: distinto a la card de producto (sin precio ni CTA de bolsa). */
 export function StoreCategoryCard({
@@ -16,7 +20,9 @@ export function StoreCategoryCard({
   category: HomeCategoryCard;
   priority?: boolean;
 }) {
-  const href = `/products?category=${encodeURIComponent(category.id)}`;
+  const href = isMarcasCategoryName(category.name)
+    ? storeMarcasHref()
+    : `/products?category=${encodeURIComponent(category.id)}`;
   const { src, srcSet } = productCardImageSources(category.imageSrc);
 
   return (

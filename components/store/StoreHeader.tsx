@@ -7,15 +7,18 @@ import { StoreHeaderActions } from "@/components/store/StoreHeaderActions";
 import { StoreHeaderShell } from "@/components/store/StoreHeaderShell";
 import { StoreNavDropdowns } from "@/components/store/StoreNavDropdowns";
 import { StoreSearch } from "@/components/store/StoreSearch";
+import { fetchPublishedBrandsWithCounts } from "@/lib/fetch-store-brands";
 import { fetchStoreCategoriesWithCounts } from "@/lib/fetch-store-categories";
 
 export async function StoreHeader() {
   const supabase = await createSupabaseServerClient();
-  const [menuCategories, cartItemCount, authResult] = await Promise.all([
-    fetchStoreCategoriesWithCounts(supabase),
-    getStorefrontCartItemCount(),
-    supabase.auth.getUser(),
-  ]);
+  const [menuCategories, storeBrands, cartItemCount, authResult] =
+    await Promise.all([
+      fetchStoreCategoriesWithCounts(supabase),
+      fetchPublishedBrandsWithCounts(supabase),
+      getStorefrontCartItemCount(),
+      supabase.auth.getUser(),
+    ]);
 
   const user = authResult.data.user;
   const userIconHref = user ? "/cuenta" : "/cuenta/entrar";
@@ -33,6 +36,7 @@ export async function StoreHeader() {
         <div className="relative z-10 flex shrink-0 items-center bg-white group-data-[home-overlay=true]/header:bg-transparent">
           <StoreNavDropdowns
             menuCategories={menuCategories}
+            storeBrands={storeBrands}
             accountHref={userIconHref}
             accountLabel={userIconLabel}
             guestOpensAuthDrawer={!user}

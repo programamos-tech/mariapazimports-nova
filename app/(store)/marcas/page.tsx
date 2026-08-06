@@ -264,12 +264,6 @@ export default async function StoreBrandsPage({ searchParams }: Props) {
                       >
                         {section.title}
                       </h2>
-                      <p className="mt-1 text-sm text-stone-500">
-                        {section.products.length}{" "}
-                        {section.products.length === 1
-                          ? "producto"
-                          : "productos"}
-                      </p>
                     </div>
                   </RevealOnScroll>
 

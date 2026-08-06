@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CatalogListingHero } from "@/components/store/CatalogListingHero";
 import { CatalogPagination } from "@/components/store/CatalogPagination";
@@ -40,6 +41,7 @@ import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
 import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
 import { buildCategoryTree } from "@/lib/category-tree";
 import { CategorySubnav } from "@/components/store/CategorySubnav";
+import { isMarcasCategoryName, storeMarcasHref } from "@/lib/store-marcas";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +143,10 @@ export default async function ProductsPage({ searchParams }: Props) {
       typeof cat.parent_id === "string" && cat.parent_id.trim()
         ? cat.parent_id.trim()
         : null;
+  }
+
+  if (isMarcasCategoryName(categoryName)) {
+    redirect(storeMarcasHref());
   }
 
   const categoryView = Boolean(categoryFilterId && categoryName);
