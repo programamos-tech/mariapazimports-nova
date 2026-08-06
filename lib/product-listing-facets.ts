@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
-import { normalizeSizeOptionsFromRow } from "@/lib/product-size-options";
 import { buildCategoryTree } from "@/lib/category-tree";
+import { isUsableStoreBrand } from "@/lib/fetch-store-catalog-by-brand";
+import { normalizeSizeOptionsFromRow } from "@/lib/product-size-options";
 
 export type SizeFacetOption = {
   key: string;
