@@ -40,7 +40,8 @@ function HeroCard({
 }
 
 /**
- * Hero a pantalla completa: collage en movimiento + mensaje editorial centrado encima.
+ * Hero a pantalla completa: collage en movimiento + mensaje editorial
+ * sobre un difuminado inferior (sin cuadro).
  */
 export function StoreNetflixHero() {
   return (
@@ -79,41 +80,40 @@ export function StoreNetflixHero() {
         </div>
       </div>
 
-      {/* Velos suaves para legibilidad del mensaje centrado */}
+      {/* Velo superior suave (logo / header) */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(28vh,12rem)] bg-gradient-to-b from-white/90 via-white/40 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(28vh,12rem)] bg-gradient-to-t from-white/85 via-white/35 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 z-[1] bg-white/25"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(22vh,10rem)] bg-gradient-to-b from-white/80 via-white/25 to-transparent"
         aria-hidden
       />
 
-      <div className="relative z-[2] flex min-h-[100svh] items-center justify-center px-5 pb-16 pt-[max(6.5rem,18vw)] sm:px-8">
+      {/* Difuminado inferior: el collage se pierde y el texto queda legible */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(58vh,28rem)] sm:h-[min(52vh,30rem)]"
+        aria-hidden
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-[#eceae6] via-[#eceae6]/90 via-40% to-transparent" />
+        <div className="absolute inset-0 backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_35%,transparent_85%)]" />
+      </div>
+
+      <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(5.5rem,10vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(6rem,11vh)]">
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center sm:max-w-lg">
-          <div className="w-full rounded-2xl bg-white/70 px-6 py-7 shadow-[0_20px_60px_-28px_rgba(28,25,23,0.35)] ring-1 ring-white/60 backdrop-blur-md sm:px-10 sm:py-9">
-            <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 sm:text-[11px] sm:tracking-[0.24em]">
-              Personal shopper · Originales
-            </p>
-            <h1
-              id="store-hero-intro-heading"
-              className="mt-3 text-[clamp(1.85rem,7vw,2.65rem)] font-semibold leading-[1.1] tracking-tight text-stone-900"
-            >
-              María Paz Imports
-            </h1>
-            <p className="mx-auto mt-3 max-w-[22rem] text-[13px] leading-relaxed text-stone-600 sm:mt-4 sm:text-[14px]">
-              Curaduría de productos auténticos, con asesoría cercana para elegir
-              lo mejor para vos.
-            </p>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 sm:text-[11px] sm:tracking-[0.24em]">
+            Personal shopper · Originales
+          </p>
+          <h1
+            id="store-hero-intro-heading"
+            className="mt-3 text-[clamp(1.85rem,7vw,2.65rem)] font-semibold leading-[1.1] tracking-tight text-stone-900"
+          >
+            María Paz Imports
+          </h1>
+          <p className="mx-auto mt-3 max-w-[22rem] text-[13px] leading-relaxed text-stone-600 sm:mt-4 sm:text-[14px]">
+            Curaduría de productos auténticos, con asesoría cercana para elegir
+            lo mejor para vos.
+          </p>
 
           <Link
             href="/products"
-            className="mt-5 inline-flex w-full max-w-[16rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800 active:scale-[0.98] sm:mt-6 sm:max-w-[17rem]"
+            className="mt-6 inline-flex w-full max-w-[16rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-stone-800 active:scale-[0.98] sm:mt-7 sm:max-w-[17rem]"
           >
             Ver catálogo
           </Link>
