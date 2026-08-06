@@ -105,7 +105,7 @@ export function StoreNetflixHero() {
             María Paz Imports
           </h1>
           <p className="mt-3 text-[13px] leading-snug text-stone-600 sm:text-[14px]">
-            Productos con entrega inmediata y por encargo.
+            Productos entrega inmediata y encargos
           </p>
           <p className="mt-4 max-w-[20rem] text-[13px] font-medium leading-snug tracking-wide text-stone-700 sm:text-[14px]">
             Encontramos lo extraordinario para ti
@@ -115,7 +115,7 @@ export function StoreNetflixHero() {
             href="/products"
             className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-stone-800 active:scale-[0.98]"
           >
-            Descubre mi tienda
+            Ver tienda
           </Link>
         </div>
       </div>
