@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { createCategory } from "@/app/actions/admin/categories";
 import type { AdminCategoryManageRow } from "@/lib/supabase/admin-products-list";
 import { CategoryDeleteButton } from "@/components/admin/CategoryDeleteButton";
+import { CategoryMoveButtons } from "@/components/admin/CategoryMoveButtons";
 import { CategoryIconPicker } from "@/components/admin/CategoryIconPicker";
 import {
   getCategoryIconComponent,
@@ -67,7 +68,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
           Las <strong className="font-semibold text-zinc-800">categorías</strong>{" "}
           son los grupos grandes del menú. Dentro de cada una podés crear{" "}
           <strong className="font-semibold text-zinc-800">subcategorías</strong>.
-          Después, en cada producto, elegís en cuál va.
+          Usá las flechas ↑ ↓ para elegir cuál va primero en el menú Shop.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
           <span className="rounded-lg bg-zinc-900 px-3 py-1.5 font-semibold text-white">
@@ -223,7 +224,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
                     list.length > tree.length
                       ? ` · ${list.length - tree.length} subcategorías`
                       : ""
-                  }`}
+                  } · el orden de arriba es el del menú Shop`}
             </p>
           </div>
 
@@ -245,7 +246,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
             </div>
           ) : (
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1">
-              {tree.map(({ parent, children }) => {
+              {tree.map(({ parent, children }, rootIndex) => {
                 const ParentIcon = getCategoryIconComponent(
                   resolveCategoryIconKey(parent.icon_key),
                 );
@@ -269,6 +270,11 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
                             : ""}
                         </p>
                       </div>
+                      <CategoryMoveButtons
+                        categoryId={parent.id}
+                        canMoveUp={rootIndex > 0}
+                        canMoveDown={rootIndex < tree.length - 1}
+                      />
                       <CategoryDeleteButton
                         categoryId={parent.id}
                         categoryName={parent.name}
@@ -277,7 +283,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
 
                     {children.length > 0 ? (
                       <ul className="border-t border-zinc-100">
-                        {children.map((child) => {
+                        {children.map((child, childIndex) => {
                           const ChildIcon = getCategoryIconComponent(
                             resolveCategoryIconKey(child.icon_key),
                           );
@@ -300,6 +306,11 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
                                   Subcategoría
                                 </p>
                               </div>
+                              <CategoryMoveButtons
+                                categoryId={child.id}
+                                canMoveUp={childIndex > 0}
+                                canMoveDown={childIndex < children.length - 1}
+                              />
                               <CategoryDeleteButton
                                 categoryId={child.id}
                                 categoryName={child.name}
