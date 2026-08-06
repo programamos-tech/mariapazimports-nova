@@ -9,6 +9,9 @@ type Props = {
   children: React.ReactNode;
 };
 
+/**
+ * Overlay centrado en el área de trabajo (a la derecha del sidebar en desktop).
+ */
 export function CategoriesModal({ closeHref, children }: Props) {
   const router = useRouter();
 
@@ -27,28 +30,24 @@ export function CategoriesModal({ closeHref, children }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex max-lg:justify-end lg:items-center lg:justify-center lg:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 lg:left-64"
       role="dialog"
       aria-modal="true"
       aria-labelledby="categories-modal-title"
     >
       <Link
         href={closeHref}
-        className="absolute inset-0 z-0 bg-black/40 backdrop-blur-[1px] lg:bg-zinc-950/55 lg:backdrop-blur-[2px]"
+        className="absolute inset-0 z-0 bg-zinc-950/50 backdrop-blur-[2px] transition-opacity"
         aria-label="Cerrar categorías"
         scroll={false}
       />
       <div
-        className={[
-          "relative z-10 flex w-full flex-col overflow-hidden bg-white shadow-2xl ring-1 ring-zinc-950/10",
-          "max-lg:h-full max-lg:w-[min(100%,28rem)] max-lg:border-l max-lg:border-zinc-200/90",
-          "lg:h-[min(92vh,880px)] lg:max-w-5xl lg:rounded-2xl lg:border lg:border-zinc-200/90",
-        ].join(" ")}
+        className="categories-modal-panel relative z-10 flex h-[min(92vh,880px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-2xl ring-1 ring-zinc-950/10"
       >
         <Link
           href={closeHref}
           scroll={false}
-          className="absolute right-3 top-3 z-20 inline-flex size-10 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900 max-lg:right-4 max-lg:top-4"
+          className="absolute right-3 top-3 z-20 inline-flex size-10 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900 active:scale-95"
           aria-label="Cerrar"
         >
           <span className="sr-only">Cerrar</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { createCategory } from "@/app/actions/admin/categories";
 import type { AdminCategoryManageRow } from "@/lib/supabase/admin-products-list";
 import { CategoryDeleteButton } from "@/components/admin/CategoryDeleteButton";
@@ -22,6 +23,31 @@ type Props = {
 
 const fieldClass =
   "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-sm font-medium text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+
+function CreateSubmitButton({ mode }: { mode: "root" | "sub" }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className="relative w-full overflow-hidden rounded-xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-wait disabled:opacity-80"
+    >
+      <span
+        className={`inline-flex items-center justify-center gap-2 transition-opacity ${pending ? "opacity-0" : "opacity-100"}`}
+      >
+        {mode === "root" ? "Crear categoría" : "Crear subcategoría"}
+      </span>
+      <span
+        className={`pointer-events-none absolute inset-0 inline-flex items-center justify-center gap-2 transition-opacity ${pending ? "opacity-100" : "opacity-0"}`}
+        aria-hidden={!pending}
+      >
+        <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        Guardando…
+      </span>
+    </button>
+  );
+}
 
 export function CategoriesPanel({ list, loadError, categoryError }: Props) {
   const roots = rootCategoryOptions(list);
@@ -76,7 +102,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
               role="tab"
               aria-selected={mode === "root"}
               onClick={() => setMode("root")}
-              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition active:scale-[0.97] ${
                 mode === "root"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-800"
@@ -90,7 +116,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
               aria-selected={mode === "sub"}
               onClick={() => setMode("sub")}
               disabled={roots.length === 0}
-              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${
                 mode === "sub"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-800"
@@ -181,12 +207,7 @@ export function CategoriesPanel({ list, loadError, categoryError }: Props) {
               </p>
             ) : null}
 
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
-            >
-              {mode === "root" ? "Crear categoría" : "Crear subcategoría"}
-            </button>
+            <CreateSubmitButton mode={mode} />
           </form>
         </section>
 
