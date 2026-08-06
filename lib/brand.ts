@@ -23,6 +23,12 @@ export const storeTagline =
   process.env.NEXT_PUBLIC_STORE_TAGLINE ??
   "Encuentro lo extraordinario para ti";
 
+/** Misma frase en 2 líneas (visual de marca). */
+export const storeTaglineLines = [
+  "Encuentro lo extraordinario",
+  "para ti",
+] as const;
+
 /** Párrafo corto sobre la tienda (footer). */
 export const storeShortDescription =
   process.env.NEXT_PUBLIC_STORE_DESCRIPTION ??

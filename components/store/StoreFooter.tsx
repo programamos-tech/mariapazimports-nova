@@ -9,7 +9,7 @@ import {
   storeCopyrightHolder,
   storeInstagramUrl,
   storeSupportHours,
-  storeTagline,
+  storeTaglineLines,
   storeWhatsAppUrl,
 } from "@/lib/brand";
 
@@ -30,8 +30,9 @@ export function StoreFooter() {
             <StoreHomeLogoLink className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2">
               <StoreLogo variant="footer" className="object-left" />
             </StoreHomeLogoLink>
-            <p className="mt-3 whitespace-nowrap text-[9px] font-medium uppercase leading-none tracking-[0.1em] text-stone-500 sm:text-[10px] sm:tracking-[0.12em]">
-              {storeTagline}
+            <p className="mt-3 text-[9px] font-medium uppercase leading-snug tracking-[0.1em] text-stone-500 sm:text-[10px] sm:tracking-[0.12em]">
+              <span className="block">{storeTaglineLines[0]}</span>
+              <span className="block">{storeTaglineLines[1]}</span>
             </p>
           </div>
 
