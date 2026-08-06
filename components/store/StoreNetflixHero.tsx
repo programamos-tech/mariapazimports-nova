@@ -115,7 +115,7 @@ export function StoreNetflixHero() {
             href="/products"
             className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-stone-800 active:scale-[0.98]"
           >
-            Descubre mi tienda!
+            Descubre mi tienda
           </Link>
         </div>
       </div>

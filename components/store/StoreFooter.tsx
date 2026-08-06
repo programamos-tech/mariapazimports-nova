@@ -120,9 +120,6 @@ export function StoreFooter() {
               <Link href="/cookies" className={footerLink}>
                 Cookies
               </Link>
-              <Link href="/admin" className={`${footerLink} text-stone-600`}>
-                Backoffice
-              </Link>
             </nav>
             <div className="inline-flex items-center gap-1.5 text-[11px] text-stone-500 sm:text-xs">
               <span className="whitespace-nowrap">Diseñado por</span>
