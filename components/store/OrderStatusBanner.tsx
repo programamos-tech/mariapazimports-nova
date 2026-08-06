@@ -1,6 +1,7 @@
 import {
   fulfillmentStatusDescription,
   fulfillmentStatusLabel,
+  resolveCustomerFulfillmentStatus,
   type OrderFulfillmentStatus,
 } from "@/lib/order-fulfillment";
 
@@ -24,20 +25,12 @@ export function OrderStatusBanner({
   paymentStatus?: string;
   compact?: boolean;
 }) {
-  const cancelled =
-    fulfillmentStatus === "cancelled" || paymentStatus === "cancelled";
-  const key = (
-    cancelled
-      ? "cancelled"
-      : fulfillmentStatus && fulfillmentStatus in STATUS_ACCENT
-        ? fulfillmentStatus
-        : "awaiting_payment"
-  ) as OrderFulfillmentStatus;
+  const key = resolveCustomerFulfillmentStatus(
+    fulfillmentStatus,
+    paymentStatus,
+  );
   const accent = STATUS_ACCENT[key];
-  const label =
-    key === "awaiting_payment" && !fulfillmentStatus
-      ? "Esperando comprobante"
-      : fulfillmentStatusLabel(key);
+  const label = fulfillmentStatusLabel(key);
   const description =
     key === "awaiting_payment"
       ? "Transfiere el monto exacto y sube el comprobante para continuar."

@@ -11,6 +11,7 @@ import {
   StorePrimaryLinkButton,
   StoreProductSuggestionsGrid,
 } from "@/components/store/StoreProductSuggestionsGrid";
+import { resolveCustomerFulfillmentStatus } from "@/lib/order-fulfillment";
 import { fetchStoreProductSuggestions } from "@/lib/store-product-suggestions";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { storeShellClass } from "@/lib/store-layout";
@@ -73,20 +74,27 @@ export default async function PedidoSeguimientoPage({
     ? await listStoreOrderPaymentProofs(String(order.id), trackingToken)
     : [];
 
-  const fulfillment = order.fulfillment_status
+  const rawFulfillment = order.fulfillment_status
     ? String(order.fulfillment_status)
     : null;
+  const fulfillment = resolveCustomerFulfillmentStatus(
+    rawFulfillment,
+    String(order.status),
+  );
   const awaitingProof =
-    fulfillment === "awaiting_payment" || fulfillment == null;
-  const pendingValidation =
+    isBankTransferOrder &&
     order.status === "pending" &&
-    (fulfillment === "payment_submitted" || proofs.length > 0);
+    (rawFulfillment === "awaiting_payment" || rawFulfillment == null);
+  const pendingValidation =
+    isBankTransferOrder &&
+    order.status === "pending" &&
+    (rawFulfillment === "payment_submitted" || proofs.length > 0);
   const canUploadProof =
     isBankTransferOrder &&
     order.status === "pending" &&
-    (awaitingProof || fulfillment === "payment_submitted");
+    (awaitingProof || rawFulfillment === "payment_submitted");
   const showProgressTimeline =
-    !awaitingProof && fulfillment !== "cancelled";
+    fulfillment !== "awaiting_payment" && fulfillment !== "cancelled";
 
   const lines = items ?? [];
   const totalCents = Number(order.total_cents);
@@ -146,7 +154,7 @@ export default async function PedidoSeguimientoPage({
         <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_min(100%,340px)] lg:items-start xl:gap-16">
           <div className="min-w-0 space-y-12">
             <OrderStatusBanner
-              fulfillmentStatus={fulfillment ?? "awaiting_payment"}
+              fulfillmentStatus={fulfillment}
               paymentStatus={String(order.status)}
             />
 

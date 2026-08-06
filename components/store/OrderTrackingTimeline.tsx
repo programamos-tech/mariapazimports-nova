@@ -2,6 +2,7 @@ import {
   fulfillmentStatusDescription,
   fulfillmentStatusLabel,
   fulfillmentStepIndex,
+  resolveCustomerFulfillmentStatus,
   TRACKING_TIMELINE_STEPS,
 } from "@/lib/order-fulfillment";
 
@@ -15,9 +16,12 @@ export function OrderTrackingTimeline({
   fulfillmentStatus: string | null;
   paymentStatus: string;
 }) {
-  const cancelled =
-    fulfillmentStatus === "cancelled" || paymentStatus === "cancelled";
-  const currentIdx = fulfillmentStepIndex(fulfillmentStatus);
+  const resolved = resolveCustomerFulfillmentStatus(
+    fulfillmentStatus,
+    paymentStatus,
+  );
+  const cancelled = resolved === "cancelled";
+  const currentIdx = fulfillmentStepIndex(resolved);
 
   if (cancelled) {
     return (
@@ -72,7 +76,7 @@ export function OrderTrackingTimeline({
                 </p>
                 {active ? (
                   <p className="mt-0.5 text-xs text-stone-500">
-                    {fulfillmentStatusDescription(fulfillmentStatus)}
+                    {fulfillmentStatusDescription(resolved)}
                   </p>
                 ) : null}
               </div>
@@ -83,7 +87,7 @@ export function OrderTrackingTimeline({
       <p className="mt-4 text-xs text-stone-500">
         Estado actual:{" "}
         <span className="font-medium text-stone-800">
-          {fulfillmentStatusLabel(fulfillmentStatus)}
+          {fulfillmentStatusLabel(resolved)}
         </span>
       </p>
     </div>

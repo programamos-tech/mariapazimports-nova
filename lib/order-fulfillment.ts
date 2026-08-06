@@ -64,6 +64,43 @@ export function fulfillmentStatusDescription(
   return DESCRIPTIONS[key] ?? "";
 }
 
+/**
+ * Estado de cumplimiento que ve el cliente.
+ * Si el cobro ya está `paid` (p. ej. Wompi APPROVED), no debe quedar
+ * en estados de transferencia (“esperando comprobante”).
+ */
+export function resolveCustomerFulfillmentStatus(
+  fulfillmentStatus: string | null | undefined,
+  paymentStatus?: string | null,
+): OrderFulfillmentStatus {
+  if (
+    fulfillmentStatus === "cancelled" ||
+    paymentStatus === "cancelled"
+  ) {
+    return "cancelled";
+  }
+
+  if (
+    paymentStatus === "paid" &&
+    (fulfillmentStatus == null ||
+      fulfillmentStatus === "awaiting_payment" ||
+      fulfillmentStatus === "payment_submitted")
+  ) {
+    return "accepted";
+  }
+
+  if (
+    fulfillmentStatus &&
+    ORDER_FULFILLMENT_STATUSES.includes(
+      fulfillmentStatus as OrderFulfillmentStatus,
+    )
+  ) {
+    return fulfillmentStatus as OrderFulfillmentStatus;
+  }
+
+  return "awaiting_payment";
+}
+
 /** Pasos visibles en la línea de tiempo del cliente (sin cancelado ni “esperando”). */
 export const TRACKING_TIMELINE_STEPS: {
   key: OrderFulfillmentStatus;

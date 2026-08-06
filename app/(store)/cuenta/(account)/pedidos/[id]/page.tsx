@@ -9,6 +9,7 @@ import {
 import { OrderStatusBanner } from "@/components/store/OrderStatusBanner";
 import { OrderTrackingSummary } from "@/components/store/OrderTrackingSummary";
 import { OrderTrackingTimeline } from "@/components/store/OrderTrackingTimeline";
+import { resolveCustomerFulfillmentStatus } from "@/lib/order-fulfillment";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/money";
 import { ventaNumeroReferencia } from "@/lib/ventas-sales";
@@ -95,18 +96,19 @@ export default async function CuentaPedidoDetallePage({
 
   const lines = items ?? [];
   const orderRef = ventaNumeroReferencia(String(order.id));
-  const fulfillment = order.fulfillment_status
-    ? String(order.fulfillment_status)
-    : null;
   const paymentStatus = String(order.status);
+  const fulfillment = resolveCustomerFulfillmentStatus(
+    order.fulfillment_status != null
+      ? String(order.fulfillment_status)
+      : null,
+    paymentStatus,
+  );
   const trackingToken = order.tracking_token
     ? String(order.tracking_token)
     : null;
   const isBankTransfer = order.payment_method === "bank_transfer";
   const showTimeline =
-    fulfillment != null &&
-    fulfillment !== "awaiting_payment" &&
-    fulfillment !== "cancelled";
+    fulfillment !== "awaiting_payment" && fulfillment !== "cancelled";
 
   const deptRel = munRow?.shipping_departments;
   const departmentName = Array.isArray(deptRel)
@@ -163,7 +165,7 @@ export default async function CuentaPedidoDetallePage({
       </div>
 
       <OrderStatusBanner
-        fulfillmentStatus={fulfillment ?? "awaiting_payment"}
+        fulfillmentStatus={fulfillment}
         paymentStatus={paymentStatus}
       />
 
