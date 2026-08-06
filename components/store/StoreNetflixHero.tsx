@@ -1,6 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Great_Vibes } from "next/font/google";
 import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
+
+const heroSignature = Great_Vibes({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 const ROWS: { direction: "left" | "right"; durationSec: number; offset: number }[] =
   [
@@ -107,8 +114,12 @@ export function StoreNetflixHero() {
             María Paz Imports
           </h1>
           <p className="mx-auto mt-3 max-w-[22rem] text-[13px] leading-relaxed text-stone-600 sm:mt-4 sm:text-[14px]">
-            Curaduría de productos auténticos, con asesoría cercana para elegir
-            lo mejor para vos.
+            Productos con entrega inmediata y por encargo.
+          </p>
+          <p
+            className={`${heroSignature.className} mt-3 text-[clamp(1.55rem,5.5vw,2.15rem)] leading-tight text-stone-800 sm:mt-4`}
+          >
+            Encontramos lo extraordinario para ti
           </p>
 
           <Link
