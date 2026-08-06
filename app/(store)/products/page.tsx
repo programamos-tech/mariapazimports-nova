@@ -354,11 +354,6 @@ export default async function ProductsPage({ searchParams }: Props) {
           <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
             Todos los productos
           </h1>
-          <p className="mt-2 text-sm text-stone-500">
-            {listingTotal === 1
-              ? "1 producto en el catálogo"
-              : `${listingTotal} productos en el catálogo`}
-          </p>
         </header>
       ) : null}
 

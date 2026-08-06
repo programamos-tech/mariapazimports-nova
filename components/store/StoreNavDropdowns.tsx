@@ -326,14 +326,11 @@ export function StoreNavDropdowns({
                             {c.name}
                           </span>
                           <span
-                            className={`inline-flex shrink-0 items-center gap-1.5 ${
+                            className={`inline-flex shrink-0 items-center ${
                               isFlyoutOpen ? "text-stone-900" : "text-stone-400"
                             }`}
                             title="Tiene subcategorías"
                           >
-                            <span className="text-[10px] font-medium tabular-nums tracking-[0.08em]">
-                              {c.children.length}
-                            </span>
                             <CaretDoubleRight
                               className={`size-4 transition-transform duration-200 ${
                                 isFlyoutOpen ? "translate-x-0.5" : ""
