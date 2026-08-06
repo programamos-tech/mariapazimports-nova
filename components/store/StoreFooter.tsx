@@ -26,13 +26,17 @@ export function StoreFooter() {
     <footer className="border-t border-stone-200/90 bg-white">
       <div className={`${storeShellClass} py-12 sm:py-14 lg:py-16`}>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,14rem)_1fr] lg:gap-16 xl:gap-20">
-          <div className="max-w-[12rem]">
+          <div className="max-w-[16rem]">
             <StoreHomeLogoLink className="inline-block outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2">
               <StoreLogo variant="footer" className="object-left" />
             </StoreHomeLogoLink>
-            <p className="mt-3 text-[9px] font-medium uppercase leading-snug tracking-[0.1em] text-stone-500 sm:text-[10px] sm:tracking-[0.12em]">
-              <span className="block">{storeTaglineLines[0]}</span>
-              <span className="block">{storeTaglineLines[1]}</span>
+            <p className="mt-3 text-[9px] font-medium uppercase leading-snug tracking-[0.08em] text-stone-500 sm:text-[10px] sm:tracking-[0.1em]">
+              <span className="block whitespace-nowrap">
+                {storeTaglineLines[0]}
+              </span>
+              <span className="block whitespace-nowrap">
+                {storeTaglineLines[1]}
+              </span>
             </p>
           </div>
 

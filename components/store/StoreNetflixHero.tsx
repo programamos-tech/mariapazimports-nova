@@ -109,8 +109,12 @@ export function StoreNetflixHero() {
             Productos entrega inmediata y encargos
           </p>
           <p className="mt-4 text-center text-[11px] font-semibold uppercase leading-snug tracking-[0.1em] text-stone-700 sm:text-[12px] sm:tracking-[0.12em]">
-            <span className="block">{storeTaglineLines[0]}</span>
-            <span className="block">{storeTaglineLines[1]}</span>
+            <span className="block whitespace-nowrap">
+              {storeTaglineLines[0]}
+            </span>
+            <span className="block whitespace-nowrap">
+              {storeTaglineLines[1]}
+            </span>
           </p>
 
           <Link
