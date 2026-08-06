@@ -8,9 +8,7 @@ export function StoreNetflixCategories({
 }: {
   categories: HomeCategoryCard[];
 }) {
-  const visible = categories
-    .filter((c) => c.productCount > 0)
-    .slice(0, 6);
+  const visible = categories.slice(0, 6);
 
   if (visible.length === 0) return null;
 

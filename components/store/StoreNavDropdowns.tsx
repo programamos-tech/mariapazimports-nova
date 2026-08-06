@@ -55,10 +55,9 @@ export function StoreNavDropdowns({
   const [activeCategoryId, setActiveCategoryId] = useState("");
   const baseId = useId();
 
-  const categoriesWithProducts = menuCategories.filter((c) => c.productCount > 0);
   const flyoutCategory =
     flyoutId != null
-      ? (categoriesWithProducts.find((c) => c.id === flyoutId) ?? null)
+      ? (menuCategories.find((c) => c.id === flyoutId) ?? null)
       : null;
   const flyoutOpen = Boolean(open && flyoutCategory);
 
@@ -83,8 +82,7 @@ export function StoreNavDropdowns({
     if (!activeId) return;
     const parent = menuCategories.find(
       (c) =>
-        c.productCount > 0 &&
-        (c.id === activeId || c.children.some((ch) => ch.id === activeId)),
+        c.id === activeId || c.children.some((ch) => ch.id === activeId),
     );
     if (parent && parent.children.length > 0) {
       setFlyoutId(parent.id);
@@ -286,7 +284,7 @@ export function StoreNavDropdowns({
                 </Link>
               </li>
 
-              {categoriesWithProducts.length === 0 ? (
+              {menuCategories.length === 0 ? (
                 <li className="border-b border-stone-100 px-0 py-4">
                   <p className="text-[12px] leading-relaxed text-stone-500">
                     Todavía no hay categorías. En «Todos los productos» ves el
@@ -295,7 +293,7 @@ export function StoreNavDropdowns({
                   </p>
                 </li>
               ) : (
-                categoriesWithProducts.map((c) => {
+                menuCategories.map((c) => {
                   const hasSubs = c.children.length > 0;
                   const isFlyoutOpen = flyoutId === c.id;
                   const parentHref = `/products?category=${c.id}`;
