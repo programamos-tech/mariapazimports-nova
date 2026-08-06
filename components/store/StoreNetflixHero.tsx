@@ -107,7 +107,7 @@ export function StoreNetflixHero() {
           <p className="mt-3 text-[13px] leading-snug text-stone-600 sm:text-[14px]">
             Productos con entrega inmediata y por encargo.
           </p>
-          <p className="font-store-display mt-4 text-[clamp(1.05rem,3.8vw,1.35rem)] italic leading-snug text-stone-700">
+          <p className="mt-4 max-w-[20rem] text-[13px] font-medium leading-snug tracking-wide text-stone-700 sm:text-[14px]">
             Encontramos lo extraordinario para ti
           </p>
 
