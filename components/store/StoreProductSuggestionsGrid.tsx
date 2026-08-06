@@ -52,8 +52,9 @@ export function StoreProductSuggestionsGrid({
       </h2>
       <ul className="mt-4 grid grid-cols-4 gap-3 sm:gap-3.5">
         {visible.map((s) => {
-          const framed = productCardImageSources(s.imagePath);
-          const img = framed.src ?? storagePublicObjectUrl(s.imagePath);
+          const publicUrl = storagePublicObjectUrl(s.imagePath);
+          const framed = productCardImageSources(publicUrl);
+          const img = framed.src ?? publicUrl;
           const swatches = s.colors.slice(0, 3);
           const extraColors = Math.max(0, s.colors.length - swatches.length);
           return (
