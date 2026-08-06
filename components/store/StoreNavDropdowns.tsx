@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { CaretDoubleRight } from "@phosphor-icons/react/dist/csr/CaretDoubleRight";
 import { CaretLeft } from "@phosphor-icons/react/dist/csr/CaretLeft";
 import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
-import { Folders } from "@phosphor-icons/react/dist/csr/Folders";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
 import { X } from "@phosphor-icons/react/dist/csr/X";
@@ -257,13 +257,36 @@ export function StoreNavDropdowns({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
-              {categoriesWithProducts.length === 0 ? (
-                <p className="py-6 text-sm text-stone-500">
-                  Todavía no hay categorías con productos.
-                </p>
-              ) : (
-                <ul className="border-t border-stone-200">
-                  {categoriesWithProducts.map((c) => {
+              <ul className="border-t border-stone-200">
+                <li className="border-b border-stone-200">
+                  <Link
+                    href="/products"
+                    onClick={close}
+                    className={linkRowClass}
+                  >
+                    <span
+                      className={`${linkLabelClass} ${
+                        !activeCategoryId
+                          ? "underline decoration-stone-400 underline-offset-4"
+                          : ""
+                      }`}
+                    >
+                      Todos los productos
+                    </span>
+                    <CaretRight
+                      className="size-4 shrink-0 text-stone-400"
+                      weight={STORE_HEADER_ICON_WEIGHT}
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+
+                {categoriesWithProducts.length === 0 ? (
+                  <li className="py-6 text-sm text-stone-500">
+                    Todavía no hay categorías con productos.
+                  </li>
+                ) : (
+                  categoriesWithProducts.map((c) => {
                     const hasSubs = c.children.length > 0;
                     const isFlyoutOpen = flyoutId === c.id;
                     const parentHref = `/products?category=${c.id}`;
@@ -282,37 +305,29 @@ export function StoreNavDropdowns({
                             }`}
                             aria-expanded={isFlyoutOpen}
                             aria-controls={`${baseId}-flyout`}
-                            aria-label={`${c.name}, tiene subcategorías`}
+                            aria-label={`${c.name}, tiene ${c.children.length} subcategorías`}
                           >
-                            <span className="flex min-w-0 items-center gap-2.5">
-                              <Folders
-                                className={`size-4 shrink-0 ${
-                                  isFlyoutOpen
-                                    ? "text-stone-900"
-                                    : "text-stone-500"
-                                }`}
-                                weight={STORE_HEADER_ICON_WEIGHT}
-                                aria-hidden
-                              />
-                              <span
-                                className={`${linkLabelClass} ${
-                                  parentActive
-                                    ? "underline decoration-stone-400 underline-offset-4"
-                                    : ""
-                                }`}
-                              >
-                                {c.name}
-                              </span>
+                            <span
+                              className={`${linkLabelClass} ${
+                                parentActive
+                                  ? "underline decoration-stone-400 underline-offset-4"
+                                  : ""
+                              }`}
+                            >
+                              {c.name}
                             </span>
-                            <span className="inline-flex shrink-0 items-center gap-1 text-stone-400">
-                              <span className="text-[10px] font-medium uppercase tracking-[0.06em]">
-                                {isFlyoutOpen ? "Abiertas" : "Ver"}
+                            <span
+                              className={`inline-flex shrink-0 items-center gap-1.5 ${
+                                isFlyoutOpen ? "text-stone-900" : "text-stone-400"
+                              }`}
+                              title="Tiene subcategorías"
+                            >
+                              <span className="text-[10px] font-medium tabular-nums tracking-[0.08em]">
+                                {c.children.length}
                               </span>
-                              <CaretRight
+                              <CaretDoubleRight
                                 className={`size-4 transition-transform duration-200 ${
-                                  isFlyoutOpen
-                                    ? "translate-x-0.5 text-stone-900"
-                                    : ""
+                                  isFlyoutOpen ? "translate-x-0.5" : ""
                                 }`}
                                 weight={STORE_HEADER_ICON_WEIGHT}
                                 aria-hidden
@@ -343,18 +358,9 @@ export function StoreNavDropdowns({
                         )}
                       </li>
                     );
-                  })}
-                </ul>
-              )}
-
-              <Link href="/products" onClick={close} className={linkRowClass}>
-                <span className={linkLabelClass}>Todos los productos</span>
-                <CaretRight
-                  className="size-4 shrink-0 text-stone-400"
-                  weight={STORE_HEADER_ICON_WEIGHT}
-                  aria-hidden
-                />
-              </Link>
+                  })
+                )}
+              </ul>
             </div>
 
             <div className="shrink-0 border-t border-stone-200 px-4 py-4">
