@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
 import { StoreLogo } from "@/components/store/StoreLogo";
