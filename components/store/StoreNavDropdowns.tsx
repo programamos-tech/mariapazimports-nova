@@ -287,8 +287,12 @@ export function StoreNavDropdowns({
               </li>
 
               {categoriesWithProducts.length === 0 ? (
-                <li className="py-6 text-sm text-stone-500">
-                  Todavía no hay categorías con productos.
+                <li className="border-b border-stone-100 px-0 py-4">
+                  <p className="text-[12px] leading-relaxed text-stone-500">
+                    Todavía no hay categorías. En «Todos los productos» ves el
+                    catálogo completo; después podés organizarlos por categoría
+                    desde el admin.
+                  </p>
                 </li>
               ) : (
                 categoriesWithProducts.map((c) => {

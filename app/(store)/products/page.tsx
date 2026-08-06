@@ -326,23 +326,40 @@ export default async function ProductsPage({ searchParams }: Props) {
   const paginationBaseQuery = paginationParams.toString();
 
   const catalogHeroBanner = productsBanners[0];
+  const catalogHeroSrc = catalogHeroBanner?.image_path
+    ? catalogHeroBanner.image_path.trim()
+    : "";
+  const showCatalogHero = Boolean(catalogBrowseMode && catalogHeroSrc);
+  const showAllProductsTitle =
+    !categoryView && !q && (!catalogBrowseMode || !showCatalogHero);
 
   return (
     <div className="bg-white">
-      {catalogBrowseMode ? (
+      {showCatalogHero && catalogHeroBanner ? (
         <div className="w-full">
           <CatalogListingHero
-            title="CATÁLOGO"
-            banner={
-              catalogHeroBanner ?
-                {
-                  image_path: catalogHeroBanner.image_path,
-                  alt_text: catalogHeroBanner.alt_text,
-                }
-              : null
-            }
+            title="Todos los productos"
+            banner={{
+              image_path: catalogHeroBanner.image_path,
+              alt_text: catalogHeroBanner.alt_text,
+            }}
           />
         </div>
+      ) : null}
+
+      {showAllProductsTitle ? (
+        <header
+          className={`${storeShellClass} border-b border-stone-100 pb-6 pt-8 text-center sm:pb-8 sm:pt-10`}
+        >
+          <h1 className="text-xl font-semibold uppercase tracking-[0.12em] text-stone-900 sm:text-2xl">
+            Todos los productos
+          </h1>
+          <p className="mt-2 text-sm text-stone-500">
+            {listingTotal === 1
+              ? "1 producto en el catálogo"
+              : `${listingTotal} productos en el catálogo`}
+          </p>
+        </header>
       ) : null}
 
       {categoryView && categoryName ? (
