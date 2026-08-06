@@ -401,36 +401,25 @@ export function StoreNavDropdowns({
             </div>
           </div>
 
-          {/* Desktop: panel de subcategorías a la derecha, sobre el hero */}
-          <div
-            id={`${baseId}-flyout`}
-            role="region"
-            aria-label={
-              flyoutCategory
-                ? `Subcategorías de ${flyoutCategory.name}`
-                : "Subcategorías"
-            }
-            aria-hidden={!flyoutOpen}
-            className={`hidden h-full ${flyoutWidth} shrink-0 flex-col border-l border-stone-200 bg-white/95 shadow-[8px_0_28px_-8px_rgba(0,0,0,0.18)] backdrop-blur-md transition-all duration-300 ease-out md:flex ${
-              flyoutOpen
-                ? "translate-x-0 opacity-100"
-                : "pointer-events-none -translate-x-3 opacity-0"
-            }`}
-          >
-            {flyoutCategory ? (
-              <>
-                <div className="shrink-0 border-b border-stone-200 px-4 py-5">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
-                    Subcategorías
-                  </p>
-                  <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
-                    {flyoutCategory.name}
-                  </p>
-                </div>
-                {renderSubcategoryList(flyoutCategory)}
-              </>
-            ) : null}
-          </div>
+          {/* Desktop: subcategorías solo si hay; overlay a la derecha (no panel vacío) */}
+          {flyoutOpen && flyoutCategory ? (
+            <div
+              id={`${baseId}-flyout`}
+              role="region"
+              aria-label={`Subcategorías de ${flyoutCategory.name}`}
+              className={`absolute left-full top-0 z-10 hidden h-full ${flyoutWidth} flex-col border-l border-stone-200 bg-white shadow-[8px_0_28px_-8px_rgba(0,0,0,0.18)] md:flex`}
+            >
+              <div className="shrink-0 border-b border-stone-200 px-4 py-5">
+                <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+                  Subcategorías
+                </p>
+                <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+                  {flyoutCategory.name}
+                </p>
+              </div>
+              {renderSubcategoryList(flyoutCategory)}
+            </div>
+          ) : null}
         </div>
       </>,
       portalTarget,
