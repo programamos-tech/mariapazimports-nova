@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CaretDown } from "@phosphor-icons/react/dist/csr/CaretDown";
+import { CaretLeft } from "@phosphor-icons/react/dist/csr/CaretLeft";
 import { CaretRight } from "@phosphor-icons/react/dist/csr/CaretRight";
 import { List } from "@phosphor-icons/react/dist/csr/List";
 import { User } from "@phosphor-icons/react/dist/csr/User";
@@ -47,19 +47,27 @@ export function StoreNavDropdowns({
   const { openLogin } = useStoreAuthModals();
   const [open, setOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [flyoutId, setFlyoutId] = useState<string | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState("");
   const baseId = useId();
 
   const categoriesWithProducts = menuCategories.filter((c) => c.productCount > 0);
+  const flyoutCategory =
+    flyoutId != null
+      ? (categoriesWithProducts.find((c) => c.id === flyoutId) ?? null)
+      : null;
+  const flyoutOpen = Boolean(open && flyoutCategory);
 
   useEffect(() => {
     setPortalTarget(document.body);
   }, []);
 
-  /** Al abrir el menú, expandí la categoría activa (padre o hija). */
+  /** Al abrir el menú, abrí el panel de la categoría activa si tiene subcategorías. */
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setFlyoutId(null);
+      return;
+    }
     const activeId = readActiveCategoryId();
     setActiveCategoryId(activeId);
     if (!activeId) return;
@@ -68,24 +76,18 @@ export function StoreNavDropdowns({
         c.productCount > 0 &&
         (c.id === activeId || c.children.some((ch) => ch.id === activeId)),
     );
-    if (!parent || parent.children.length === 0) return;
-    setExpandedIds((prev) => {
-      if (prev.has(parent.id)) return prev;
-      const next = new Set(prev);
-      next.add(parent.id);
-      return next;
-    });
+    if (parent && parent.children.length > 0) {
+      setFlyoutId(parent.id);
+    }
   }, [open, menuCategories]);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => {
+    setFlyoutId(null);
+    setOpen(false);
+  }, []);
 
-  const toggleExpanded = useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const openFlyout = useCallback((id: string) => {
+    setFlyoutId((prev) => (prev === id ? null : id));
   }, []);
 
   useEffect(() => {
@@ -100,14 +102,80 @@ export function StoreNavDropdowns({
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
+      if (e.key !== "Escape") return;
+      if (flyoutId) {
+        setFlyoutId(null);
+        return;
+      }
+      close();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, [open, close, flyoutId]);
 
   const shopBtnClass =
     "group inline-flex items-center gap-2 rounded-none py-1 text-[13px] font-medium tracking-wide text-stone-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/40 focus-visible:ring-offset-2";
+
+  const drawerWidth =
+    "w-[min(20rem,calc(100svw-2.5rem))] sm:w-[min(22rem,calc(100svw-3rem))]";
+  const flyoutWidth =
+    "w-[min(18rem,calc(100svw-5rem))] sm:w-[min(20rem,calc(100svw-4rem))]";
+
+  function renderSubcategoryList(category: StoreCategoryMenuItem) {
+    return (
+      <ul className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        <li>
+          <Link
+            href={`/products?category=${category.id}`}
+            onClick={close}
+            className="flex items-center justify-between gap-3 px-2 py-3.5 text-left transition hover:bg-stone-50"
+          >
+            <span
+              className={`text-[12px] font-semibold uppercase tracking-[0.05em] ${
+                activeCategoryId === category.id
+                  ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
+                  : "text-stone-800"
+              }`}
+            >
+              Todo {category.name}
+            </span>
+            <CaretRight
+              className="size-3.5 shrink-0 text-stone-300"
+              weight={STORE_HEADER_ICON_WEIGHT}
+              aria-hidden
+            />
+          </Link>
+        </li>
+        {category.children.map((child) => {
+          const childActive = activeCategoryId === child.id;
+          return (
+            <li key={child.id}>
+              <Link
+                href={`/products?category=${child.id}`}
+                onClick={close}
+                className="flex items-center justify-between gap-3 px-2 py-3.5 text-left transition hover:bg-stone-50"
+              >
+                <span
+                  className={`text-[12px] font-medium uppercase tracking-[0.05em] ${
+                    childActive
+                      ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
+                      : "text-stone-600"
+                  }`}
+                >
+                  {child.name}
+                </span>
+                <CaretRight
+                  className="size-3.5 shrink-0 text-stone-300"
+                  weight={STORE_HEADER_ICON_WEIGHT}
+                  aria-hidden
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
 
   const drawerLayer =
     portalTarget &&
@@ -122,52 +190,97 @@ export function StoreNavDropdowns({
         />
 
         <div
-          id={`${baseId}-shop-drawer`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`${baseId}-shop-drawer-title`}
-          className={`fixed inset-y-0 left-0 z-[80] flex w-[min(22rem,calc(100svw-2rem))] flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out sm:w-[min(24rem,calc(100svw-3rem))] ${
-            open ? "translate-x-0" : "-translate-x-full pointer-events-none"
+          className={`fixed inset-y-0 left-0 z-[80] flex max-w-[100svw] ${
+            open ? "pointer-events-auto" : "pointer-events-none"
           }`}
         >
-          <div className="flex shrink-0 justify-end px-4 pb-2 pt-4">
-            <button
-              type="button"
-              onClick={close}
-              className="inline-flex size-10 items-center justify-center border border-stone-900 text-stone-900 transition hover:bg-stone-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
-              aria-label="Cerrar menú"
+          {/* Panel principal de categorías */}
+          <div
+            id={`${baseId}-shop-drawer`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`${baseId}-shop-drawer-title`}
+            className={`relative flex h-full ${drawerWidth} shrink-0 flex-col bg-white shadow-[4px_0_24px_-4px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out ${
+              open ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex shrink-0 justify-end px-4 pb-2 pt-4">
+              <button
+                type="button"
+                onClick={close}
+                className="inline-flex size-10 items-center justify-center border border-stone-900 text-stone-900 transition hover:bg-stone-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/50"
+                aria-label="Cerrar menú"
+              >
+                <X className="size-5" weight={STORE_HEADER_ICON_WEIGHT} aria-hidden />
+              </button>
+            </div>
+
+            <h2 id={`${baseId}-shop-drawer-title`} className="sr-only">
+              Menú de la tienda
+            </h2>
+
+            {/* Móvil: subcategorías reemplazan el listado dentro del mismo panel */}
+            <div
+              className={`absolute inset-0 z-10 flex flex-col bg-white transition-transform duration-300 ease-out md:hidden ${
+                flyoutOpen ? "translate-x-0" : "pointer-events-none translate-x-full"
+              }`}
+              aria-hidden={!flyoutOpen}
             >
-              <X className="size-5" weight={STORE_HEADER_ICON_WEIGHT} aria-hidden />
-            </button>
-          </div>
+              {flyoutCategory ? (
+                <>
+                  <div className="flex shrink-0 items-center gap-2 border-b border-stone-200 px-3 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setFlyoutId(null)}
+                      className="inline-flex items-center gap-1.5 px-1 py-2 text-[12px] font-medium uppercase tracking-[0.06em] text-stone-600 transition hover:text-stone-900"
+                    >
+                      <CaretLeft
+                        className="size-4"
+                        weight={STORE_HEADER_ICON_WEIGHT}
+                        aria-hidden
+                      />
+                      Volver
+                    </button>
+                  </div>
+                  <div className="shrink-0 px-4 pb-3 pt-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+                      Subcategorías
+                    </p>
+                    <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+                      {flyoutCategory.name}
+                    </p>
+                  </div>
+                  {renderSubcategoryList(flyoutCategory)}
+                </>
+              ) : null}
+            </div>
 
-          <h2 id={`${baseId}-shop-drawer-title`} className="sr-only">
-            Menú de la tienda
-          </h2>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+              {categoriesWithProducts.length === 0 ? (
+                <p className="py-6 text-sm text-stone-500">
+                  Todavía no hay categorías con productos.
+                </p>
+              ) : (
+                <ul className="border-t border-stone-200">
+                  {categoriesWithProducts.map((c) => {
+                    const hasSubs = c.children.length > 0;
+                    const isFlyoutOpen = flyoutId === c.id;
+                    const parentHref = `/products?category=${c.id}`;
+                    const parentActive =
+                      activeCategoryId === c.id ||
+                      c.children.some((ch) => ch.id === activeCategoryId);
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
-            {categoriesWithProducts.length === 0 ? (
-              <p className="py-6 text-sm text-stone-500">
-                Todavía no hay categorías con productos.
-              </p>
-            ) : (
-              <ul className="border-t border-stone-200">
-                {categoriesWithProducts.map((c) => {
-                  const hasSubs = c.children.length > 0;
-                  const expanded = expandedIds.has(c.id);
-                  const parentHref = `/products?category=${c.id}`;
-                  const parentActive = activeCategoryId === c.id;
-
-                  return (
-                    <li key={c.id} className="border-b border-stone-200">
-                      <div className="flex items-stretch">
+                    return (
+                      <li key={c.id} className="border-b border-stone-200">
                         {hasSubs ? (
                           <button
                             type="button"
-                            onClick={() => toggleExpanded(c.id)}
-                            className="flex min-w-0 flex-1 items-center justify-between gap-3 py-4 text-left transition hover:bg-stone-50"
-                            aria-expanded={expanded}
-                            aria-controls={`${baseId}-subs-${c.id}`}
+                            onClick={() => openFlyout(c.id)}
+                            className={`flex w-full min-w-0 items-center justify-between gap-3 py-4 text-left transition ${
+                              isFlyoutOpen ? "bg-stone-50" : "hover:bg-stone-50"
+                            }`}
+                            aria-expanded={isFlyoutOpen}
+                            aria-controls={`${baseId}-flyout`}
                           >
                             <span
                               className={`${linkLabelClass} ${
@@ -178,18 +291,15 @@ export function StoreNavDropdowns({
                             >
                               {c.name}
                             </span>
-                            <span className="inline-flex items-center gap-1.5 pr-1 text-stone-400">
-                              <span className="text-[10px] font-medium uppercase tracking-[0.06em] text-stone-400">
-                                {expanded ? "Ocultar" : "Ver"}
-                              </span>
-                              <CaretDown
-                                className={`size-4 shrink-0 transition-transform duration-200 ${
-                                  expanded ? "rotate-180" : ""
-                                }`}
-                                weight={STORE_HEADER_ICON_WEIGHT}
-                                aria-hidden
-                              />
-                            </span>
+                            <CaretRight
+                              className={`size-4 shrink-0 transition-transform duration-200 ${
+                                isFlyoutOpen
+                                  ? "translate-x-0.5 text-stone-900"
+                                  : "text-stone-400"
+                              }`}
+                              weight={STORE_HEADER_ICON_WEIGHT}
+                              aria-hidden
+                            />
                           </button>
                         ) : (
                           <Link
@@ -199,7 +309,7 @@ export function StoreNavDropdowns({
                           >
                             <span
                               className={`${linkLabelClass} ${
-                                parentActive
+                                activeCategoryId === c.id
                                   ? "underline decoration-stone-400 underline-offset-4"
                                   : ""
                               }`}
@@ -213,115 +323,89 @@ export function StoreNavDropdowns({
                             />
                           </Link>
                         )}
-                      </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
 
-                      {hasSubs && expanded ? (
-                        <ul
-                          id={`${baseId}-subs-${c.id}`}
-                          className="border-t border-stone-100 bg-stone-50/80"
-                        >
-                          <li>
-                            <Link
-                              href={parentHref}
-                              onClick={close}
-                              className="flex items-center justify-between gap-4 py-3 pl-4 pr-0 text-left transition hover:bg-stone-100/80"
-                            >
-                              <span
-                                className={`text-[12px] font-semibold uppercase tracking-[0.05em] ${
-                                  parentActive
-                                    ? "text-stone-900"
-                                    : "text-stone-600"
-                                }`}
-                              >
-                                Todo {c.name}
-                              </span>
-                              <CaretRight
-                                className="size-3.5 shrink-0 text-stone-300"
-                                weight={STORE_HEADER_ICON_WEIGHT}
-                                aria-hidden
-                              />
-                            </Link>
-                          </li>
-                          {c.children.map((child) => {
-                            const childActive = activeCategoryId === child.id;
-                            return (
-                              <li key={child.id}>
-                                <Link
-                                  href={`/products?category=${child.id}`}
-                                  onClick={close}
-                                  className="flex items-center justify-between gap-4 py-3 pl-4 pr-0 text-left transition hover:bg-stone-100/80"
-                                >
-                                  <span
-                                    className={`text-[12px] font-medium uppercase tracking-[0.05em] ${
-                                      childActive
-                                        ? "text-stone-900 underline decoration-stone-400 underline-offset-4"
-                                        : "text-stone-600"
-                                    }`}
-                                  >
-                                    {child.name}
-                                  </span>
-                                  <CaretRight
-                                    className="size-3.5 shrink-0 text-stone-300"
-                                    weight={STORE_HEADER_ICON_WEIGHT}
-                                    aria-hidden
-                                  />
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+              <Link href="/products" onClick={close} className={linkRowClass}>
+                <span className={linkLabelClass}>Todos los productos</span>
+                <CaretRight
+                  className="size-4 shrink-0 text-stone-400"
+                  weight={STORE_HEADER_ICON_WEIGHT}
+                  aria-hidden
+                />
+              </Link>
+            </div>
 
-            <Link href="/products" onClick={close} className={linkRowClass}>
-              <span className={linkLabelClass}>Todos los productos</span>
-              <CaretRight
-                className="size-4 shrink-0 text-stone-400"
-                weight={STORE_HEADER_ICON_WEIGHT}
-                aria-hidden
-              />
-            </Link>
+            <div className="shrink-0 border-t border-stone-200 px-4 py-4">
+              {guestOpensAuthDrawer ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    openLogin();
+                  }}
+                  className="flex w-full items-center gap-3 py-2 text-left transition hover:opacity-70"
+                >
+                  <User
+                    className="size-5 shrink-0 text-stone-900"
+                    weight={STORE_HEADER_ICON_WEIGHT}
+                    aria-hidden
+                  />
+                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
+                    {accountLabel}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  href={accountHref}
+                  onClick={close}
+                  className="flex items-center gap-3 py-2 text-left transition hover:opacity-70"
+                >
+                  <User
+                    className="size-5 shrink-0 text-stone-900"
+                    weight={STORE_HEADER_ICON_WEIGHT}
+                    aria-hidden
+                  />
+                  <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
+                    {accountLabel}
+                  </span>
+                </Link>
+              )}
+            </div>
           </div>
 
-          <div className="shrink-0 border-t border-stone-200 px-4 py-4">
-            {guestOpensAuthDrawer ? (
-              <button
-                type="button"
-                onClick={() => {
-                  close();
-                  openLogin();
-                }}
-                className="flex w-full items-center gap-3 py-2 text-left transition hover:opacity-70"
-              >
-                <User
-                  className="size-5 shrink-0 text-stone-900"
-                  weight={STORE_HEADER_ICON_WEIGHT}
-                  aria-hidden
-                />
-                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
-                  {accountLabel}
-                </span>
-              </button>
-            ) : (
-              <Link
-                href={accountHref}
-                onClick={close}
-                className="flex items-center gap-3 py-2 text-left transition hover:opacity-70"
-              >
-                <User
-                  className="size-5 shrink-0 text-stone-900"
-                  weight={STORE_HEADER_ICON_WEIGHT}
-                  aria-hidden
-                />
-                <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone-900">
-                  {accountLabel}
-                </span>
-              </Link>
-            )}
+          {/* Desktop: panel de subcategorías a la derecha, sobre el hero */}
+          <div
+            id={`${baseId}-flyout`}
+            role="region"
+            aria-label={
+              flyoutCategory
+                ? `Subcategorías de ${flyoutCategory.name}`
+                : "Subcategorías"
+            }
+            aria-hidden={!flyoutOpen}
+            className={`hidden h-full ${flyoutWidth} shrink-0 flex-col border-l border-stone-200 bg-white/95 shadow-[8px_0_28px_-8px_rgba(0,0,0,0.18)] backdrop-blur-md transition-all duration-300 ease-out md:flex ${
+              flyoutOpen
+                ? "translate-x-0 opacity-100"
+                : "pointer-events-none -translate-x-3 opacity-0"
+            }`}
+          >
+            {flyoutCategory ? (
+              <>
+                <div className="shrink-0 border-b border-stone-200 px-4 py-5">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-400">
+                    Subcategorías
+                  </p>
+                  <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-stone-900">
+                    {flyoutCategory.name}
+                  </p>
+                </div>
+                {renderSubcategoryList(flyoutCategory)}
+              </>
+            ) : null}
           </div>
         </div>
       </>,
