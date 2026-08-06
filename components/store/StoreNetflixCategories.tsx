@@ -2,7 +2,7 @@ import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
 import { storeShellClass } from "@/lib/store-layout";
 import { StoreCategoryCard } from "@/components/store/StoreCategoryCard";
 
-/** Vitrina 3×2 a ancho de vitrina: categorías, no productos sueltos. */
+/** Vitrina 3×2: Todos los productos + categorías raíz, con imagen. */
 export function StoreNetflixCategories({
   categories,
 }: {

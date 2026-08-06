@@ -30,6 +30,18 @@ export type HomeCategoryCard = {
   imageSrc: string | null;
 };
 
+/** Tile sintético del home → catálogo completo (`/products`). */
+export const HOME_ALL_PRODUCTS_CATEGORY_ID = "__all_products__";
+
+export function isHomeAllProductsCategory(
+  category: Pick<HomeCategoryCard, "id" | "name">,
+): boolean {
+  return (
+    category.id === HOME_ALL_PRODUCTS_CATEGORY_ID ||
+    category.name.trim().toLowerCase() === "todos los productos"
+  );
+}
+
 function resolveProductCoverUrl(
   imagePath: string | null | undefined,
   imagePaths: unknown,
@@ -123,7 +135,7 @@ async function loadHomeCategoryCards(
     for (const c of arr) idToGroupKey.set(c.id, gKey);
   }
 
-  /** Grupos sin listing_hero: rellenamos portada con un producto reciente. */
+  /** Portadas: listing_hero → producto de la categoría → cualquier producto con foto. */
   const groupsNeedingProductCover = new Set<string>();
   for (const [gKey, arr] of groups) {
     const hasHero = arr.some(
@@ -134,36 +146,52 @@ async function loadHomeCategoryCards(
     if (!hasHero) groupsNeedingProductCover.add(gKey);
   }
 
-  const productCoverByGroup = new Map<string, string>();
-  if (groupsNeedingProductCover.size > 0) {
-    const { data: products, error: prodErr } = await supabase
-      .from("products")
-      .select("category_id,image_path,image_paths")
-      .eq("is_published", true)
-      .not("category_id", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(120);
+  const { data: coverPool, error: prodErr } = await supabase
+    .from("products")
+    .select("category_id,image_path,image_paths")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(120);
 
-    if (prodErr) {
-      console.error(
-        "[home-categories] product covers:",
-        prodErr.message,
-        prodErr.code,
-      );
-    } else {
-      for (const row of products ?? []) {
-        const cid = row.category_id as string | null;
-        if (!cid) continue;
-        const gKey = idToGroupKey.get(cid);
-        if (!gKey || !groupsNeedingProductCover.has(gKey)) continue;
-        if (productCoverByGroup.has(gKey)) continue;
-        const cover = resolveProductCoverUrl(
-          row.image_path as string | null,
-          row.image_paths,
-        );
-        if (cover) productCoverByGroup.set(gKey, cover);
-      }
+  if (prodErr) {
+    console.error(
+      "[home-categories] product covers:",
+      prodErr.message,
+      prodErr.code,
+    );
+  }
+
+  const productCoverByGroup = new Map<string, string>();
+  const spareCovers: string[] = [];
+  const usedCovers = new Set<string>();
+
+  for (const row of coverPool ?? []) {
+    const cover = resolveProductCoverUrl(
+      row.image_path as string | null,
+      row.image_paths,
+    );
+    if (!cover) continue;
+
+    const cid = row.category_id as string | null;
+    const gKey = cid ? idToGroupKey.get(cid) : undefined;
+    if (
+      gKey &&
+      groupsNeedingProductCover.has(gKey) &&
+      !productCoverByGroup.has(gKey)
+    ) {
+      productCoverByGroup.set(gKey, cover);
+      usedCovers.add(cover);
+      continue;
     }
+    spareCovers.push(cover);
+  }
+
+  for (const gKey of groupsNeedingProductCover) {
+    if (productCoverByGroup.has(gKey)) continue;
+    const next = spareCovers.find((c) => !usedCovers.has(c));
+    if (!next) break;
+    productCoverByGroup.set(gKey, next);
+    usedCovers.add(next);
   }
 
   type Row = HomeCategoryCard & { sort_order: number };
@@ -208,7 +236,37 @@ async function loadHomeCategoryCards(
       a.sort_order - b.sort_order || a.name.localeCompare(b.name, "es"),
   );
 
-  return merged.map(({ sort_order: _, ...card }) => card);
+  let allProductsCover: string | null = null;
+  for (const row of coverPool ?? []) {
+    const cover = resolveProductCoverUrl(
+      row.image_path as string | null,
+      row.image_paths,
+    );
+    if (cover) {
+      allProductsCover = productStorefrontImageUrl(cover) ?? cover;
+      break;
+    }
+  }
+
+  const { count: publishedCount } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("is_published", true);
+
+  const allProductsCount = publishedCount ?? 0;
+
+  const cards = merged.map(({ sort_order: _, ...card }) => card);
+  cards.unshift({
+    id: HOME_ALL_PRODUCTS_CATEGORY_ID,
+    name: "Todos los productos",
+    sub: "Catálogo completo",
+    tint: "bg-[#f4f4f3]",
+    iconKey: "tag",
+    productCount: allProductsCount,
+    imageSrc: allProductsCover,
+  });
+
+  return cards;
 }
 
 const getCachedHomeCategoryCards = unstable_cache(
@@ -216,7 +274,7 @@ const getCachedHomeCategoryCards = unstable_cache(
     const supabase = createSupabaseServiceClient();
     return loadHomeCategoryCards(supabase);
   },
-  ["home-category-cards-v4"],
+  ["home-category-cards-v6"],
   { revalidate: 60 },
 );
 

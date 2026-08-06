@@ -42,7 +42,7 @@ function HeroCard({
 
 /**
  * Hero a pantalla completa: collage en movimiento + mensaje editorial
- * sobre un difuminado inferior (sin cuadro).
+ * sobre lavado blanco / velo local (legible en tablet y móvil).
  */
 export function StoreNetflixHero() {
   return (
@@ -82,33 +82,44 @@ export function StoreNetflixHero() {
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(22vh,10rem)] bg-gradient-to-b from-white/80 via-white/25 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[min(22vh,10rem)] bg-gradient-to-b from-white/85 via-white/30 to-transparent"
         aria-hidden
       />
 
+      {/* Lavado inferior más alto/opaco en tablet: el collage no pelea con el copy. */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(58vh,28rem)] sm:h-[min(52vh,30rem)]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(68vh,34rem)] sm:h-[min(62vh,36rem)] md:h-[min(70vh,40rem)]"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 via-35% to-transparent" />
-        <div className="absolute inset-0 backdrop-blur-[2px] [mask-image:linear-gradient(to_top,black_35%,transparent_85%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white from-[18%] via-white/97 via-[48%] to-transparent" />
+        <div className="absolute inset-0 backdrop-blur-[6px] [mask-image:linear-gradient(to_top,black_42%,transparent_92%)]" />
       </div>
 
-      <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(5.5rem,10vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(6rem,11vh)]">
-        <div className="mx-auto flex w-full max-w-sm flex-col items-center text-center sm:max-w-md">
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-500">
+      <div className="relative z-[2] flex min-h-[100svh] flex-col items-center justify-end px-5 pb-[max(5.5rem,10vh)] pt-[max(6.5rem,18vw)] sm:px-8 sm:pb-[max(6rem,11vh)] md:pb-[max(6.5rem,12vh)]">
+        <div className="relative mx-auto flex w-full max-w-sm flex-col items-center text-center sm:max-w-md">
+          {/* Velo local detrás del mensaje (sin borde/card): legible sobre fotos oscuras. */}
+          <div
+            className="pointer-events-none absolute -inset-x-6 -inset-y-5 -z-10 bg-white/88 blur-xl sm:-inset-x-10 sm:-inset-y-7 md:-inset-x-14 md:-inset-y-8 md:bg-white/92"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -inset-x-4 -inset-y-3 -z-10 bg-gradient-to-t from-white via-white/95 to-white/70 sm:-inset-x-8 sm:-inset-y-4"
+            aria-hidden
+          />
+
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-stone-600 sm:text-[11px]">
             Tienda en línea · Personal shopper
           </p>
           <h1
             id="store-hero-intro-heading"
-            className="mt-2.5 text-[clamp(1.75rem,6.5vw,2.4rem)] font-semibold leading-[1.12] tracking-tight text-stone-900"
+            className="mt-2.5 text-[clamp(1.75rem,5.5vw,2.55rem)] font-semibold leading-[1.1] tracking-tight text-stone-900 [text-shadow:0_1px_0_rgba(255,255,255,0.9)]"
           >
             María Paz Imports
           </h1>
-          <p className="mt-3 text-[13px] leading-snug text-stone-600 sm:text-[14px]">
+          <p className="mt-3 max-w-[22rem] text-[13px] leading-snug text-stone-700 sm:text-[15px]">
             Productos entrega inmediata y encargos
           </p>
-          <p className="mt-4 text-center text-[11px] font-semibold uppercase leading-snug tracking-[0.1em] text-stone-700 sm:text-[12px] sm:tracking-[0.12em]">
+          <p className="mt-4 text-center text-[11px] font-semibold uppercase leading-snug tracking-[0.1em] text-stone-800 sm:text-[12px] sm:tracking-[0.12em]">
             <span className="block whitespace-nowrap">
               {storeTaglineLines[0]}
             </span>
@@ -119,7 +130,7 @@ export function StoreNetflixHero() {
 
           <Link
             href="/products"
-            className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-stone-800 active:scale-[0.98]"
+            className="mt-7 inline-flex w-full max-w-[15.5rem] items-center justify-center bg-stone-900 px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-[0_10px_28px_-12px_rgba(0,0,0,0.45)] transition hover:bg-stone-800 active:scale-[0.98]"
           >
             Ver tienda
           </Link>

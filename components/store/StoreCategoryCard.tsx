@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { HomeCategoryCard } from "@/lib/fetch-home-categories";
+import {
+  isHomeAllProductsCategory,
+  type HomeCategoryCard,
+} from "@/lib/fetch-home-categories";
 import {
   STORE_CATEGORY_CARD_IMAGE_SIZES,
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
@@ -20,9 +23,11 @@ export function StoreCategoryCard({
   category: HomeCategoryCard;
   priority?: boolean;
 }) {
-  const href = isMarcasCategoryName(category.name)
-    ? storeMarcasHref()
-    : `/products?category=${encodeURIComponent(category.id)}`;
+  const href = isHomeAllProductsCategory(category)
+    ? "/products"
+    : isMarcasCategoryName(category.name)
+      ? storeMarcasHref()
+      : `/products?category=${encodeURIComponent(category.id)}`;
   const { src, srcSet } = productCardImageSources(category.imageSrc);
 
   return (
