@@ -58,7 +58,7 @@ export function computeListingFacetsFromProductRows(
     }
 
     const b = typeof row.brand === "string" ? row.brand.trim() : "";
-    if (b && b.length <= 160) {
+    if (b && b.length <= 160 && isUsableStoreBrand(b)) {
       const bk = b.toLowerCase();
       if (!brandSeen.has(bk)) {
         brandSeen.add(bk);
