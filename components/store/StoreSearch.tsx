@@ -22,6 +22,41 @@ import {
   STORE_HEADER_ICON_LG,
   STORE_HEADER_ICON_WEIGHT,
 } from "@/lib/store-header-icons";
+import { isMarcasCategoryName, storeMarcasHref } from "@/lib/store-marcas";
+
+type CategorySuggestion = {
+  id: string;
+  name: string;
+  href: string;
+};
+
+function buildCategorySuggestions(
+  menuCategories: StoreCategoryMenuItem[],
+): CategorySuggestion[] {
+  const items: CategorySuggestion[] = [];
+
+  for (const category of menuCategories) {
+    items.push({
+      id: category.id,
+      name: category.name,
+      href: isMarcasCategoryName(category.name)
+        ? storeMarcasHref()
+        : `/products?category=${encodeURIComponent(category.id)}`,
+    });
+
+    if (isMarcasCategoryName(category.name)) continue;
+
+    for (const child of category.children) {
+      items.push({
+        id: child.id,
+        name: child.name,
+        href: `/products?category=${encodeURIComponent(child.id)}`,
+      });
+    }
+  }
+
+  return items;
+}
 
 type ProductRow = {
   id: string;
@@ -132,9 +167,7 @@ export function StoreSearch({
   }
 
   const isFiltering = debounced.length >= 2;
-  const categorySuggestions = menuCategories.filter(
-    (c) => c.productCount > 0,
-  );
+  const categorySuggestions = buildCategorySuggestions(menuCategories);
   const iconBtn =
     "flex shrink-0 items-center justify-center rounded-none p-1.5 text-stone-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2";
 
@@ -214,7 +247,7 @@ export function StoreSearch({
                     {categorySuggestions.map((category) => (
                       <li key={category.id}>
                         <Link
-                          href={`/products?category=${encodeURIComponent(category.id)}`}
+                          href={category.href}
                           onClick={closeDrawer}
                           className="inline-block border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
                         >
