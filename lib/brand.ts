@@ -81,3 +81,27 @@ export const storeInstagramUrl =
 export const storeWhatsAppPrefilledText =
   process.env.NEXT_PUBLIC_WHATSAPP_TEXT ??
   "Hola, quiero asesoría para elegir mis productos.";
+
+/** Mensaje para cotizar envío a un municipio sin tarifa en checkout. */
+export function storeWhatsAppShippingInquiryText(opts?: {
+  municipalityName?: string | null;
+  departmentName?: string | null;
+}): string {
+  const municipality = opts?.municipalityName?.trim();
+  const department = opts?.departmentName?.trim();
+  const location = [municipality, department].filter(Boolean).join(", ");
+  if (!location) {
+    return "Hola, quiero comprar en María Paz Imports y necesito cotizar el envío a mi municipio.";
+  }
+  return `Hola, quiero comprar en María Paz Imports y necesito cotizar el envío a ${location}.`;
+}
+
+/** URL de WhatsApp con mensaje de cotización de envío. */
+export function storeWhatsAppShippingInquiryUrl(opts?: {
+  municipalityName?: string | null;
+  departmentName?: string | null;
+}): string {
+  if (storeWhatsAppUrl === "#") return storeWhatsAppUrl;
+  const text = storeWhatsAppShippingInquiryText(opts);
+  return `${storeWhatsAppUrl}?text=${encodeURIComponent(text)}`;
+}

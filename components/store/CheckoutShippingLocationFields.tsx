@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   createContext,
   useContext,
@@ -8,7 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { storeWhatsAppShippingInquiryUrl } from "@/lib/brand";
 import { formatCop } from "@/lib/money";
+import { isStorefrontShippingAvailable } from "@/lib/shipping-rates";
 import { CheckoutShippingMap } from "@/components/store/CheckoutShippingMap";
 
 type Department = { code: string; name: string };
@@ -27,11 +30,58 @@ type ShippingCtx = {
   shippingCents: number;
   cityLabel: string;
   quoteLoading: boolean;
+  shippingAvailable: boolean;
   setDepartmentCode: (v: string) => void;
   setMunicipalityCode: (v: string) => void;
 };
 
 const CheckoutShippingContext = createContext<ShippingCtx | null>(null);
+
+function isShippableMunicipality(m: Municipality): boolean {
+  return isStorefrontShippingAvailable({
+    cost_cents: m.cost_cents,
+    is_delivery_enabled: true,
+  });
+}
+
+function ShippingWhatsAppNotice({
+  departmentName,
+  municipalityName,
+  className = "",
+}: {
+  departmentName?: string;
+  municipalityName?: string;
+  className?: string;
+}) {
+  const href = storeWhatsAppShippingInquiryUrl({
+    departmentName,
+    municipalityName,
+  });
+
+  return (
+    <div
+      className={`border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-stone-800 ${className}`.trim()}
+    >
+      <p>
+        {municipalityName
+          ? `Para envíos a ${municipalityName}${departmentName ? `, ${departmentName}` : ""} coordina tu pedido directamente por WhatsApp.`
+          : departmentName
+            ? `En ${departmentName} aún no hay tarifa de envío en línea. Escríbenos por WhatsApp para cotizar tu pedido.`
+            : "Para tu ubicación coordina el envío directamente por WhatsApp."}
+      </p>
+      {href !== "#" ? (
+        <Link
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-800 underline decoration-emerald-400 underline-offset-4 transition hover:text-emerald-950"
+        >
+          Escribir por WhatsApp
+        </Link>
+      ) : null}
+    </div>
+  );
+}
 
 export function CheckoutShippingProvider({ children }: { children: ReactNode }) {
   const [departmentCode, setDepartmentCode] = useState("");
@@ -39,12 +89,14 @@ export function CheckoutShippingProvider({ children }: { children: ReactNode }) 
   const [shippingCents, setShippingCents] = useState(0);
   const [cityLabel, setCityLabel] = useState("");
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [shippingAvailable, setShippingAvailable] = useState(false);
 
   useEffect(() => {
     if (!municipalityCode) {
       setShippingCents(0);
       setCityLabel("");
       setQuoteLoading(false);
+      setShippingAvailable(false);
       return;
     }
     let cancelled = false;
@@ -58,13 +110,16 @@ export function CheckoutShippingProvider({ children }: { children: ReactNode }) 
           setShippingCents(0);
           setCityLabel("");
           setQuoteLoading(false);
+          setShippingAvailable(false);
         }
         return;
       }
       const json = (await res.json()) as { quote?: Quote };
+      const costCents = json.quote?.costCents ?? 0;
       if (!cancelled) {
-        setShippingCents(json.quote?.costCents ?? 0);
+        setShippingCents(costCents);
         setCityLabel(json.quote?.label ?? "");
+        setShippingAvailable(costCents > 0);
         setQuoteLoading(false);
       }
     })();
@@ -80,10 +135,18 @@ export function CheckoutShippingProvider({ children }: { children: ReactNode }) 
       shippingCents,
       cityLabel,
       quoteLoading,
+      shippingAvailable,
       setDepartmentCode,
       setMunicipalityCode,
     }),
-    [departmentCode, municipalityCode, shippingCents, cityLabel, quoteLoading],
+    [
+      departmentCode,
+      municipalityCode,
+      shippingCents,
+      cityLabel,
+      quoteLoading,
+      shippingAvailable,
+    ],
   );
 
   return (
@@ -99,6 +162,11 @@ function useCheckoutShipping() {
     throw new Error("CheckoutShippingProvider required");
   }
   return ctx;
+}
+
+/** Para botones de checkout fuera de campos de envío (opcional). */
+export function useCheckoutShippingOptional() {
+  return useContext(CheckoutShippingContext);
 }
 
 export function CheckoutShippingLocationFields({
@@ -155,11 +223,14 @@ export function CheckoutShippingLocationFields({
         const list = json.municipalities ?? [];
         if (cancelled) return;
         setMunicipalities(list);
-        setMunicipalityCode(
-          municipalityCode && list.some((m) => m.code === municipalityCode)
+        const nextCode =
+          municipalityCode &&
+          list.some(
+            (m) => m.code === municipalityCode && isShippableMunicipality(m),
+          )
             ? municipalityCode
-            : (list[0]?.code ?? ""),
-        );
+            : (list.find((m) => isShippableMunicipality(m))?.code ?? "");
+        setMunicipalityCode(nextCode);
       } finally {
         if (!cancelled) setLoadingMun(false);
       }
@@ -169,6 +240,13 @@ export function CheckoutShippingLocationFields({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset municipios al cambiar depto
   }, [departmentCode]);
+
+  const departmentName =
+    departments.find((d) => d.code === departmentCode)?.name ?? "";
+  const shippableMunicipalities = municipalities.filter(isShippableMunicipality);
+  const unavailableMunicipalities = municipalities.filter(
+    (m) => !isShippableMunicipality(m),
+  );
 
   return (
     <>
@@ -203,23 +281,62 @@ export function CheckoutShippingLocationFields({
           </label>
           <select
             id="ship-mun"
-            required
-            disabled={!departmentCode || loadingMun}
+            required={shippableMunicipalities.length > 0}
+            disabled={!departmentCode || loadingMun || shippableMunicipalities.length === 0}
             value={municipalityCode}
             onChange={(e) => setMunicipalityCode(e.target.value)}
             className={selectClass}
           >
             <option value="">
-              {loadingMun ? "Cargando…" : "Seleccionar…"}
+              {loadingMun
+                ? "Cargando…"
+                : shippableMunicipalities.length === 0
+                  ? "Sin envío online"
+                  : "Seleccionar…"}
             </option>
-            {municipalities.map((m) => (
+            {shippableMunicipalities.map((m) => (
               <option key={m.code} value={m.code}>
                 {m.name}
               </option>
             ))}
+            {unavailableMunicipalities.length > 0 ? (
+              <optgroup label="Cotizar por WhatsApp">
+                {unavailableMunicipalities.map((m) => (
+                  <option key={m.code} value={m.code} disabled>
+                    {m.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </select>
         </div>
       </div>
+
+      {departmentCode && !loadingMun && shippableMunicipalities.length === 0 ? (
+        <ShippingWhatsAppNotice
+          departmentName={departmentName}
+          className="mt-4"
+        />
+      ) : null}
+
+      {departmentCode &&
+      !loadingMun &&
+      shippableMunicipalities.length > 0 &&
+      unavailableMunicipalities.length > 0 ? (
+        <p className="mt-3 text-xs leading-relaxed text-stone-500">
+          Los municipios en gris no tienen tarifa configurada. Para esos destinos,
+          {" "}
+          <Link
+            href={storeWhatsAppShippingInquiryUrl({ departmentName })}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-stone-700 underline decoration-stone-300 underline-offset-2 hover:text-stone-900"
+          >
+            escríbenos por WhatsApp
+          </Link>
+          .
+        </p>
+      ) : null}
 
       <CheckoutShippingMap
         departmentCode={departmentCode}
@@ -237,8 +354,9 @@ export function CheckoutSidebarTotals({
   subtotalCents: number;
   itemCount: number;
 }) {
-  const { municipalityCode, shippingCents, quoteLoading } = useCheckoutShipping();
-  const total = subtotalCents + shippingCents;
+  const { municipalityCode, shippingCents, quoteLoading, shippingAvailable } =
+    useCheckoutShipping();
+  const total = subtotalCents + (shippingAvailable ? shippingCents : 0);
 
   return (
     <dl className="space-y-3 text-[13px] text-stone-700">
@@ -257,7 +375,9 @@ export function CheckoutSidebarTotals({
             ? "Selecciona municipio"
             : quoteLoading
               ? "Calculando…"
-              : formatCop(shippingCents)}
+              : !shippingAvailable
+                ? "Por WhatsApp"
+                : formatCop(shippingCents)}
         </dd>
       </div>
       <div className="flex justify-between gap-4">

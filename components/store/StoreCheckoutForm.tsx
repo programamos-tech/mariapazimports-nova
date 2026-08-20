@@ -19,6 +19,8 @@ import {
 } from "react";
 import { startCheckout } from "@/app/actions/checkout";
 import { createWompiCheckoutSession } from "@/app/actions/payments/create-wompi-session";
+import { storeWhatsAppShippingInquiryUrl } from "@/lib/brand";
+import { useCheckoutShippingOptional } from "@/components/store/CheckoutShippingLocationFields";
 import { storeWompiSession } from "@/components/store/CheckoutWompiPayClient";
 import { StoreLoadingScreen } from "@/components/store/StoreLoadingScreen";
 
@@ -323,9 +325,26 @@ export function CheckoutContinueToPaymentButton({
   className?: string;
 }) {
   const { continueToPayment } = useCheckoutFlow();
+  const shipping = useCheckoutShippingOptional();
+
   return (
-    <button type="button" onClick={continueToPayment} className={className}>
-      Continuar al resumen
+    <button
+      type="button"
+      onClick={() => {
+        if (shipping?.departmentCode && !shipping.shippingAvailable) {
+          const whatsappUrl = storeWhatsAppShippingInquiryUrl();
+          if (whatsappUrl !== "#") {
+            window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+          }
+          return;
+        }
+        continueToPayment();
+      }}
+      className={className}
+    >
+      {shipping?.departmentCode && !shipping.shippingAvailable
+        ? "Cotizar envío por WhatsApp"
+        : "Continuar al resumen"}
     </button>
   );
 }

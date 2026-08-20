@@ -32,6 +32,16 @@ export type ShippingMethod =
   | typeof SHIPPING_METHOD_PICKUP
   | typeof SHIPPING_METHOD_DELIVERY;
 
+/** Checkout web: tarifa configurada (> 0) y entrega habilitada. */
+export function isStorefrontShippingAvailable(
+  row: Pick<ShippingMunicipalityRow, "cost_cents" | "is_delivery_enabled">,
+): boolean {
+  return (
+    row.is_delivery_enabled &&
+    Math.max(0, Math.floor(Number(row.cost_cents ?? 0))) > 0
+  );
+}
+
 function departmentNameFromJoin(
   row: ShippingMunicipalityRow,
 ): string | null {
@@ -94,7 +104,7 @@ export async function quoteShippingForMunicipality(
   municipalityCode: string,
 ): Promise<ShippingQuote | null> {
   const row = await fetchShippingMunicipalityByCode(supabase, municipalityCode);
-  if (!row) return null;
+  if (!row || !isStorefrontShippingAvailable(row)) return null;
   const departmentName = departmentNameFromJoin(row) ?? row.department_code;
   return {
     municipalityCode: row.code,
