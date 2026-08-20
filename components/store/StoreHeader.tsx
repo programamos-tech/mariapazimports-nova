@@ -50,7 +50,7 @@ export async function StoreHeader() {
         </div>
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-0 bg-white sm:gap-0.5 lg:min-w-0 lg:shrink lg:gap-4 group-data-[home-overlay=true]/header:bg-transparent">
-          <StoreSearch variant="minimal" />
+          <StoreSearch menuCategories={menuCategories} variant="minimal" />
           <StoreHeaderActions
             cartItemCount={cartItemCount}
             userIconHref={userIconHref}

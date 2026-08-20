@@ -17,6 +17,7 @@ import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
   STORE_PRODUCT_IMAGE_IMG_CLASS,
 } from "@/lib/store-product-card-image";
+import type { StoreCategoryMenuItem } from "@/lib/fetch-store-categories";
 import {
   STORE_HEADER_ICON_LG,
   STORE_HEADER_ICON_WEIGHT,
@@ -32,18 +33,11 @@ type ProductRow = {
 
 const SEARCH_PLACEHOLDER = "Buscar productos";
 
-const SUGGESTED_SEARCHES = [
-  "Maquillaje",
-  "Cuidado de la piel",
-  "Vitaminas",
-  "Termos",
-  "Bolsos",
-  "Cuidado corporal",
-] as const;
-
 export function StoreSearch({
+  menuCategories,
   variant = "default",
 }: {
+  menuCategories: StoreCategoryMenuItem[];
   /** @deprecated El header usa siempre el drawer; se ignora. */
   variant?: "default" | "minimal";
 }) {
@@ -137,12 +131,10 @@ export function StoreSearch({
     else router.push("/products");
   }
 
-  function applySuggestion(term: string) {
-    setQuery(term);
-    inputRef.current?.focus();
-  }
-
   const isFiltering = debounced.length >= 2;
+  const categorySuggestions = menuCategories.filter(
+    (c) => c.productCount > 0,
+  );
   const iconBtn =
     "flex shrink-0 items-center justify-center rounded-none p-1.5 text-stone-900 transition hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/35 focus-visible:ring-offset-2";
 
@@ -210,24 +202,24 @@ export function StoreSearch({
             </form>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-8">
-              {!isFiltering ? (
-                <section className="mb-8" aria-labelledby={`${baseId}-suggestions`}>
+              {!isFiltering && categorySuggestions.length > 0 ? (
+                <section className="mb-8" aria-labelledby={`${baseId}-categories`}>
                   <h3
-                    id={`${baseId}-suggestions`}
+                    id={`${baseId}-categories`}
                     className="text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-900"
                   >
-                    Sugerencias
+                    Categorías
                   </h3>
                   <ul className="mt-4 flex flex-wrap gap-2">
-                    {SUGGESTED_SEARCHES.map((term) => (
-                      <li key={term}>
-                        <button
-                          type="button"
-                          onClick={() => applySuggestion(term)}
-                          className="border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
+                    {categorySuggestions.map((category) => (
+                      <li key={category.id}>
+                        <Link
+                          href={`/products?category=${encodeURIComponent(category.id)}`}
+                          onClick={closeDrawer}
+                          className="inline-block border border-stone-300 bg-white px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-stone-800 transition hover:border-stone-900 hover:text-stone-900"
                         >
-                          {term}
-                        </button>
+                          {category.name}
+                        </Link>
                       </li>
                     ))}
                   </ul>
