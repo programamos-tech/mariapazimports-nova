@@ -4,7 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Suspense, type SVGProps } from "react";
-import { bereaSignaturePath, storeBrand, storeLogoPath } from "@/lib/brand";
+import {
+  bereaSignaturePathSm,
+  storeBrand,
+  storeLogoPath,
+} from "@/lib/brand";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
   const { children, className = "", ...rest } = props;
@@ -343,17 +347,17 @@ function AdminSidebarInner({
           </div>
         ))}
       </nav>
-      <div className="shrink-0 border-t border-stone-200/90 px-4 py-4 dark:border-zinc-800">
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-stone-400/90 dark:text-zinc-500/90">
+      <div className="shrink-0 border-t border-stone-200/90 px-3 py-2.5 dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-0.5 text-center">
+          <span className="text-[8px] font-medium uppercase tracking-[0.18em] text-stone-400/70 dark:text-zinc-500/70">
             Experiencia por
           </span>
           <Image
-            src={bereaSignaturePath}
+            src={bereaSignaturePathSm}
             alt="Berea House — desarrollo de software"
-            width={400}
-            height={188}
-            className="h-14 w-auto max-w-[min(100%,13rem)] object-contain object-center opacity-90"
+            width={160}
+            height={48}
+            className="h-5 w-auto max-w-[6.5rem] object-contain object-center opacity-45 grayscale dark:opacity-40"
           />
         </div>
       </div>
@@ -371,10 +375,10 @@ function AdminSidebarFallback() {
         </p>
       </div>
       <div className="flex-1 px-3 py-3" aria-busy aria-label="Cargando menú" />
-      <div className="shrink-0 border-t border-stone-200/90 px-3 pb-2 pt-1.5 dark:border-zinc-800">
-        <div className="mb-1 flex flex-col items-center gap-0">
-          <div className="h-2 w-14 rounded bg-stone-200/60 dark:bg-zinc-700/80" aria-hidden />
-          <div className="h-7 w-[7.5rem] max-w-full rounded bg-stone-200/50 dark:bg-zinc-700/60" aria-hidden />
+      <div className="shrink-0 border-t border-stone-200/90 px-3 py-2.5 dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="h-1.5 w-12 rounded bg-stone-200/50 dark:bg-zinc-700/70" aria-hidden />
+          <div className="h-5 w-[5.5rem] max-w-full rounded bg-stone-200/40 dark:bg-zinc-700/50" aria-hidden />
         </div>
       </div>
     </aside>
