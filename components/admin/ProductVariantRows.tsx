@@ -16,9 +16,11 @@ import {
 } from "@/lib/product-image-upload";
 import {
   formatSizeVariantLabel,
+  getVariantPickerTitle,
   VARIANT_AXIS_OPTIONS,
   type ProductVariantAxis,
 } from "@/lib/product-variants";
+import { CLOTHING_SIZE_PRESETS, SHOE_SIZE_PRESETS } from "@/lib/product-clothing-sizes";
 import { SIZE_UNITS, type SizeUnit } from "@/lib/product-size-options";
 import { shouldUnoptimizeStorageImageUrl } from "@/lib/storage-public-url";
 import {
@@ -209,6 +211,27 @@ export function ProductVariantRows({
 
   const add = () => setRows((prev) => [...prev, emptyRow()]);
 
+  const addPresetTallas = (presets: readonly string[]) => {
+    setRows((prev) => {
+      const existing = new Set(
+        prev.map((r) => r.label.trim().toLowerCase()).filter(Boolean),
+      );
+      const next = [...prev];
+      // Drop the empty starter row if present and unused
+      const onlyEmpty =
+        next.length === 1 && !next[0]?.label.trim() && !next[0]?.id;
+      const base = onlyEmpty ? [] : next;
+      const out = [...base];
+      for (const label of presets) {
+        const key = label.trim().toLowerCase();
+        if (!key || existing.has(key)) continue;
+        existing.add(key);
+        out.push({ ...emptyRow(), label: label.trim() });
+      }
+      return out.length > 0 ? out : [emptyRow()];
+    });
+  };
+
   const remove = (i: number) =>
     setRows((prev) => {
       const dropped = prev[i];
@@ -315,9 +338,86 @@ export function ProductVariantRows({
       {showRows ? (
         <div className="mt-4 space-y-4">
           <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            Cada presentación es un SKU: define su costo, precio de venta e inventario. El
-            cliente elige una opción en la tienda.
+            {axis === "talla"
+              ? "Cada talla es un SKU con su propio precio e inventario. El cliente elige la talla en la tienda."
+              : "Cada presentación es un SKU: define su costo, precio de venta e inventario. El cliente elige una opción en la tienda."}
           </p>
+
+          {axis === "talla" ? (
+            <div className="space-y-3 rounded-xl border border-zinc-200/90 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
+              <div>
+                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  Tallas de ropa
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {CLOTHING_SIZE_PRESETS.map((size) => {
+                    const taken = rows.some(
+                      (r) =>
+                        r.label.trim().toLowerCase() === size.toLowerCase(),
+                    );
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        disabled={taken}
+                        onClick={() => addPresetTallas([size])}
+                        className={
+                          taken
+                            ? "rounded-md border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500"
+                            : "rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-800 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                        }
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addPresetTallas(CLOTHING_SIZE_PRESETS)}
+                  className="mt-2 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                >
+                  Agregar todas (XS–XXL + Única)
+                </button>
+              </div>
+
+              <div className="border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  Tallas de zapato (EU)
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {SHOE_SIZE_PRESETS.map((size) => {
+                    const taken = rows.some(
+                      (r) => r.label.trim() === size,
+                    );
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        disabled={taken}
+                        onClick={() => addPresetTallas([size])}
+                        className={
+                          taken
+                            ? "rounded-md border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-medium tabular-nums text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500"
+                            : "rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-semibold tabular-nums text-zinc-800 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                        }
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addPresetTallas(SHOE_SIZE_PRESETS)}
+                  className="mt-2 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                >
+                  Agregar todas (34–45)
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {rows.map((row, i) => {
             const totalImages = row.existingPaths.length + row.picked.length;
             const atMax = totalImages >= MAX_PRODUCT_IMAGES_PER_GROUP;
@@ -386,7 +486,9 @@ export function ProductVariantRows({
                             ? "Nombre del tono"
                             : axis === "color"
                               ? "Nombre del color"
-                              : "Etiqueta de la presentación"
+                              : axis === "talla"
+                                ? "Talla (ej. M, 38, 37.5)"
+                                : "Etiqueta de la presentación"
                       }
                       autoComplete="off"
                       className={`${productInputClass} min-w-0 flex-1`}
@@ -442,7 +544,9 @@ export function ProductVariantRows({
                     type="button"
                     onClick={() => remove(i)}
                     className="inline-flex shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                    aria-label="Quitar presentación"
+                    aria-label={
+                      axis === "talla" ? "Quitar talla" : "Quitar presentación"
+                    }
                   >
                     <Trash2 className="size-4" strokeWidth={1.5} />
                   </button>
@@ -553,10 +657,12 @@ export function ProductVariantRows({
             className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-300"
           >
             <Plus className="size-4" strokeWidth={1.5} aria-hidden />
-            Añadir presentación
+            {axis === "talla" ? "Añadir talla" : "Añadir presentación"}
           </button>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Añade todas las presentaciones que vendes (tamaños, fragancias, tonos, etc.).
+            {axis === "talla"
+              ? `Define cada ${getVariantPickerTitle(axis).toLowerCase()} que vendes con stock y precio propios.`
+              : "Añade todas las presentaciones que vendes (tamaños, fragancias, tonos, tallas, etc.)."}
           </p>
         </div>
       ) : null}

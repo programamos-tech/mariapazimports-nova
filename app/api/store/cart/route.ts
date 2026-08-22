@@ -13,6 +13,8 @@ import {
 import { getStorefrontCartLines } from "@/lib/storefront-cart";
 import {
   fetchProductVariantsByProductIds,
+  getVariantPickerTitle,
+  parseProductVariantAxis,
   type ProductVariant,
 } from "@/lib/product-variants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -24,6 +26,8 @@ export type CartDrawerItem = {
   quantity: number;
   variantId: string | null;
   variantLabel: string | null;
+  /** Fragancia / Presentación / Talla / etc. */
+  variantAxisLabel: string | null;
   name: string;
   priceCents: number;
   imagePath: string | null;
@@ -72,11 +76,14 @@ function buildCartDrawerItems(
     const lineTotalCents = priceCents * line.quantity;
     subtotalCents += lineTotalCents;
     const variantLabel = variant?.label?.trim() || null;
+    const axis = parseProductVariantAxis(p.variant_axis);
     items.push({
       productId: line.productId,
       quantity: line.quantity,
       variantId: line.variantId ?? null,
       variantLabel,
+      variantAxisLabel:
+        variantLabel && axis !== "none" ? getVariantPickerTitle(axis) : null,
       name: p.name,
       priceCents,
       imagePath: imagePathForProductLine(

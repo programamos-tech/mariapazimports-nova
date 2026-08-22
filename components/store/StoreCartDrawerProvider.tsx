@@ -30,6 +30,7 @@ export type StoreCartDrawerItem = {
   quantity: number;
   variantId: string | null;
   variantLabel: string | null;
+  variantAxisLabel?: string | null;
   name: string;
   priceCents: number;
   imagePath: string | null;
@@ -264,7 +265,9 @@ function DrawerLine({
             <div className="mt-3 space-y-1 text-[12px] text-stone-600">
               {item.variantLabel ? (
                 <p>
-                  <span className="text-stone-500">Presentación:</span>{" "}
+                  <span className="text-stone-500">
+                    {item.variantAxisLabel?.trim() || "Opción"}:
+                  </span>{" "}
                   {item.variantLabel}
                 </p>
               ) : null}

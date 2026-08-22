@@ -7,6 +7,7 @@ export const PRODUCT_VARIANT_AXES = [
   "size",
   "tone",
   "color",
+  "talla",
 ] as const;
 
 export type ProductVariantAxis = (typeof PRODUCT_VARIANT_AXES)[number];
@@ -49,6 +50,7 @@ const AXIS_UI_LABELS: Record<
   size: "Presentación",
   tone: "Tono",
   color: "Color",
+  talla: "Talla",
 };
 
 export function parseProductVariantAxis(raw: unknown): ProductVariantAxis {
@@ -57,7 +59,8 @@ export function parseProductVariantAxis(raw: unknown): ProductVariantAxis {
     s === "fragrance" ||
     s === "size" ||
     s === "tone" ||
-    s === "color"
+    s === "color" ||
+    s === "talla"
   ) {
     return s;
   }
@@ -240,4 +243,5 @@ export const VARIANT_AXIS_OPTIONS: {
   { value: "size", label: "Tamaño / cápsula / presentación" },
   { value: "tone", label: "Tono" },
   { value: "color", label: "Color" },
+  { value: "talla", label: "Talla (ropa / calzado)" },
 ];
