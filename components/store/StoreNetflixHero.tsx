@@ -10,21 +10,23 @@ const ROWS: { direction: "left" | "right"; durationSec: number; offset: number }
     { direction: "left", durationSec: 48, offset: 4 },
   ];
 
-/** Duplicamos el set para que el marquee sea continuo sin saltos. */
+/** Duplicamos el set para marquee continuo (2× basta para el loop CSS). */
 function rowImages(offset: number) {
   const rotated = [
     ...MPI_HERO_IMAGES.slice(offset),
     ...MPI_HERO_IMAGES.slice(0, offset),
   ];
-  return [...rotated, ...rotated, ...rotated];
+  return [...rotated, ...rotated];
 }
 
 function HeroCard({
   src,
   priority,
+  loading,
 }: {
   src: string;
   priority?: boolean;
+  loading?: "lazy" | "eager";
 }) {
   return (
     <div className="relative aspect-[2/3] w-[9.5rem] shrink-0 overflow-hidden rounded-xl bg-stone-200 shadow-[0_12px_40px_-18px_rgba(0,0,0,0.45)] ring-1 ring-black/5 sm:w-[11.5rem] md:w-[13rem] lg:w-[14.5rem]">
@@ -33,6 +35,7 @@ function HeroCard({
         alt=""
         fill
         priority={priority}
+        loading={loading}
         sizes="(max-width: 640px) 152px, (max-width: 768px) 184px, (max-width: 1024px) 208px, 232px"
         className="object-cover object-center"
       />
@@ -72,6 +75,7 @@ export function StoreNetflixHero() {
                       key={`${rowIdx}-${i}`}
                       src={src}
                       priority={rowIdx === 1 && i < 3}
+                      loading={rowIdx === 1 ? undefined : "lazy"}
                     />
                   ))}
                 </div>

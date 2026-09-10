@@ -28,6 +28,8 @@ export type HomeCategoryCard = {
   productCount: number;
   /** URL pública para el póster; null → fallback visual. */
   imageSrc: string | null;
+  /** Collage del tile «Todos los productos» (varias categorías). */
+  imageSrcs?: string[];
 };
 
 /** Tile sintético del home → catálogo completo (`/products`). */
@@ -236,16 +238,25 @@ async function loadHomeCategoryCards(
       a.sort_order - b.sort_order || a.name.localeCompare(b.name, "es"),
   );
 
-  let allProductsCover: string | null = null;
+  const ALL_PRODUCTS_MOSAIC_COUNT = 4;
+  const mosaicSeen = new Set<string>();
+  const allProductsMosaic: string[] = [];
+  const pushMosaicCover = (raw: string | null | undefined) => {
+    if (!raw || allProductsMosaic.length >= ALL_PRODUCTS_MOSAIC_COUNT) return;
+    const url = productStorefrontImageUrl(raw) ?? raw;
+    if (!url || mosaicSeen.has(url)) return;
+    mosaicSeen.add(url);
+    allProductsMosaic.push(url);
+  };
+
+  for (const card of merged) pushMosaicCover(card.imageSrc);
   for (const row of coverPool ?? []) {
-    const cover = resolveProductCoverUrl(
-      row.image_path as string | null,
-      row.image_paths,
+    pushMosaicCover(
+      resolveProductCoverUrl(
+        row.image_path as string | null,
+        row.image_paths,
+      ),
     );
-    if (cover) {
-      allProductsCover = productStorefrontImageUrl(cover) ?? cover;
-      break;
-    }
   }
 
   const { count: publishedCount } = await supabase
@@ -260,10 +271,14 @@ async function loadHomeCategoryCards(
     id: HOME_ALL_PRODUCTS_CATEGORY_ID,
     name: "Todos los productos",
     sub: "Catálogo completo",
-    tint: "bg-[#f4f4f3]",
+    tint: "bg-[#81523e]",
     iconKey: "tag",
     productCount: allProductsCount,
-    imageSrc: allProductsCover,
+    imageSrc: null,
+    imageSrcs:
+      allProductsMosaic.length >= ALL_PRODUCTS_MOSAIC_COUNT
+        ? allProductsMosaic
+        : undefined,
   });
 
   return cards;
@@ -274,7 +289,7 @@ const getCachedHomeCategoryCards = unstable_cache(
     const supabase = createSupabaseServiceClient();
     return loadHomeCategoryCards(supabase);
   },
-  ["home-category-cards-v6"],
+  ["home-category-cards-v7"],
   { revalidate: 60 },
 );
 

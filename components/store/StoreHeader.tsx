@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStorefrontCartItemCount } from "@/lib/storefront-cart";
+import { getStoreAuthSessionUser } from "@/lib/store-auth-session";
 import { StoreLogo } from "@/components/store/StoreLogo";
 import { StoreHomeLogoLink } from "@/components/store/StoreHomeLogoLink";
 import { StoreAnnouncementBar } from "@/components/store/StoreAnnouncementBar";
@@ -12,15 +13,12 @@ import { fetchStoreCategoriesWithCounts } from "@/lib/fetch-store-categories";
 
 export async function StoreHeader() {
   const supabase = await createSupabaseServerClient();
-  const [menuCategories, storeBrands, cartItemCount, authResult] =
-    await Promise.all([
-      fetchStoreCategoriesWithCounts(supabase),
-      fetchPublishedBrandsWithCounts(supabase),
-      getStorefrontCartItemCount(),
-      supabase.auth.getUser(),
-    ]);
-
-  const user = authResult.data.user;
+  const [menuCategories, storeBrands, cartItemCount, user] = await Promise.all([
+    fetchStoreCategoriesWithCounts(supabase),
+    fetchPublishedBrandsWithCounts(supabase),
+    getStorefrontCartItemCount(),
+    getStoreAuthSessionUser(),
+  ]);
   const userIconHref = user ? "/cuenta" : "/cuenta/entrar";
   const userIconLabel = user ? "Mi cuenta" : "Iniciar sesión";
 

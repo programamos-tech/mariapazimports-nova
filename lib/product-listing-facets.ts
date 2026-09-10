@@ -137,6 +137,22 @@ export function mergeCategoryRowsForFilterMenu(
   return out;
 }
 
+function getCachedCategoryListingFacets(categoryIds: string[]) {
+  const sortedKey = [...categoryIds].sort().join(",");
+  return unstable_cache(
+    async () => {
+      const { createSupabaseServiceClient } = await import(
+        "@/lib/supabase/service"
+      );
+      return loadListingFacets(createSupabaseServiceClient(), {
+        categoryIds,
+      });
+    },
+    ["store-listing-facets-category-v1", sortedKey],
+    { revalidate: 60 },
+  )();
+}
+
 export async function fetchListingFacets(
   supabase: SupabaseClient,
   options: { categoryIds: string[] | null },
@@ -147,6 +163,12 @@ export async function fetchListingFacets(
       return await getCachedGlobalListingFacets();
     } catch (err) {
       console.error("[listing-facets] cache fallback", err);
+    }
+  } else {
+    try {
+      return await getCachedCategoryListingFacets(options.categoryIds);
+    } catch (err) {
+      console.error("[listing-facets] category cache fallback", err);
     }
   }
 

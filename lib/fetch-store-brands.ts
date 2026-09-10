@@ -1,5 +1,8 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUsableStoreBrand } from "@/lib/fetch-store-catalog-by-brand";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type StoreBrandSummary = {
   /** Valor exacto de `products.brand` (trim) para enlazar a `/products?brand=`. */
@@ -11,7 +14,7 @@ export type StoreBrandSummary = {
  * Marcas con al menos un producto publicado, orden alfabético (es).
  * Ignora placeholders (“-”, “sin marca”, etc.).
  */
-export async function fetchPublishedBrandsWithCounts(
+async function loadPublishedBrandsWithCounts(
   supabase: SupabaseClient,
 ): Promise<StoreBrandSummary[]> {
   const { data: rows, error } = await supabase
@@ -32,3 +35,29 @@ export async function fetchPublishedBrandsWithCounts(
     .map(([name, productCount]) => ({ name, productCount }))
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
+
+/** Cache entre requests (menú Marcas). */
+const getCachedPublishedBrandsWithCounts = unstable_cache(
+  async () => {
+    const supabase = createSupabaseServiceClient();
+    return loadPublishedBrandsWithCounts(supabase);
+  },
+  ["store-published-brands-with-counts-v1"],
+  { revalidate: 60 },
+);
+
+/**
+ * Marcas con al menos un producto publicado, orden alfabético (es).
+ * Ignora placeholders (“-”, “sin marca”, etc.).
+ */
+export const fetchPublishedBrandsWithCounts = cache(
+  async (_supabase?: SupabaseClient): Promise<StoreBrandSummary[]> => {
+    try {
+      return await getCachedPublishedBrandsWithCounts();
+    } catch (err) {
+      console.error("[store-brands] cache fallback", err);
+      const supabase = _supabase ?? createSupabaseServiceClient();
+      return loadPublishedBrandsWithCounts(supabase);
+    }
+  },
+);

@@ -192,32 +192,39 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   const catalogBrowseMode = !categoryView && !hasListingFilters;
 
+  const listingPromise = fetchPublishedProductsForListing(supabase, {
+    categoryFilterId,
+    filterCategoryIds,
+    activeBrands,
+    activeColors,
+    activeSizes,
+    priceMin,
+    priceMax,
+    q,
+    sort,
+    allCategoryRows,
+    page,
+  });
+  const enrichedFromListingPromise = listingPromise.then((result) =>
+    enrichListingProductsWithVariants(supabase, result.products),
+  );
+
   const [
     listingFacetsFromQuery,
     productsBanners,
     listingResult,
     cartQtyByProductId,
     couponPctByProductId,
+    enrichedFromListing,
   ] = await Promise.all([
     fetchListingFacets(supabase, { categoryIds: facetCategoryIds }),
     categoryView ?
       Promise.resolve([] as Awaited<ReturnType<typeof fetchPublishedBanners>>)
     : fetchPublishedBanners(supabase, "products"),
-    fetchPublishedProductsForListing(supabase, {
-      categoryFilterId,
-      filterCategoryIds,
-      activeBrands,
-      activeColors,
-      activeSizes,
-      priceMin,
-      priceMax,
-      q,
-      sort,
-      allCategoryRows,
-      page,
-    }),
+    listingPromise,
     getStorefrontCartQuantityByProductId(),
     fetchStorefrontCouponDiscountPercentByProductId(supabase),
+    enrichedFromListingPromise,
   ]);
 
   const categoryNameById = new Map(
@@ -256,7 +263,10 @@ export default async function ProductsPage({ searchParams }: Props) {
   const listingFacets =
     listingFacetsFromQuery ?? computeListingFacetsFromProductRows([]);
 
-  const enrichedList = await enrichListingProductsWithVariants(supabase, list);
+  let enrichedList = enrichedFromListing;
+  if (page > totalPages && listingTotal > 0) {
+    enrichedList = await enrichListingProductsWithVariants(supabase, list);
+  }
 
   const withCategory = enrichedList.map((p) => ({
     ...p,

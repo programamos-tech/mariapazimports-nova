@@ -60,6 +60,10 @@ export const STORE_PRODUCT_DETAIL_HERO_SIZES =
 export const STORE_CATEGORY_CARD_IMAGE_SIZES =
   "(max-width: 640px) 50vw, 33vw";
 
+/** Cada celda del collage 2×2 en «Todos los productos». */
+export const STORE_CATEGORY_MOSAIC_IMAGE_SIZES =
+  "(max-width: 640px) 25vw, 17vw";
+
 export function storeProductCardImagePriority(index: number): boolean {
   return index >= 0 && index < STORE_PRODUCT_CARD_EAGER_COUNT;
 }

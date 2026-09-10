@@ -1,43 +1,29 @@
+import { Suspense } from "react";
 import { preconnect } from "react-dom";
 import { AirplaneTilt } from "@phosphor-icons/react/dist/ssr/AirplaneTilt";
 import { CalendarBlank } from "@phosphor-icons/react/dist/ssr/CalendarBlank";
 import { Handshake } from "@phosphor-icons/react/dist/ssr/Handshake";
 import { SealCheck } from "@phosphor-icons/react/dist/ssr/SealCheck";
-import { ProductListingCard } from "@/components/store/ProductListingCard";
-import { RevealOnScroll } from "@/components/store/RevealOnScroll";
-import { ViewAllProductsLink } from "@/components/store/ViewAllProductsLink";
-import { storeShellClass, storeProductGridClass } from "@/lib/store-layout";
-import { STORE_HEADER_ICON_WEIGHT } from "@/lib/store-header-icons";
-import {
-  STORE_PRODUCT_CARD_IMAGE_SIZES,
-  storeProductCardImagePriority,
-} from "@/lib/store-product-card-image";
-import {
-  REVEAL_BLOCK_DELAY_MS,
-} from "@/lib/store-reveal-timing";
-import { productCardDisplayImages } from "@/lib/product-card-display-images";
 import { StoreNetflixHero } from "@/components/store/StoreNetflixHero";
-import { StoreNetflixCategories } from "@/components/store/StoreNetflixCategories";
 import { StoreMariaPazBio } from "@/components/store/StoreMariaPazBio";
 import {
   StoreUsaImportBanner,
   USA_FLAG_IMAGE,
 } from "@/components/store/StoreUsaImportBanner";
-import { StoreBestsellersRow } from "@/components/store/StoreBestsellersRow";
-import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
-import { fetchHomeCategoryCards } from "@/lib/fetch-home-categories";
-import { fetchHomeBestsellersWeek } from "@/lib/fetch-home-bestsellers";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { fetchStorefrontCouponDiscountPercentByProductId } from "@/lib/store-coupons";
-import { getStorefrontCartQuantityByProductId } from "@/lib/storefront-cart";
+import { HomeCategoriesSection } from "@/components/store/home/HomeCategoriesSection";
+import { HomeFeaturedSection } from "@/components/store/home/HomeFeaturedSection";
+import { HomeBestsellersSection } from "@/components/store/home/HomeBestsellersSection";
 import {
-  enrichListingProductsWithVariants,
-  toProductListingCardProps,
-} from "@/lib/store-listing-variant-meta";
+  HomeBestsellersSkeleton,
+  HomeCategoriesSkeleton,
+  HomeFeaturedSkeleton,
+} from "@/components/store/home/HomeSectionSkeletons";
+import { storeShellClass } from "@/lib/store-layout";
+import { STORE_HEADER_ICON_WEIGHT } from "@/lib/store-header-icons";
+import { MPI_HERO_IMAGES } from "@/lib/mpi-hero-images";
 
 export const dynamic = "force-dynamic";
 
-const HOME_PRODUCTS_LIMIT = 8;
 const HIGHLIGHT_ICON_CLASS = "size-8 shrink-0 text-stone-900 sm:size-9";
 
 const STORE_HIGHLIGHTS = [
@@ -64,68 +50,9 @@ const STORE_HIGHLIGHTS = [
   },
 ] as const;
 
-export default async function HomePage() {
+export default function HomePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl) preconnect(supabaseUrl);
-
-  const supabase = await createSupabaseServerClient();
-
-  const productsQuery = supabase
-    .from("products")
-    .select(
-      "id,name,brand,price_cents,image_path,image_paths,stock_quantity,fragrance_options,variant_axis,import_origin,size_options,size_value,size_unit,created_at",
-    )
-    .eq("is_published", true)
-    .order("created_at", { ascending: false })
-    .limit(HOME_PRODUCTS_LIMIT);
-
-  // Enriquecer variantes en paralelo apenas llegan los productos (sin esperar cupones/carrito).
-  const featuredWithVariantsPromise = productsQuery.then(async (result) => {
-    if (result.error) {
-      console.error(
-        "[home] products:",
-        result.error.message,
-        result.error.code,
-      );
-    }
-    const rows = (result.data ?? []).map((p) => ({
-      ...p,
-      description: null,
-    })) as Parameters<typeof enrichListingProductsWithVariants>[1];
-    return enrichListingProductsWithVariants(supabase, rows);
-  });
-
-  const bestsellersWithVariantsPromise = fetchHomeBestsellersWeek(
-    supabase,
-  ).then((rows) => enrichListingProductsWithVariants(supabase, rows));
-
-  const [
-    homeCategories,
-    enrichedFeatured,
-    enrichedBestsellers,
-    cartQtyByProductId,
-    couponPctByProductId,
-  ] = await Promise.all([
-    fetchHomeCategoryCards(supabase),
-    featuredWithVariantsPromise,
-    bestsellersWithVariantsPromise,
-    getStorefrontCartQuantityByProductId(),
-    fetchStorefrontCouponDiscountPercentByProductId(supabase),
-  ]);
-
-  const featuredImagePreloads = enrichedFeatured
-    .slice(0, 2)
-    .map((p) => {
-      const imgs = productCardDisplayImages(p.image_path, p.image_paths);
-      if (!imgs.primary) return null;
-      return {
-        href: imgs.primary,
-        srcSet: imgs.primarySrcSet,
-      };
-    })
-    .filter((row): row is { href: string; srcSet: string | null } =>
-      Boolean(row),
-    );
 
   return (
     <div>
@@ -139,16 +66,6 @@ export default async function HomePage() {
         />
       ))}
       <link rel="preload" as="image" href={USA_FLAG_IMAGE} />
-      {featuredImagePreloads.map(({ href, srcSet }) => (
-        <link
-          key={href}
-          rel="preload"
-          as="image"
-          href={href}
-          imageSrcSet={srcSet ?? undefined}
-          imageSizes={STORE_PRODUCT_CARD_IMAGE_SIZES}
-        />
-      ))}
 
       <StoreNetflixHero />
 
@@ -176,61 +93,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <StoreNetflixCategories categories={homeCategories} />
+      <Suspense fallback={<HomeCategoriesSkeleton />}>
+        <HomeCategoriesSection />
+      </Suspense>
 
       <StoreMariaPazBio />
 
       <StoreUsaImportBanner />
 
-      {/* Productos destacados */}
-      <section className="bg-white py-8 sm:py-10">
-        <div className={storeShellClass}>
-          <div className="mt-2 sm:mt-4">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-xl font-semibold uppercase tracking-[0.06em] text-stone-900 sm:text-2xl">
-                Productos destacados
-              </h2>
-            </div>
+      <Suspense fallback={<HomeFeaturedSkeleton />}>
+        <HomeFeaturedSection />
+      </Suspense>
 
-            {enrichedFeatured.length === 0 ? (
-              <p className="mt-6 rounded-xl border border-dashed border-stone-200/90 bg-[#faf8f5]/60 p-8 text-center text-sm text-stone-600">
-                Aún no hay productos publicados. Cárgalos desde el admin para que
-                aparezcan aquí.
-              </p>
-            ) : (
-              <>
-                <ul className={`mt-8 ${storeProductGridClass}`}>
-                  {enrichedFeatured.map((p, index) => (
-                    <li key={p.id} className="h-full">
-                      <ProductListingCard
-                        imagePriority={storeProductCardImagePriority(index)}
-                        cartQuantity={cartQtyByProductId[p.id] ?? 0}
-                        couponDiscountPercent={
-                          couponPctByProductId[p.id] ?? 0
-                        }
-                        product={toProductListingCardProps(p)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-                <RevealOnScroll
-                  delayMs={REVEAL_BLOCK_DELAY_MS}
-                  className="mt-6 flex justify-center sm:mt-7"
-                >
-                  <ViewAllProductsLink className="inline-flex border border-stone-900 bg-stone-900 px-10 py-3 text-[11px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-stone-800">
-                    Ver todos los productos
-                  </ViewAllProductsLink>
-                </RevealOnScroll>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <StoreBestsellersRow
-        products={enrichedBestsellers}
-        couponPctByProductId={couponPctByProductId}
-      />
+      <Suspense fallback={<HomeBestsellersSkeleton />}>
+        <HomeBestsellersSection />
+      </Suspense>
     </div>
   );
 }
