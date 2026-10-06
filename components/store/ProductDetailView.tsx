@@ -643,9 +643,10 @@ export function ProductDetailView({
 
           <AccordionSection title="Envíos y devoluciones" defaultOpen>
             <p>
-              Envíos a todo el país según disponibilidad. Cambios y devoluciones
-              según políticas del comercio; consultá por WhatsApp antes de
-              comprar si tienes dudas sobre talla o compatibilidad.
+              El envío se paga al recibir este producto. Enviamos a todo el
+              país. Cambios y devoluciones según políticas del comercio;
+              consultá por WhatsApp antes de comprar si tienes dudas sobre talla
+              o compatibilidad.
             </p>
           </AccordionSection>
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { formatCop } from "@/lib/money";
+import { STOREFRONT_SHIPPING_COD_LABEL } from "@/lib/shipping-rates";
 import { productColorSwatchClass } from "@/lib/product-colors";
 import {
   STORE_PRODUCT_CARD_IMAGE_ASPECT_CLASS,
@@ -388,6 +389,9 @@ export function StoreCartDrawerPanel({
                 {formatCop(subtotalCents)}
               </span>
             </div>
+            <p className="mt-2 text-right text-[11px] leading-snug text-stone-500">
+              {STOREFRONT_SHIPPING_COD_LABEL}
+            </p>
             <button
               type="button"
               onClick={onCheckout}

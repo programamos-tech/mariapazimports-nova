@@ -5,6 +5,7 @@ import {
   storeTagline,
 } from "@/lib/brand";
 import { formatCop } from "@/lib/money";
+import { formatStorefrontShippingAmount } from "@/lib/shipping-rates";
 import { ventaNumeroReferencia } from "@/lib/ventas-sales";
 import {
   isStoreEmailConfigured,
@@ -117,7 +118,7 @@ function buildBodies(
     ...itemLines,
     "",
     `Subtotal: ${formatCop(subtotal)}`,
-    `Envío: ${shipping > 0 ? formatCop(shipping) : "Incluido"}`,
+    `Envío: ${formatStorefrontShippingAmount(shipping)}`,
     `Total: ${formatCop(payload.totalCents)}`,
     `Pago: ${paymentLabel(payload.paymentMethod)}`,
     "",
@@ -222,7 +223,7 @@ function buildBodies(
                 </tr>
                 <tr>
                   <td style="padding:6px 0;color:#78716c">Envío</td>
-                  <td style="padding:6px 0;text-align:right;color:#292524">${escapeHtml(shipping > 0 ? formatCop(shipping) : "Incluido")}</td>
+                  <td style="padding:6px 0;text-align:right;color:#292524">${escapeHtml(formatStorefrontShippingAmount(shipping))}</td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0;color:#78716c">Pago</td>
@@ -342,7 +343,7 @@ function buildStoreSaleNotifyBodies(payload: OrderReceivedEmailPayload) {
     ...itemLines,
     "",
     `Subtotal: ${formatCop(subtotal)}`,
-    `Envío: ${shipping > 0 ? formatCop(shipping) : "Incluido"}`,
+    `Envío: ${formatStorefrontShippingAmount(shipping)}`,
     `Total venta: ${formatCop(payload.totalCents)}`,
     `Método: ${paymentLabel(payload.paymentMethod)}`,
     adminUrl ? `\nVer en el panel: ${adminUrl}` : null,
@@ -398,7 +399,7 @@ function buildStoreSaleNotifyBodies(payload: OrderReceivedEmailPayload) {
               </tr>
               <tr>
                 <td style="padding:6px 0;color:#78716c">Envío</td>
-                <td style="padding:6px 0;text-align:right">${escapeHtml(shipping > 0 ? formatCop(shipping) : "Incluido")}</td>
+                <td style="padding:6px 0;text-align:right">${escapeHtml(formatStorefrontShippingAmount(shipping))}</td>
               </tr>
               <tr>
                 <td style="padding:6px 0;color:#78716c">Pago</td>

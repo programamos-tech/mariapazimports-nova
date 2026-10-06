@@ -23,7 +23,7 @@ import {
 } from "@/lib/product-variants";
 import { findActiveStoreCouponForCheckout } from "@/lib/store-coupons";
 import {
-  quoteShippingForMunicipality,
+  quoteStorefrontShipping,
   SHIPPING_METHOD_DELIVERY,
 } from "@/lib/shipping-rates";
 import {
@@ -285,7 +285,7 @@ export async function createPendingStoreOrderFromForm(
   }
   const totalWithDiscount = Math.max(0, total - discount);
 
-  const shippingQuote = await quoteShippingForMunicipality(
+  const shippingQuote = await quoteStorefrontShipping(
     supabase,
     shippingMunicipalityCode,
   );
@@ -293,7 +293,7 @@ export async function createPendingStoreOrderFromForm(
     !shippingQuote ||
     shippingQuote.departmentCode !== shippingDepartmentCode
   ) {
-    redirect("/checkout?error=shipping_unavailable");
+    redirect("/checkout?error=missing_shipping");
   }
   const shippingCents = shippingQuote.costCents;
   const orderSubtotalCents = totalWithDiscount;

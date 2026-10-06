@@ -66,7 +66,7 @@ function CheckoutErrorBanner({
       {error === "missing_shipping" &&
         "Completa dirección, departamento, municipio y teléfono de contacto."}
       {error === "shipping_unavailable" &&
-        "El municipio seleccionado no tiene envío en línea. Escríbenos por WhatsApp para cotizar tu pedido o elige otro destino."}
+        "Completa departamento y municipio de envío para continuar."}
       {error === "products" &&
         "No se pudieron cargar los productos del pedido. Si persiste, revisa la conexión o prueba más tarde."}
       {error === "unpublished" &&

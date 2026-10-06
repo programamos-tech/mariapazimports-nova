@@ -61,10 +61,10 @@ export default function TerminosPage() {
 
       <LegalSection title="Envíos y entregas">
         <p>
-          Los plazos y costos de envío dependen de la ubicación y del transportista.
-          Los indicados en el checkout son orientativos; Factores externos pueden
-          atrasar una entrega. Las políticas de cambios o devoluciones te las
-          comunicamos en el proceso de compra o por{" "}
+          Los plazos de entrega dependen de la ubicación y del transportista.
+          El envío se paga al recibir el producto; no se cobra en el checkout.
+          Los tiempos indicados son orientativos. Las políticas de cambios o
+          devoluciones te las comunicamos en el proceso de compra o por{" "}
           <a
             className="font-medium text-stone-900 underline underline-offset-2 hover:no-underline"
             href={`mailto:${storeSupportEmail}`}

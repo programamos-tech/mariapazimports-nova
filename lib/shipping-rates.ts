@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatMunicipalityLabel } from "@/lib/colombia-geo";
+import { formatCop } from "@/lib/money";
 
 export type ShippingDepartmentRow = {
   code: string;
@@ -32,7 +33,16 @@ export type ShippingMethod =
   | typeof SHIPPING_METHOD_PICKUP
   | typeof SHIPPING_METHOD_DELIVERY;
 
-/** Checkout web: tarifa configurada (> 0) y entrega habilitada. */
+/**
+ * Lanzamiento: el flete no se cobra en checkout; se paga al recibir.
+ * El POS del admin sigue usando tarifas configuradas.
+ */
+export const STOREFRONT_SHIPPING_COD = true;
+
+export const STOREFRONT_SHIPPING_COD_LABEL =
+  "El envío se paga al recibir este producto";
+
+/** Checkout web (modo tarifa): entrega habilitada y costo > 0. */
 export function isStorefrontShippingAvailable(
   row: Pick<ShippingMunicipalityRow, "cost_cents" | "is_delivery_enabled">,
 ): boolean {
@@ -40,6 +50,12 @@ export function isStorefrontShippingAvailable(
     row.is_delivery_enabled &&
     Math.max(0, Math.floor(Number(row.cost_cents ?? 0))) > 0
   );
+}
+
+/** Texto del renglón de envío en tienda (pedidos viejos con tarifa conservan el monto). */
+export function formatStorefrontShippingAmount(shippingCents: number): string {
+  if (shippingCents > 0) return formatCop(shippingCents);
+  return STOREFRONT_SHIPPING_COD_LABEL;
 }
 
 function departmentNameFromJoin(
@@ -72,7 +88,7 @@ export async function fetchShippingMunicipalitiesByDepartment(
     .select("code,department_code,name,cost_cents,is_delivery_enabled,sort_order")
     .eq("department_code", departmentCode)
     .order("name", { ascending: true });
-  if (!opts.admin) {
+  if (!opts.admin && !STOREFRONT_SHIPPING_COD) {
     q = q.eq("is_delivery_enabled", true);
   }
   const { data, error } = await q;
@@ -91,7 +107,7 @@ export async function fetchShippingMunicipalityByCode(
       "code,department_code,name,cost_cents,is_delivery_enabled,sort_order,shipping_departments(name)",
     )
     .eq("code", municipalityCode);
-  if (!opts.admin) {
+  if (!opts.admin && !STOREFRONT_SHIPPING_COD) {
     q = q.eq("is_delivery_enabled", true);
   }
   const { data, error } = await q.maybeSingle();
@@ -103,7 +119,9 @@ export async function quoteShippingForMunicipality(
   supabase: SupabaseClient,
   municipalityCode: string,
 ): Promise<ShippingQuote | null> {
-  const row = await fetchShippingMunicipalityByCode(supabase, municipalityCode);
+  const row = await fetchShippingMunicipalityByCode(supabase, municipalityCode, {
+    admin: true,
+  });
   if (!row || !isStorefrontShippingAvailable(row)) return null;
   const departmentName = departmentNameFromJoin(row) ?? row.department_code;
   return {
@@ -112,6 +130,29 @@ export async function quoteShippingForMunicipality(
     departmentCode: row.department_code,
     departmentName,
     costCents: Math.max(0, Math.floor(Number(row.cost_cents ?? 0))),
+    label: formatMunicipalityLabel(row.name, departmentName),
+  };
+}
+
+/** Destino de la tienda: en COD el flete online es 0. */
+export async function quoteStorefrontShipping(
+  supabase: SupabaseClient,
+  municipalityCode: string,
+): Promise<ShippingQuote | null> {
+  const row = await fetchShippingMunicipalityByCode(supabase, municipalityCode);
+  if (!row) return null;
+  if (!STOREFRONT_SHIPPING_COD && !isStorefrontShippingAvailable(row)) {
+    return null;
+  }
+  const departmentName = departmentNameFromJoin(row) ?? row.department_code;
+  return {
+    municipalityCode: row.code,
+    municipalityName: row.name,
+    departmentCode: row.department_code,
+    departmentName,
+    costCents: STOREFRONT_SHIPPING_COD
+      ? 0
+      : Math.max(0, Math.floor(Number(row.cost_cents ?? 0))),
     label: formatMunicipalityLabel(row.name, departmentName),
   };
 }

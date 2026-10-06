@@ -3,7 +3,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   fetchShippingDepartments,
   fetchShippingMunicipalitiesByDepartment,
-  quoteShippingForMunicipality,
+  quoteStorefrontShipping,
 } from "@/lib/shipping-rates";
 
 export async function GET(request: Request) {
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const supabase = createSupabaseServiceClient();
 
     if (municipalityCode) {
-      const quote = await quoteShippingForMunicipality(supabase, municipalityCode);
+      const quote = await quoteStorefrontShipping(supabase, municipalityCode);
       if (!quote) {
         return NextResponse.json({ error: "Municipio no disponible" }, { status: 404 });
       }

@@ -29,7 +29,7 @@ const HIGHLIGHT_ICON_CLASS = "size-8 shrink-0 text-stone-900 sm:size-9";
 const STORE_HIGHLIGHTS = [
   {
     title: "Envíos nacionales",
-    description: "Enviamos dentro de las 24h posteriores a tu compra.",
+    description: "El envío se paga al recibir el producto.",
     Icon: CalendarBlank,
   },
   {

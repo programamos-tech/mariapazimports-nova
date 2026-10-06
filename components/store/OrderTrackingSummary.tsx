@@ -1,4 +1,5 @@
 import { formatCop } from "@/lib/money";
+import { formatStorefrontShippingAmount } from "@/lib/shipping-rates";
 
 type Line = {
   id: string;
@@ -86,9 +87,9 @@ export function OrderTrackingSummary({
           <dd className="tabular-nums text-stone-900">{formatCop(subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4 text-stone-600">
-          <dt>Envío</dt>
-          <dd className="tabular-nums text-stone-900">
-            {shipping > 0 ? formatCop(shipping) : "Incluido"}
+          <dt className="shrink-0">Envío</dt>
+          <dd className="max-w-[16rem] text-right leading-snug text-stone-900">
+            {formatStorefrontShippingAmount(shipping)}
           </dd>
         </div>
         <div className="flex justify-between gap-4 border-t border-stone-200 pt-2.5 text-[15px] font-semibold text-stone-900">
